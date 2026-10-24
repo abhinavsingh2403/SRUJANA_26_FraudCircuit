@@ -71,7 +71,7 @@
       <div class="grid main-grid">
         <section class="card queue" id="queue-section" aria-label="Cases">
           <div class="ch">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h2>Live review queue</h2><div class="radar-badge"><span class="radar-ping"></span> Active Surveillance</div></div>
+            <h2>Live review queue</h2>
             <div class="queue-actions">
               <button id="import-csv" class="pill btn" type="button">Import CSV</button>
               <input id="csv-file" type="file" accept=".csv,text/csv" hidden>
@@ -84,10 +84,6 @@
           <div id="view-toggle" class="view-toggle" hidden></div>
 
           <div class="fl">
-            <div class="search-wrap">
-              <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-              <input type="search" id="queue-search" placeholder="Search case ID, account, rule..." aria-label="Search cases" class="search-input">
-            </div>
             <span>Priority</span>
             <div class="tools" id="fp" role="group" aria-label="Filter by priority"></div>
             <select id="priority-filter" class="sr-only" aria-label="Filter by priority">
@@ -135,10 +131,7 @@
           <!-- Quick Detail Panel -->
           <section class="card dtl" aria-live="polite">
             <div class="ch">
-              <div style="display:flex;align-items:center;gap:6px">
               <h2 class="mono" id="dt">—</h2>
-                <button id="copy-case-id" class="copy-pill" type="button" title="Copy Case ID" style="display:none">Copy</button>
-              </div>
               <span class="b" id="dp">—</span>
             </div>
             <dl id="dl">
@@ -381,12 +374,9 @@ TX-003,2026-10-24T10:12:00Z,MULE-501,CASH-901,92000,TRANSFER</div>
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   </main>
 
-  <footer class="note" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+  <footer class="note">
     <span>TraceGuard · Srujana Tech Fest 2026 · F-01 prototype</span> · 
     <span>Synthetic / local data only · No bank connection</span>
-    <div class="kbd-hint" aria-label="Keyboard navigation">
-      <kbd>J</kbd> / <kbd>K</kbd> navigate cases ? <kbd>G</kbd> view graph ? <kbd>Esc</kbd> close
-    </div>
   </footer>
 </div>
 </body>

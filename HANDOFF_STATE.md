@@ -1,6 +1,6 @@
-# Final integration handoff
+# Handoff State — Checkpoint 1 Resume
 
-Snapshot: 24 October 2026. Existing v0.4.0 API contract retained with backward-compatible pagination additions; code merged and pushed to main (56a3e58).
+Snapshot: 25 October 2026. Pulled latest main (d9a6c73). Backend 96/96 tests pass. Server running at http://localhost:8000. Multi-page frontend confirmed via live browser verification (Case Queue, Scenario Console, Import Data, Evaluation & Audit).
 
 ## Completed
 ## Main Branch & try_kr_rha Integration
