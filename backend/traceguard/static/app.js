@@ -239,7 +239,7 @@
 
   function drawGraph(g, svg, sm = false) {
     if (!g || !g.L || !g.L.length) {
-      svg.innerHTML = '<text x="500" y="260" text-anchor="middle" font-size="14" fill="#58584d">No connected graph data</text>';
+      svg.innerHTML = '<text x="500" y="260" text-anchor="middle" font-size="14" fill="#64748b">No connected graph data</text>';
       return;
     }
     const R = sm ? 22 : 30;
@@ -282,7 +282,7 @@
         const bx = ex - ux * hl;
         const by = ey - uy * hl;
         const isTrigger = e[3] === 1;
-        const col = isTrigger ? '#111' : '#b8b8b0';
+        const col = isTrigger ? '#f43f5e' : '#475569';
         const titleText = `${e[4] || 'tx'}: ${e[0]} → ${e[1]}, amount ${e[2]}, ${e[5] || ''}`;
 
         const el = `<line x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${col}" stroke-width="${w.toFixed(1)}"><title>${escapeHtml(titleText)}</title></line><polygon fill="${col}" points="${ex.toFixed(1)},${ey.toFixed(1)} ${(bx + nx * hw).toFixed(1)},${(by + ny * hw).toFixed(1)} ${(bx - nx * hw).toFixed(1)},${(by - ny * hw).toFixed(1)}"/>`;
@@ -292,7 +292,7 @@
         const lx = sx + (bx - sx) * t;
         const ly = sy + (by - sy) * t - w / 2 - 6;
         if (!sm || isTrigger) {
-          lab += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 18 : 13}" font-weight="700" fill="#111" stroke="#fffdea" stroke-width="${sm ? 5 : 4}" paint-order="stroke">${inr(e[2])}</text>`;
+          lab += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-family="'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 16 : 12}" font-weight="600" fill="#f8fafc" stroke="#090d16" stroke-width="${sm ? 5 : 4}" paint-order="stroke">${inr(e[2])}</text>`;
         }
       });
     });
@@ -301,7 +301,7 @@
     Object.keys(pos).forEach(n => {
       const p = pos[n];
       const displayLabel = n.length > 10 ? n.slice(0, 8) + '…' : n;
-      nodes += `<circle cx="${p.x}" cy="${p.y}" r="${R}" fill="#fff" stroke="#111" stroke-width="2.5"><title>${escapeHtml(n)}</title></circle><text x="${p.x}" y="${p.y + (sm ? 4 : 5)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 11 : 13}" font-weight="700" fill="#111">${escapeHtml(displayLabel)}</text>`;
+      nodes += `<circle cx="${p.x}" cy="${p.y}" r="${R}" fill="#111827" stroke="#6366f1" stroke-width="2.5"><title>${escapeHtml(n)}</title></circle><text x="${p.x}" y="${p.y + (sm ? 4 : 5)}" text-anchor="middle" font-family="'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 11 : 12}" font-weight="600" fill="#f8fafc">${escapeHtml(displayLabel)}</text>`;
     });
 
     svg.innerHTML = base + top + nodes + lab;
@@ -324,19 +324,20 @@
 
     // 1. Priority Bars
     const pCounts = [
-      ['HIGH', all.filter(c => c.priority === 'HIGH').length],
-      ['MEDIUM', all.filter(c => c.priority === 'MEDIUM').length],
-      ['LOW', all.filter(c => c.priority === 'LOW').length],
-      ['INSUFFICIENT', all.filter(c => c.priority === 'INSUFFICIENT_HISTORY').length],
+      ['HIGH', all.filter(c => c.priority === 'HIGH').length, '#f43f5e'],
+      ['MEDIUM', all.filter(c => c.priority === 'MEDIUM').length, '#f59e0b'],
+      ['LOW', all.filter(c => c.priority === 'LOW').length, '#10b981'],
+      ['INSUFFICIENT', all.filter(c => c.priority === 'INSUFFICIENT_HISTORY').length, '#64748b'],
     ];
     $('m1').innerHTML = pCounts.map(p =>
-      `<div class="bar"><span style="width:96px;font-size:12px">${p[0]}</span><span class="t"><i style="--c:#111;width:${(p[1] / totalCount * 100).toFixed(1)}%"></i></span><span>${p[1]}</span></div>`
+      `<div class="bar"><span style="width:96px;font-size:12px">${p[0]}</span><span class="t"><i style="--c:${p[2]};width:${(p[1] / totalCount * 100).toFixed(1)}%"></i></span><span>${p[1]}</span></div>`
     ).join('');
 
     // 2. Status Bars
-    const sCounts = STATUSES.slice(1).map(s => [s, all.filter(c => (c.status || 'OPEN') === s).length]);
+    const sColors = { OPEN: '#38bdf8', INVESTIGATING: '#818cf8', ESCALATED: '#f43f5e', CLOSED: '#64748b' };
+    const sCounts = STATUSES.slice(1).map(s => [s, all.filter(c => (c.status || 'OPEN') === s).length, sColors[s] || '#6366f1']);
     $('m2').innerHTML = sCounts.map(p =>
-      `<div class="bar"><span style="width:96px;font-size:12px">${p[0]}</span><span class="t"><i style="--c:#111;width:${(p[1] / totalCount * 100).toFixed(1)}%"></i></span><span>${p[1]}</span></div>`
+      `<div class="bar"><span style="width:96px;font-size:12px">${p[0]}</span><span class="t"><i style="--c:${p[2]};width:${(p[1] / totalCount * 100).toFixed(1)}%"></i></span><span>${p[1]}</span></div>`
     ).join('');
 
     // 3. Rules Fired Bars
@@ -353,7 +354,7 @@
     } else {
       const maxRule = Math.max(1, ...Object.values(rc));
       $('m3').innerHTML = ruleKeys.map(r =>
-        `<div class="bar"><span class="mono" style="flex:1;font-size:11px">${r}</span><span class="t" style="flex:0 0 70px"><i style="--c:#111;width:${(rc[r] / maxRule * 100).toFixed(1)}%"></i></span><span>${rc[r]}</span></div>`
+        `<div class="bar"><span class="mono" style="flex:1;font-size:11px">${r}</span><span class="t" style="flex:0 0 70px"><i style="--c:#6366f1;width:${(rc[r] / maxRule * 100).toFixed(1)}%"></i></span><span>${rc[r]}</span></div>`
       ).join('');
     }
   }
@@ -901,10 +902,8 @@
 
     // Actions
     const actions = node('div', 'review-actions full');
-    const save = node('button', 'pill btn', 'Save review');
+    const save = node('button', 'pill btn primary', 'Save review');
     save.type = 'submit';
-    save.style.background = 'var(--dark)';
-    save.style.color = '#fff';
 
     const audit = node('button', 'pill btn', 'Verify audit chain');
     audit.type = 'button';
@@ -1041,11 +1040,11 @@
       const legend = node('div', 'graph-legend');
       const item1 = node('span');
       const dot1 = node('i', 'legend-dot');
-      dot1.style.background = '#111';
+      dot1.style.background = '#f43f5e'; dot1.style.boxShadow = '0 0 8px rgba(244,63,94,0.4)';
       item1.append(dot1, document.createTextNode(' Trigger transaction (highlighted)'));
       const item2 = node('span');
       const dot2 = node('i', 'legend-dot');
-      dot2.style.background = '#b8b8b0';
+      dot2.style.background = '#475569';
       item2.append(dot2, document.createTextNode(' Context transaction'));
       legend.append(item1, item2);
       graphBox.append(legend);
