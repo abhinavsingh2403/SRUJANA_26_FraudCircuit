@@ -2,25 +2,29 @@
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   
-  /* Refined Matching Warm Champagne & Amber Intelligence Palette */
-  --bg-canvas: #faf7f2;
-  --bg-canvas-subtle: #f5eedf;
-  --lemon: #d97706; /* Rich warm amber */
-  --lemon-soft: #fcf9f2;
-  --lemon-mid: #f6eedb;
-  --amber: #d97706;
-  --amber-gold: #f59e0b;
-  --amber-light: #fef3c7;
-  --amber-glow: rgba(217, 119, 6, 0.28);
+  /* Executive Emerald Green & Pure White Design System */
+  --bg-canvas: #f6faf7;
+  --bg-canvas-subtle: #edf7f1;
+  --emerald: #10b981;
+  --emerald-dark: #059669;
+  --forest: #064e3b;
+  --mint-subtle: #f0fdf4;
+  --mint-light: #d1fae5;
+  --emerald-glow: rgba(16, 185, 129, 0.28);
   
-  --card: rgba(255, 255, 255, 0.94);
+  --lemon: #059669;
+  --lemon-soft: #f0fdf4;
+  --lemon-mid: #d1fae5;
+  --amber: #059669;
+  
+  --card: #ffffff;
   --card-solid: #ffffff;
-  --line: rgba(180, 140, 50, 0.18);
-  --line-strong: rgba(180, 130, 40, 0.35);
-  --ink: #1c1917;
-  --ink-secondary: #44403c;
+  --line: rgba(16, 185, 129, 0.18);
+  --line-strong: rgba(6, 78, 59, 0.25);
+  --ink: #0f172a;
+  --ink-secondary: #334155;
   --muted: #64748b;
-  --dark: #1c1917;
+  --dark: #064e3b;
   --on-dark: #ffffff;
   
   --danger: #e11d48;
@@ -32,9 +36,9 @@
   --info: #0284c7;
   --info-bg: #e0f2fe;
 
-  --shadow-sm: 0 1px 3px rgba(120, 90, 20, 0.06), 0 1px 2px rgba(120, 90, 20, 0.04);
-  --shadow: 0 4px 18px -2px rgba(120, 90, 20, 0.08), 0 1px 3px rgba(120, 90, 20, 0.04);
-  --shadow-lg: 0 16px 36px -4px rgba(120, 90, 20, 0.13), 0 4px 8px -2px rgba(120, 90, 20, 0.04);
+  --shadow-sm: 0 1px 3px rgba(6, 78, 59, 0.05), 0 1px 2px rgba(6, 78, 59, 0.03);
+  --shadow: 0 4px 18px -2px rgba(6, 78, 59, 0.06), 0 1px 3px rgba(6, 78, 59, 0.04);
+  --shadow-lg: 0 16px 36px -4px rgba(6, 78, 59, 0.12), 0 4px 8px -2px rgba(6, 78, 59, 0.04);
   --radius: 20px;
   color-scheme: light;
   box-sizing: border-box;
@@ -57,9 +61,9 @@ body {
   color: var(--ink);
   background: var(--bg-canvas);
   background-image: 
-    radial-gradient(1000px 600px at 15% 5%, #fdf2d6 0%, transparent 65%),
-    radial-gradient(800px 500px at 85% 95%, #fcf5e5 0%, transparent 60%),
-    radial-gradient(600px 400px at 50% 50%, #faf8f3 0%, transparent 100%);
+    radial-gradient(1100px 700px at 15% 5%, #e8f5ee 0%, transparent 65%),
+    radial-gradient(900px 600px at 85% 95%, #ebf7f0 0%, transparent 60%),
+    radial-gradient(700px 450px at 50% 50%, #f6faf7 0%, transparent 100%);
   background-attachment: fixed;
   min-height: 100vh;
   min-width: 320px;
@@ -263,51 +267,112 @@ h1 {
   white-space: nowrap;
 }
 
-/* KPI Cards */
+/* Relative Themed KPI Metric Cards */
 .kpi-grid {
   margin-bottom: 16px;
 }
 
 .kpi {
   grid-column: span 3;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+  padding: 22px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease;
+}
+
+.kpi:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
 }
 
 .kpi .l {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
 }
 
 .kpi .n {
   font-size: 38px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 1;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
 }
 
 .kpi .d {
-  font-size: 12px;
-  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.4;
 }
 
+/* Card 1: Visible Cases - Master Forest Green Hero Anchor */
 .kpi.dark {
-  background: var(--dark);
-  color: var(--on-dark);
-  border-color: transparent;
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  box-shadow: 0 8px 24px -4px rgba(6, 78, 59, 0.25);
 }
-
-.kpi.dark .l,
+.kpi.dark .l {
+  color: #a7f3d0;
+}
+.kpi.dark .n {
+  color: #ffffff;
+}
 .kpi.dark .d {
-  color: inherit;
-  opacity: 0.75;
+  color: #d1fae5;
 }
 
+/* Card 2: High Priority - Relative Crimson/Rose Alert Card */
 .kpi.lime {
-  background: var(--lemon);
-  color: #111;
-  border-color: transparent;
+  background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%);
+  border: 1px solid rgba(225, 29, 72, 0.25);
+  box-shadow: 0 4px 16px -2px rgba(225, 29, 72, 0.08);
+}
+.kpi.lime .l {
+  color: #be123c;
+}
+.kpi.lime .n {
+  color: #e11d48;
+}
+.kpi.lime .d {
+  color: #881337;
+}
+
+/* Card 3: Medium Priority - Relative Amber Warning Card */
+.kpi:nth-child(3) {
+  background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
+  border: 1px solid rgba(217, 119, 6, 0.25);
+  box-shadow: 0 4px 16px -2px rgba(217, 119, 6, 0.08);
+}
+.kpi:nth-child(3) .l {
+  color: #b45309;
+}
+.kpi:nth-child(3) .n {
+  color: #d97706;
+}
+.kpi:nth-child(3) .d {
+  color: #78350f;
+}
+
+/* Card 4: Low / Coverage - Relative Mint Green Routine Card */
+.kpi:nth-child(4) {
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  box-shadow: 0 4px 16px -2px rgba(16, 185, 129, 0.08);
+}
+.kpi:nth-child(4) .l {
+  color: #047857;
+}
+.kpi:nth-child(4) .n {
+  color: #059669;
+}
+.kpi:nth-child(4) .d {
+  color: #065f46;
 }
 
 .kpi.lime .l,
@@ -402,33 +467,41 @@ table {
 
 th {
   text-align: left;
-  color: var(--muted);
-  font-weight: 600;
-  font-size: 12px;
-  padding: 10px 12px;
+  color: var(--forest);
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 11px 14px;
   border-bottom: 1px solid var(--line);
-  background: rgba(253, 248, 210, 0.45);
+  background: #f0fdf4;
   white-space: nowrap;
 }
 
 td {
-  padding: 11px 12px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
 }
 
 tbody tr {
   cursor: pointer;
-  transition: background 0.12s;
+  transition: background 0.12s ease;
 }
 
 tbody tr:hover td {
-  background: rgba(246, 233, 107, 0.25);
+  background: #f0fdf4;
 }
 
 tbody tr.sel td,
 tbody tr.active td {
-  background: rgba(246, 233, 107, 0.55);
+  background: #ecfdf5;
+  color: var(--forest);
+}
+
+tbody tr.sel td:first-child,
+tbody tr.active td:first-child {
+  box-shadow: inset 4px 0 0 #059669;
 }
 
 tbody tr:focus-visible {
@@ -471,53 +544,58 @@ th.amt {
 
 .b.HIGH,
 .badge-high {
-  background: #111;
-  color: #fff;
+  background: #ffe4e6;
+  color: #be123c;
+  border: 1px solid rgba(225, 29, 72, 0.3);
 }
 
 .b.MEDIUM,
 .badge-medium {
-  background: var(--lemon);
-  color: #111;
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid rgba(217, 119, 6, 0.3);
 }
 
 .b.LOW,
 .badge-low {
-  background: #ffffff;
-  color: var(--muted);
-  border: 1px solid var(--line);
+  background: #d1fae5;
+  color: #047857;
+  border: 1px solid rgba(5, 150, 105, 0.3);
 }
 
 .b.INSUFFICIENT_HISTORY,
 .badge-insufficient_history {
-  background: #ffffff;
-  color: #111;
-  border: 1px solid #111;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid rgba(100, 116, 139, 0.25);
 }
 
 .b.OPEN,
 .badge-open {
-  background: #ffffff;
-  color: #111;
-  border: 1px solid #111;
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 .b.INVESTIGATING,
 .badge-investigating {
-  background: var(--lemon);
-  color: #111;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.35);
 }
 
 .b.ESCALATED,
 .badge-escalated {
-  background: #111;
-  color: #fff;
+  background: #ffe4e6;
+  color: #be123c;
+  border: 1px solid rgba(225, 29, 72, 0.35);
 }
 
 .b.CLOSED,
 .badge-closed {
-  background: #ffffff;
-  color: var(--muted);
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px dashed rgba(100, 116, 139, 0.4);
   border: 1px dashed var(--muted);
 }
 
@@ -642,10 +720,17 @@ th.amt {
   transform: translateY(-1px);
 }
 
-.acts button.p {
-  background: var(--dark);
-  color: var(--on-dark);
+.acts button.p,
+.pill.btn.primary {
+  background: #059669;
+  color: #ffffff;
   border-color: transparent;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+}
+
+.acts button.p:hover,
+.pill.btn.primary:hover {
+  background: #047857;
 }
 
 .acts button:disabled {
@@ -841,7 +926,7 @@ th.amt {
 .graph-wrap {
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: #fffdea;
+  background: #f0fdf4;
   padding: 14px;
   margin-bottom: 18px;
   overflow-x: auto;
@@ -1118,7 +1203,7 @@ th.amt {
 .pv .gw {
   padding: 6px;
   border-radius: 14px;
-  background: #fffdea;
+  background: #f0fdf4;
   border: 1px solid var(--line);
 }
 
@@ -1199,7 +1284,7 @@ th.amt {
 }
 
 .gw {
-  background: #fffdea;
+  background: #f0fdf4;
   border: 1px solid var(--line);
   border-radius: 18px;
   padding: 14px 14px 6px;
@@ -1422,7 +1507,7 @@ th.amt {
 
 .scenario-expected {
   font-size: 11px;
-  background: #fffdea;
+  background: #f0fdf4;
   border: 1px solid var(--lemon-mid);
   border-radius: 8px;
   padding: 8px 10px;
@@ -1555,9 +1640,9 @@ th.amt {
 }
 
 .search-input:focus {
-  border-color: #111;
+  border-color: #059669;
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(246, 233, 107, 0.45);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.35);
 }
 
 /* 1-Click Copy Pill */
@@ -1579,7 +1664,7 @@ th.amt {
 
 .copy-pill:hover {
   background: #ffffff;
-  border-color: #111;
+  border-color: #059669;
   transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(17, 17, 17, 0.1);
 }
@@ -1590,14 +1675,14 @@ th.amt {
 
 /* Bidirectional Graph ? Table Highlighting */
 .highlighted-tx td {
-  background: #fdf8d2 !important;
+  background: #ecfdf5 !important; color: #064e3b;
   font-weight: 600;
 }
 
 line.highlighted-edge {
   stroke: #111111 !important;
   stroke-width: 6px !important;
-  filter: drop-shadow(0 0 4px #f6e96b);
+  filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.5)); stroke: #064e3b !important;
 }
 
 polygon.highlighted-edge {
@@ -1605,7 +1690,7 @@ polygon.highlighted-edge {
 }
 
 circle.highlighted-node {
-  fill: #f6e96b !important;
+  fill: #ffffff !important; stroke: #059669 !important;
   stroke: #111111 !important;
   stroke-width: 3.5px !important;
 }

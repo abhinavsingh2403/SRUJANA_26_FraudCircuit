@@ -288,7 +288,7 @@
         const bx = ex - ux * hl;
         const by = ey - uy * hl;
         const isTrigger = e[3] === 1;
-        const col = isTrigger ? '#111' : '#b8b8b0';
+        const col = isTrigger ? '#059669' : '#94a3b8';
         const titleText = `${e[4] || 'tx'}: ${e[0]} → ${e[1]}, amount ${e[2]}, ${e[5] || ''}`;
 
         const el = `<line class="graph-edge" data-tx="${escapeHtml(e[4] || '')}" x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${col}" stroke-width="${w.toFixed(1)}"><title>${escapeHtml(titleText)}</title></line><polygon class="graph-edge" data-tx="${escapeHtml(e[4] || '')}" fill="${col}" points="${ex.toFixed(1)},${ey.toFixed(1)} ${(bx + nx * hw).toFixed(1)},${(by + ny * hw).toFixed(1)} ${(bx - nx * hw).toFixed(1)},${(by - ny * hw).toFixed(1)}"/>`;
@@ -298,7 +298,7 @@
         const lx = sx + (bx - sx) * t;
         const ly = sy + (by - sy) * t - w / 2 - 6;
         if (!sm || isTrigger) {
-          lab += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 18 : 13}" font-weight="700" fill="#111" stroke="#fffdea" stroke-width="${sm ? 5 : 4}" paint-order="stroke">${inr(e[2])}</text>`;
+          lab += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 16 : 12}" font-weight="700" fill="#064e3b" stroke="#ffffff" stroke-width="${sm ? 5 : 4}" paint-order="stroke">${inr(e[2])}</text>`;
         }
       });
     });
@@ -307,7 +307,7 @@
     Object.keys(pos).forEach(n => {
       const p = pos[n];
       const displayLabel = n.length > 10 ? n.slice(0, 8) + '…' : n;
-      nodes += `<circle class="graph-node" data-acct="${escapeHtml(n)}" cx="${p.x}" cy="${p.y}" r="${R}" fill="#fff" stroke="#111" stroke-width="2.5"><title>${escapeHtml(n)}</title></circle><text class="graph-node" data-acct="${escapeHtml(n)}" x="${p.x}" y="${p.y + (sm ? 4 : 5)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 11 : 13}" font-weight="700" fill="#111">${escapeHtml(displayLabel)}</text>`;
+      nodes += `<circle class="graph-node" data-acct="${escapeHtml(n)}" cx="${p.x}" cy="${p.y}" r="${R}" fill="#ffffff" stroke="#059669" stroke-width="2.5"><title>${escapeHtml(n)}</title></circle><text class="graph-node" data-acct="${escapeHtml(n)}" x="${p.x}" y="${p.y + (sm ? 4 : 5)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 11 : 12}" font-weight="700" fill="#064e3b">${escapeHtml(displayLabel)}</text>`;
     });
 
     svg.innerHTML = base + top + nodes + lab;
@@ -440,19 +440,20 @@
 
     // 1. Priority Bars
     const pCounts = [
-      ['HIGH', all.filter(c => c.priority === 'HIGH').length],
-      ['MEDIUM', all.filter(c => c.priority === 'MEDIUM').length],
-      ['LOW', all.filter(c => c.priority === 'LOW').length],
-      ['INSUFFICIENT', all.filter(c => c.priority === 'INSUFFICIENT_HISTORY').length],
+      ['HIGH', all.filter(c => c.priority === 'HIGH').length, '#e11d48'],
+      ['MEDIUM', all.filter(c => c.priority === 'MEDIUM').length, '#d97706'],
+      ['LOW', all.filter(c => c.priority === 'LOW').length, '#059669'],
+      ['INSUFFICIENT', all.filter(c => c.priority === 'INSUFFICIENT_HISTORY').length, '#64748b'],
     ];
     $('m1').innerHTML = pCounts.map(p =>
-      `<div class="bar"><span style="width:96px;font-size:12px">${p[0]}</span><span class="t"><i style="--c:#111;width:${(p[1] / totalCount * 100).toFixed(1)}%"></i></span><span>${p[1]}</span></div>`
+      `<div class="bar"><span style="width:96px;font-size:12px">${p[0]}</span><span class="t"><i style="--c:${p[2]};width:${(p[1] / totalCount * 100).toFixed(1)}%"></i></span><span>${p[1]}</span></div>`
     ).join('');
 
     // 2. Status Bars
-    const sCounts = STATUSES.slice(1).map(s => [s, all.filter(c => (c.status || 'OPEN') === s).length]);
+    const sColors = { OPEN: '#059669', INVESTIGATING: '#2563eb', ESCALATED: '#e11d48', CLOSED: '#64748b' };
+    const sCounts = STATUSES.slice(1).map(s => [s, all.filter(c => (c.status || 'OPEN') === s).length, sColors[s] || '#059669']);
     $('m2').innerHTML = sCounts.map(p =>
-      `<div class="bar"><span style="width:96px;font-size:12px">${p[0]}</span><span class="t"><i style="--c:#111;width:${(p[1] / totalCount * 100).toFixed(1)}%"></i></span><span>${p[1]}</span></div>`
+      `<div class="bar"><span style="width:96px;font-size:12px">${p[0]}</span><span class="t"><i style="--c:${p[2]};width:${(p[1] / totalCount * 100).toFixed(1)}%"></i></span><span>${p[1]}</span></div>`
     ).join('');
 
     // 3. Rules Fired Bars
@@ -469,7 +470,7 @@
     } else {
       const maxRule = Math.max(1, ...Object.values(rc));
       $('m3').innerHTML = ruleKeys.map(r =>
-        `<div class="bar"><span class="mono" style="flex:1;font-size:11px">${r}</span><span class="t" style="flex:0 0 70px"><i style="--c:#111;width:${(rc[r] / maxRule * 100).toFixed(1)}%"></i></span><span>${rc[r]}</span></div>`
+        `<div class="bar"><span class="mono" style="flex:1;font-size:11px">${r}</span><span class="t" style="flex:0 0 70px"><i style="--c:#059669;width:${(rc[r] / maxRule * 100).toFixed(1)}%"></i></span><span>${rc[r]}</span></div>`
       ).join('');
     }
   }
@@ -1188,11 +1189,11 @@
       const legend = node('div', 'graph-legend');
       const item1 = node('span');
       const dot1 = node('i', 'legend-dot');
-      dot1.style.background = '#111';
+      dot1.style.background = '#059669'; dot1.style.boxShadow = '0 0 8px rgba(5,150,105,0.4)';
       item1.append(dot1, document.createTextNode(' Trigger transaction (highlighted)'));
       const item2 = node('span');
       const dot2 = node('i', 'legend-dot');
-      dot2.style.background = '#b8b8b0';
+      dot2.style.background = '#94a3b8';
       item2.append(dot2, document.createTextNode(' Context transaction'));
       legend.append(item1, item2);
       graphBox.append(legend);
