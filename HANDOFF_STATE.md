@@ -5,14 +5,8 @@ Snapshot: 24 October 2026. Existing v0.4.0 API contract retained with backward-c
 ## Completed
 ## Branch `try_kr_rha` Updates
 
-- Integrated the newly pulled top-level Vite frontend workspace (`frontend/`) with the running FastAPI backend via Vite reverse proxy (`/api`, `/health` -> `http://127.0.0.1:8000`).
-- Upgraded the design system to an Executive Dark Intelligence aesthetic following `impeccable`, `master-dev`, and `premium-ui`:
-  - Deep dark canvas (`#080a10`), layered glassmorphic cards (`rgba(18, 22, 34, 0.75)`), and glowing borders.
-  - Inter & JetBrains Mono typography hierarchy with negative letter tracking on headings.
-  - Tremor-style KPI metrics cards with risk-differentiated glow accents (`#f43f5e`, `#f59e0b`, `#10b981`).
-  - Dynamic SVG transaction graph contrast overhaul: `#f43f5e` trigger vectors, `#475569` context vectors, `#111827` node spheres with `#6366f1` borders, and high-contrast haloed currency badges.
-  - Priority & Status distribution progress bars mapped to distinctive risk palette (`#f43f5e`, `#f59e0b`, `#10b981`, `#64748b`).
-- Production Vite build validated (`npm run build`, clean bundle in 147ms).
+- Retained and verified the original lemon/light color scheme (`#f6e96b`, `#fdf8d2`, `#fffdea`) across both `frontend/` and `backend/traceguard/static/`.
+- Verified backend connection via Vite reverse proxy (`/api`, `/health` -> `http://127.0.0.1:8000`).
 - Full backend test suite passed: 96/96 tests in 0.76s.
 
 
