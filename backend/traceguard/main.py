@@ -92,7 +92,9 @@ app.add_middleware(
     max_age=600,
 )
 
-STATIC_DIR = Path(__file__).resolve().parent / "static"
+_pkg_dir = Path(__file__).resolve().parent
+_repo_frontend = _pkg_dir.parents[1] / "frontend"
+STATIC_DIR = _repo_frontend if _repo_frontend.is_dir() else (_pkg_dir / "static")
 
 
 @app.get("/", include_in_schema=False)

@@ -51,3 +51,10 @@ No Git repository existed in the supplied archive or workspace. No commit hash i
 
 **Reason:** User requested integrating the design mockup as the frontend UI/UX of the project. The implementation adheres strictly to `AGENTS.md` by maintaining all backend API contracts, preserving honest disclosures (rules-only mode, unconfigured ML, non-probabilistic priorities), escaping all dynamic text to prevent XSS, and maintaining 100% test pass rate across all 96 unit tests, startup checks, and integration verification.
 
+## 2026-10-24 — Frontend asset deduplication & centralized frontend directory
+
+**Decision:** Eliminate duplicate files in `backend/traceguard/static/` and designate the top-level `frontend/` directory as the sole source of truth for all frontend assets (`index.html`, `styles.css`, `app.js`, `vite.config.js`, `package.json`). Update `backend/traceguard/main.py` and `backend/traceguard/startup.py` to point `STATIC_DIR` directly to `frontend/` (with fallback).
+
+**Reason:** User requested removing duplicate files after establishing the dedicated `frontend/` folder. All 96 unit tests, startup checks, and integration verifications continue to pass cleanly without asset redundancy.
+
+

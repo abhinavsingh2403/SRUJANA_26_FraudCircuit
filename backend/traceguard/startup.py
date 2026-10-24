@@ -36,13 +36,15 @@ def check_environment() -> dict[str, Any]:
 
     # 2. Static files check from package location, not CWD
     pkg_dir = Path(__file__).resolve().parent
-    static_dir = pkg_dir / "static"
+    repo_frontend = pkg_dir.parents[1] / "frontend"
+    static_dir = repo_frontend if repo_frontend.is_dir() else (pkg_dir / "static")
     required_assets = ("index.html", "app.js", "styles.css")
     for asset in required_assets:
         asset_path = static_dir / asset
         if not asset_path.is_file() or asset_path.stat().st_size == 0:
             raise RuntimeError(f"Missing required static asset: {asset_path}")
     results["static_assets_ok"] = True
+    results["static_dir"] = str(static_dir)
 
     # 3. Settings validation
     if DEFAULT_SETTINGS.max_upload_bytes <= 0 or DEFAULT_SETTINGS.max_csv_rows <= 0:
@@ -67,7 +69,7 @@ def run_preflight_cli() -> int:
     try:
         res = check_environment()
         print(f"[OK] TraceGuard startup pre-flight passed on {res['platform']} (Python {res['python_version']}).")
-        print(f"     Static assets verified at {Path(__file__).resolve().parent / 'static'}")
+        print(f"     Static assets verified at {res.get('static_dir', Path(__file__).resolve().parent / 'static')}")
         print(f"     {res['scenarios_loaded']} synthetic scenarios ready.")
         return 0
     except Exception as exc:
