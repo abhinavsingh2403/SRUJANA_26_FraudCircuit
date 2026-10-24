@@ -1,10 +1,26 @@
 # Final integration handoff
 
-Snapshot: 24 October 2026. Existing v0.4.0 API contract retained with backward-compatible pagination additions; no Git repository was supplied or initialized, and no Git commit hash is claimed.
+Snapshot: 24 October 2026. Existing v0.4.0 API contract retained with backward-compatible pagination additions; code merged and pushed to main (56a3e58).
 
 ## Completed
-## Branch `try_kr_rha` Updates
+## Main Branch & try_kr_rha Integration
 
+- **Original Lemon Aesthetic Restored**: Verified and locked the warm lemon and light aesthetic (--lemon: #f6e96b, --lemon-soft: #fdf8d2, #fffdea, #111 ink typography) across all workbench components.
+- **Top 4 KPI Cards Balanced**:
+  - Card 1: .kpi.dark (#111111 solid dark contrast).
+  - Card 2: .kpi.lime (#f6e96b warm lemon highlight).
+  - Cards 3 & 4: clean white cards with crisp borders and proportional typography.
+  - Interactive smooth animations with 3D perspective tilt and animateCount() ticker.
+- **Graph Topology Clumping & Overlap Resolved**:
+  - Implemented DFS-based cycle detection in buildGraphLayout() to recognize back-edges and eliminate DAG layer collapse.
+  - Added dual sub-column staggering for fanout groups exceeding 5 nodes with adaptive radii, preventing node blob collisions.
+  - Implemented proximity-based edge label placement checks to eliminate overlapping amount tags.
+- **Frontend / Backend Live Verification**:
+  - Backend unit tests: 96/96 passed in 0.776s.
+  - Full system integration script (backend/scripts/verify_integration.py): 100% passed with HTTP 200 across all routes.
+  - Frontend production build (npm run build): completed with 0 errors.
+  - Live reverse-proxy on http://localhost:5173/api/cases validated with 13 scenarios / cases.
+- **Git Push Completed**: Successfully merged into main and pushed to origin/main.
 - Retained and verified the original lemon/light color scheme (`#f6e96b`, `#fdf8d2`, `#fffdea`) across both `frontend/` and `backend/traceguard/static/`.
 - Implemented peak-tier analyst workbench interactions across UI:
   - **Instant Live Case Search**: Pre-indexed search bar in queue table filtering by Case ID, Account ID, Scenario, or Rule Code in real-time.
