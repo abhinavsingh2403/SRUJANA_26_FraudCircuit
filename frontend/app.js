@@ -243,7 +243,7 @@
     return { L, E };
   }
 
-  function drawGraph(g, svg, sm = false) {
+  function drawGraph(g, svg, sm = false, caseData = null) {
     if (!g || !g.L || !g.L.length) {
       svg.innerHTML = '<text x="500" y="260" text-anchor="middle" font-size="14" fill="#58584d">No connected graph data</text>';
       return;
@@ -317,17 +317,51 @@
       svg.onmouseover = (ev) => {
         const edge = ev.target.closest('.graph-edge');
         if (edge && edge.dataset.tx) {
-          highlightTx(edge.dataset.tx);
+          const txId = edge.dataset.tx;
+          highlightTx(txId);
+          const hud = $('graph-hud');
+          if (hud && caseData) {
+            const txs = allCaseTransactions(caseData);
+            const tx = txs.find(t => t.transaction_id === txId);
+            if (tx) {
+              const isTrigger = (caseData.transaction_ids || []).includes(txId);
+              hud.innerHTML = `
+                <div class="hud-tag" style="color:${isTrigger ? 'var(--danger)' : 'var(--muted)'}">
+                  ${isTrigger ? '? Trigger Transaction' : 'Supporting Context'}
+                </div>
+                <div class="hud-title">${escapeHtml(tx.transaction_id)}</div>
+                <div class="hud-amount">${inr(tx.amount)}</div>
+                <p class="hud-desc">${escapeHtml(tx.sender_id)} ? ${escapeHtml(tx.recipient_id)}<br>${escapeHtml(tx.timestamp || '')}</p>
+              `;
+            }
+          }
           return;
         }
         const nodeEl = ev.target.closest('.graph-node');
         if (nodeEl && nodeEl.dataset.acct) {
-          highlightAcct(nodeEl.dataset.acct);
+          const acctId = nodeEl.dataset.acct;
+          highlightAcct(acctId);
+          const hud = $('graph-hud');
+          if (hud) {
+            hud.innerHTML = `
+              <div class="hud-tag">Connected Account</div>
+              <div class="hud-title">${escapeHtml(acctId)}</div>
+              <p class="hud-desc">Account participating in case flow.<br>Hover link or timeline row for exact direction.</p>
+            `;
+          }
           return;
         }
       };
       svg.onmouseout = () => {
         clearHighlights();
+        const hud = $('graph-hud');
+        if (hud && caseData) {
+          hud.innerHTML = `
+            <div class="hud-tag">Topology Inspector</div>
+            <div class="hud-title">${(caseData.account_ids || []).length} Accounts Connected</div>
+            <p class="hud-desc">Hover a transaction link or account node to inspect details</p>
+          `;
+        }
       };
     }
   }
@@ -370,12 +404,32 @@
     document.querySelectorAll('.highlighted-tx').forEach(el => el.classList.remove('highlighted-tx'));
   }
 
+  function animateCount(el, target) {
+    if (!el) return;
+    const start = parseInt(el.textContent.replace(/[^0-9]/g, '')) || 0;
+    const end = Number(target) || 0;
+    if (start === end) {
+      el.textContent = String(end);
+      return;
+    }
+    const duration = 400;
+    const startTime = performance.now();
+    function tick(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      el.textContent = String(Math.round(start + (end - start) * ease));
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
   function updateMetrics() {
     const all = state.cases;
-    $('metric-all').textContent = state.total;
-    $('metric-high').textContent = all.filter(c => c.priority === 'HIGH').length;
-    $('metric-medium').textContent = all.filter(c => c.priority === 'MEDIUM').length;
-    $('metric-low').textContent = all.filter(c => c.priority === 'LOW' || c.priority === 'INSUFFICIENT_HISTORY').length;
+    animateCount($('metric-all'), state.total);
+    animateCount($('metric-high'), all.filter(c => c.priority === 'HIGH').length);
+    animateCount($('metric-medium'), all.filter(c => c.priority === 'MEDIUM').length);
+    animateCount($('metric-low'), all.filter(c => c.priority === 'LOW' || c.priority === 'INSUFFICIENT_HISTORY').length);
     $('count').textContent = state.total + (state.total === 1 ? ' case' : ' cases');
     $('queue-count').textContent = state.total;
   }
@@ -1109,6 +1163,15 @@
       // Graph
       const graphBox = node('div', 'graph-wrap');
       detail.append(sectionHeading('Connected-account view', `${(caseData.account_ids || []).length} accounts in case`));
+
+      const hud = node('div', 'graph-hud');
+      hud.id = 'graph-hud';
+      const hudTag = node('div', 'hud-tag', 'Topology Inspector');
+      const hudTitle = node('div', 'hud-title', `${(caseData.account_ids || []).length} Accounts Connected`);
+      const hudDesc = node('p', 'hud-desc', 'Hover a transaction link or account node to inspect details');
+      hud.append(hudTag, hudTitle, hudDesc);
+      graphBox.append(hud);
+
       const svgNS = 'http://www.w3.org/2000/svg';
       const graphSvg = document.createElementNS(svgNS, 'svg');
       graphSvg.setAttribute('viewBox', '0 0 1000 520');
@@ -1116,8 +1179,11 @@
       graphSvg.setAttribute('class', 'case-graph');
       graphSvg.setAttribute('aria-label', 'Connected transaction account graph');
       const layout = buildGraphLayout(caseData);
-      drawGraph(layout, graphSvg, false);
+      drawGraph(layout, graphSvg, false, caseData);
       graphBox.append(graphSvg);
+
+      const invSec = $('investigation-section');
+      if (invSec) invSec.classList.add('border-beam-active');
 
       const legend = node('div', 'graph-legend');
       const item1 = node('span');
@@ -1637,10 +1703,30 @@
     });
   }
 
+  function initCard3D() {
+    const cards = document.querySelectorAll('.kpi, .scenario-card');
+    cards.forEach(card => {
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -4;
+        const rotateY = ((x - centerX) / centerX) * 4;
+        card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-2px)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+      });
+    });
+  }
+
   // Initialize
   renderFilterButtons();
   loadScenarios();
   loadEvaluation();
   handleRoute();
+  initCard3D();
   refreshCases(false);
 })();
