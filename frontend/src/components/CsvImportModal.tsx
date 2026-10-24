@@ -81,38 +81,41 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-      <div className="relative w-full max-w-lg rounded-2xl bg-[#0f1117] border border-white/10 shadow-2xl p-6 text-zinc-100 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md transition-opacity duration-200">
+      <div className="relative w-full max-w-lg rounded-3xl bg-[#0f121d] border border-white/10 shadow-2xl p-6 text-zinc-100 overflow-hidden">
+        {/* Subtle top glow highlight */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent" />
+
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+          <div className="flex items-center gap-2.5">
+            <div className="h-9 w-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
               <Upload className="h-4 w-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold font-mono">IMPORT CANONICAL CSV</h3>
-              <p className="text-[11px] text-zinc-400">Raw UTF-8 byte stream processing</p>
+              <h3 className="text-sm font-semibold text-white tracking-tight">Import Canonical CSV</h3>
+              <p className="text-[11px] text-zinc-400 font-sans">Raw UTF-8 transaction stream ingestion</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.08] active:scale-95 transition-all"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Schema Notice */}
-        <div className="mt-4 p-3 rounded-xl bg-zinc-900/60 border border-white/[0.06] text-[11px] space-y-1">
-          <span className="font-mono text-zinc-400 font-bold block text-[10px] uppercase">
-            // REQUIRED COLUMNS
+        <div className="mt-4 p-3 rounded-2xl bg-zinc-900/60 border border-white/[0.06] text-[11px] space-y-1 font-sans">
+          <span className="font-mono text-zinc-400 font-semibold block text-[10px] uppercase">
+            Required Schema Columns
           </span>
           <code className="text-indigo-300 font-mono text-[10px] block break-all">
             transaction_id,timestamp,sender_id,recipient_id,amount,transaction_type
           </code>
           <p className="text-[10px] text-zinc-500 mt-1">
-            Optional: <code className="text-zinc-400">currency</code>. Target/fraud labels and PaySim post-event balance columns are automatically stripped.
+            Optional: <code className="text-zinc-400">currency</code>. Target/fraud labels and PaySim post-event balance columns are automatically stripped by safeguards.
           </p>
         </div>
 
@@ -124,12 +127,21 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
             onDragOver={handleDrag}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`mt-4 border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+            className={`mt-4 relative border-2 border-dashed rounded-2xl p-7 text-center cursor-pointer transition-all duration-200 overflow-hidden ${
               dragActive
-                ? "border-indigo-500 bg-indigo-500/[0.05]"
-                : "border-white/[0.1] hover:border-white/[0.2] bg-zinc-950/40"
+                ? "border-indigo-400 bg-indigo-500/10 shadow-lg scale-[1.01]"
+                : "border-white/[0.12] hover:border-white/[0.22] bg-[#0c0e18] hover:bg-[#121624]"
             }`}
           >
+            {isUploading && (
+              <div className="absolute inset-0 bg-[#0c0e18]/80 backdrop-blur-sm flex items-center justify-center z-10">
+                <div className="flex flex-col items-center gap-2 font-mono text-xs text-indigo-300">
+                  <div className="h-6 w-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                  <span>Ingesting and triaging transactions…</span>
+                </div>
+              </div>
+            )}
+
             <input
               ref={fileInputRef}
               type="file"
@@ -137,17 +149,17 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
               onChange={handleFileChange}
               hidden
             />
-            <div className="flex flex-col items-center gap-2">
-              <div className="h-10 w-10 rounded-full bg-white/[0.04] flex items-center justify-center text-zinc-400">
-                <FileText className="h-5 w-5" />
+            <div className="flex flex-col items-center gap-2.5">
+              <div className="h-11 w-11 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-300 shadow-inner">
+                <FileText className="h-5 w-5 text-indigo-400" />
               </div>
-              <p className="text-xs font-medium text-zinc-300">
+              <p className="text-xs font-semibold text-zinc-200 font-sans">
                 {selectedFile ? selectedFile.name : "Drag and drop your transaction CSV here"}
               </p>
               <span className="text-[10px] text-zinc-500 font-mono">
                 {selectedFile
-                  ? `${(selectedFile.size / 1024).toFixed(1)} KB selected`
-                  : "or browse files (max 5 MiB)"}
+                  ? `${(selectedFile.size / 1024).toFixed(1)} KB ready for import`
+                  : "or click to browse local files (max 5 MiB)"}
               </span>
             </div>
           </div>
@@ -155,7 +167,7 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
 
         {/* Error Callout */}
         {errorMsg && (
-          <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
+          <div className="mt-4 p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs flex items-start gap-2 shadow-lg font-sans">
             <AlertTriangle className="h-4 w-4 text-rose-400 flex-shrink-0 mt-0.5" />
             <div className="break-all font-mono text-[11px] leading-relaxed">{errorMsg}</div>
           </div>
@@ -163,25 +175,25 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
 
         {/* Result Breakdown Card */}
         {result && (
-          <div className="mt-4 p-4 rounded-xl bg-emerald-500/[0.08] border border-emerald-500/30 text-xs font-mono space-y-2">
+          <div className="mt-4 p-4 rounded-2xl bg-emerald-500/[0.08] border border-emerald-500/30 text-xs font-sans space-y-2 shadow-xl">
             <div className="flex items-center gap-2 text-emerald-400 font-bold">
               <CheckCircle2 className="h-4 w-4" />
-              <span>Import Successful: {result.transaction_count} rows processed</span>
+              <span>Ingestion Complete: {result.transaction_count} rows processed</span>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-[11px] text-zinc-300 pt-1">
+            <div className="grid grid-cols-2 gap-2 text-[11px] text-zinc-300 pt-1 font-mono">
               <div>Run ID: <span className="text-white font-bold">{result.run_id.slice(0, 14)}…</span></div>
               <div>Cases Generated: <span className="text-indigo-400 font-bold">{result.case_count}</span></div>
             </div>
 
             {result.dropped_columns && result.dropped_columns.length > 0 && (
-              <div className="text-[10px] text-amber-400 pt-1 flex items-center gap-1">
-                <ShieldAlert className="h-3 w-3" />
+              <div className="text-[10px] text-amber-400 pt-1 flex items-center gap-1.5 font-sans">
+                <ShieldAlert className="h-3.5 w-3.5" />
                 <span>Safeguard: Dropped {result.dropped_columns.length} label/balance column(s).</span>
               </div>
             )}
 
             {result.analysis_warnings && result.analysis_warnings.length > 0 && (
-              <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[10px]">
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[10px] font-sans">
                 {result.analysis_warnings.join(" ")}
               </div>
             )}
@@ -189,11 +201,11 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
         )}
 
         {/* Action Buttons */}
-        <div className="mt-6 flex justify-end gap-2">
+        <div className="mt-6 flex justify-end gap-2.5">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-white/[0.08] hover:bg-white/[0.04] text-zinc-400 text-xs font-medium"
+            className="px-4 py-2 rounded-xl border border-white/[0.08] hover:bg-white/[0.06] text-zinc-400 text-xs font-medium active:scale-95 transition-all"
           >
             {result ? "Close" : "Cancel"}
           </button>
@@ -203,9 +215,9 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
               type="button"
               disabled={!selectedFile || isUploading}
               onClick={handleUpload}
-              className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all active:scale-[0.98] disabled:opacity-40"
+              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all active:scale-[0.96] disabled:opacity-40 shadow-sm"
             >
-              {isUploading ? "Uploading & Analyzing…" : "Run Ingestion"}
+              {isUploading ? "Ingesting…" : "Import Transactions"}
             </button>
           )}
         </div>

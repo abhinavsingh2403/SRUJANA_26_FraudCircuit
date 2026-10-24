@@ -2,11 +2,11 @@
 
 :root {
   color-scheme: dark;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --bg-canvas: #050508;
-  --bg-panel: #0a0a0f;
-  --bg-card: #0f1117;
-  --bg-elevated: #141820;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --bg-canvas: #090b11;
+  --bg-panel: #0d101a;
+  --bg-card: #121624;
+  --bg-card-hover: #171c2e;
   --line-subtle: rgba(255, 255, 255, 0.07);
 }
 
@@ -14,11 +14,13 @@ body {
   margin: 0;
   padding: 0;
   background-color: var(--bg-canvas);
-  color: #e4e4e7;
+  color: #e2e8f0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 #root {
@@ -27,7 +29,11 @@ body {
   flex-direction: column;
 }
 
-/* Custom Scrollbars */
+.font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
+/* Custom Sleek Scrollbars */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -40,13 +46,32 @@ body {
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.22);
 }
 
-/* Cytoscape Canvas container styling */
+/* Cozy Cytoscape Canvas styling */
 .cytoscape-container {
   width: 100%;
   height: 100%;
   position: relative;
-  background: radial-gradient(circle at 50% 50%, #0d111a 0%, #050508 100%);
+  background: radial-gradient(circle at 50% 45%, #101422 0%, #080a10 100%);
+}
+
+/* Smooth Cozy Ambient Dots */
+.bg-grid-ambient {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Subtle soft glow card utilities */
+.glow-subtle {
+  box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.12);
+}
+
+.glow-rose {
+  box-shadow: 0 0 25px -5px rgba(244, 63, 94, 0.15);
+}
+
+.glow-amber {
+  box-shadow: 0 0 25px -5px rgba(245, 158, 11, 0.12);
 }

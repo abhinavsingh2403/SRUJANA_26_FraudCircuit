@@ -58,7 +58,15 @@ Snapshot: 24 October 2026. Existing v0.4.0 API contract retained with backward-c
 - `backend/traceguard/static/app.js`
 - `backend/traceguard/static/index.html`
 - `backend/traceguard/static/styles.css`
-- `frontend/` (Modern React 19 + TypeScript + Vite + Tailwind CSS + Cytoscape.js Dark Intelligence Workbench)
+- `frontend/` (Modern React 19 + TypeScript + Vite + Tailwind CSS + Cytoscape.js Dark Intelligence Workbench with original layout topology, Inter typography, side-docked inspection tooltips, and tamper-evident audit ledger)
+
+## Recent Updates (Branch: Abhinav)
+
+- Restored Cytoscape.js native circle layout topology and alignment from commit `1de1b9f` to maintain authentic transaction flows and avoid artificial star clustering.
+- Resolved node oval collapsing on hover by scoping edge vs node highlight selectors (`shape: "ellipse"` invariant).
+- Positioned inspection tooltips dynamically to the side (`+35px`) to keep transaction connections and arrowheads unobstructed.
+- Upgraded surface typography with Inter and proportional tracking, retaining JetBrains Mono for hashes and timestamps.
+- Verified: `npm run build` (355ms, 0 errors); 96 backend tests passed (0.683s). All changes committed to branch `Abhinav`.
 
 ## Risks and one next task
 

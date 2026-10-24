@@ -6,6 +6,7 @@ import { EvidenceInspector } from "./components/EvidenceInspector";
 import { TransactionTimeline } from "./components/TransactionTimeline";
 import { CsvImportModal } from "./components/CsvImportModal";
 import { StatusStrip } from "./components/StatusStrip";
+import { Play, ShieldCheck, Network, Lock, Upload, Sparkles } from "lucide-react";
 import { api } from "./lib/api";
 import type {
   CaseRecord,
@@ -240,7 +241,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#050508] text-zinc-100 select-none">
+    <div className="min-h-screen flex flex-col bg-[#080a10] text-zinc-100 select-none">
       {/* Top Command Bar */}
       <CommandBar
         cases={cases}
@@ -322,16 +323,86 @@ export function App() {
             />
           </main>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#050508]">
-            <div className="h-16 w-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-3xl font-bold mb-4 shadow-[0_0_30px_rgba(99,102,241,0.15)]">
-              ◆
+          /* Cozy Executive Workbench Empty State */
+          <div className="relative flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#090b11] bg-grid-ambient overflow-hidden">
+            <div className="relative z-10 flex flex-col items-center max-w-xl px-4">
+              {/* Cozy Header Icon */}
+              <div className="relative mb-6">
+                <div className="absolute -inset-2 bg-indigo-500/15 rounded-3xl blur-xl" />
+                <div className="relative h-16 w-16 rounded-2xl bg-[#121624] border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-xl">
+                  <ShieldCheck className="h-8 w-8 text-indigo-400" />
+                </div>
+              </div>
+
+              <h2 className="text-xl font-bold tracking-tight text-white font-sans">
+                Investigation Workbench
+              </h2>
+
+              <p className="text-xs text-zinc-400 mt-2.5 max-w-md leading-relaxed font-sans">
+                Select an investigation lead from the triage queue on the left to examine the connected money flow graph, evaluate contextual evidence, and log decisions.
+              </p>
+
+              {/* Quick Action Buttons */}
+              <div className="flex items-center gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={handleReplayAll}
+                  disabled={isReplayingAll}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-2 transition-all active:scale-95 shadow-sm"
+                >
+                  <Play className="h-3.5 w-3.5 fill-current" />
+                  <span>{isReplayingAll ? "Replaying 14 Fixtures…" : "Replay Synthetic Scenarios"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsImportOpen(true)}
+                  className="px-4 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.1] text-zinc-200 font-semibold text-xs flex items-center gap-2 transition-all active:scale-95"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  <span>Import CSV File</span>
+                </button>
+              </div>
+
+              {/* 3 Executive Pillars */}
+              <div className="grid grid-cols-3 gap-3.5 mt-8 w-full text-left">
+                <div className="p-3.5 rounded-2xl bg-[#111420]/80 border border-white/[0.06] backdrop-blur-sm">
+                  <div className="flex items-center gap-2 text-indigo-400 mb-1.5">
+                    <Network className="h-4 w-4" />
+                    <span className="text-xs font-semibold text-zinc-200">Account Graph</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 leading-snug">
+                    Concentric layout separating trigger and context transaction paths.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-[#111420]/80 border border-white/[0.06] backdrop-blur-sm">
+                  <div className="flex items-center gap-2 text-amber-400 mb-1.5">
+                    <Sparkles className="h-4 w-4" />
+                    <span className="text-xs font-semibold text-zinc-200">Evidence Triage</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 leading-snug">
+                    Deterministic rule signals, baseline context, and explicit disclosures.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-[#111420]/80 border border-white/[0.06] backdrop-blur-sm">
+                  <div className="flex items-center gap-2 text-emerald-400 mb-1.5">
+                    <Lock className="h-4 w-4" />
+                    <span className="text-xs font-semibold text-zinc-200">Audit Ledger</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 leading-snug">
+                    Cryptographic SHA-256 chain ensuring tamper-evident review trails.
+                  </p>
+                </div>
+              </div>
+
+              {/* Bottom Disclosures */}
+              <div className="flex items-center gap-2 text-[11px] font-sans text-zinc-500 mt-7 pt-5 border-t border-white/[0.06]">
+                <ShieldCheck className="h-3.5 w-3.5 text-zinc-500" />
+                <span>Decision support prototype · Rules-only triage · Evaluation unconfigured</span>
+              </div>
             </div>
-            <h2 className="text-xl font-bold tracking-tight text-zinc-100">
-              Investigation Workspace
-            </h2>
-            <p className="text-xs text-zinc-400 max-w-sm mt-2 leading-relaxed">
-              Select a case in the triage queue or replay a synthetic scenario to inspect the connected transaction network and observed risk evidence.
-            </p>
           </div>
         )}
       </div>
@@ -354,10 +425,10 @@ export function App() {
       {/* Toast Feedback Notification */}
       {toast && (
         <div
-          className={`fixed bottom-12 right-6 z-50 px-4 py-2.5 rounded-xl border text-xs font-mono shadow-2xl backdrop-blur-md transition-all ${
+          className={`fixed bottom-12 right-6 z-50 px-4 py-2.5 rounded-xl border text-xs font-sans shadow-2xl backdrop-blur-md transition-all ${
             toast.isError
-              ? "bg-rose-950/90 border-rose-500/40 text-rose-200"
-              : "bg-zinc-900/90 border-indigo-500/40 text-indigo-200"
+              ? "bg-rose-950/95 border-rose-500/40 text-rose-200"
+              : "bg-[#141826]/95 border-indigo-500/40 text-indigo-200"
           }`}
         >
           {toast.message}

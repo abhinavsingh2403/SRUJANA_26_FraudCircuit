@@ -13,29 +13,29 @@ export const StatusStrip: React.FC<StatusStripProps> = ({
   latestRunId,
 }) => {
   return (
-    <footer className="h-8 border-t border-white/[0.06] bg-[#07070b] px-4 flex items-center justify-between text-[10px] font-mono text-zinc-500 select-none">
+    <footer className="h-8 border-t border-white/[0.06] bg-[#090b11] px-4 flex items-center justify-between text-[11px] font-sans text-zinc-500 select-none">
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5 text-zinc-400">
           <Database className="h-3 w-3 text-indigo-400" />
-          <span>LEDGER: SQLITE</span>
+          <span>Local SQLite Ledger</span>
           {latestRunId && (
-            <span className="text-zinc-600">({latestRunId.slice(0, 12)}…)</span>
+            <span className="font-mono text-[10px] text-zinc-500">({latestRunId.slice(0, 10)}…)</span>
           )}
         </div>
-        <span className="text-zinc-700">│</span>
+        <span className="text-zinc-700">·</span>
         <span>
-          SHOWING {visibleCases} OF {totalCases} CASES
+          Showing <span className="font-semibold text-zinc-300">{visibleCases}</span> of <span className="font-semibold text-zinc-300">{totalCases}</span> Cases
         </span>
       </div>
 
       <div className="hidden sm:flex items-center gap-3">
-        <span className="text-zinc-600">
+        <span className="text-zinc-500 text-[10px] font-mono">
           MODEL: NOT_CONFIGURED · EVALUATION: NOT_RUN
         </span>
-        <span className="text-zinc-700">│</span>
-        <div className="flex items-center gap-1 text-zinc-400">
+        <span className="text-zinc-700">·</span>
+        <div className="flex items-center gap-1 text-zinc-400 text-[11px]">
           <Shield className="h-3 w-3 text-emerald-400" />
-          <span>SRUJANA 2026 · PROTOTYPE DECISION SUPPORT</span>
+          <span>Srujana 2026 Decision Support</span>
         </div>
       </div>
     </footer>
