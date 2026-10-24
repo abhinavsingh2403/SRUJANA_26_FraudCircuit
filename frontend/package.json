@@ -1,0 +1,15 @@
+{
+  "name": "traceguard-frontend",
+  "version": "0.4.0",
+  "private": true,
+  "description": "TraceGuard Analyst Investigation Workbench — Frontend UI",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}

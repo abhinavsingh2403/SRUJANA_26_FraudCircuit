@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="TraceGuard is an analyst workbench for explaining potentially suspicious transaction patterns.">
+  <title>TraceGuard – Case Queue</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="/" aria-label="TraceGuard home">
+      <div class="logo">TG</div>
+      <span>TraceGuard</span>
+    </a>
+    <nav class="nav" aria-label="Modules">
+      <a href="#queue-section" class="on" aria-current="page" id="nav-queue">Case Queue</a>
+      <a href="#scenario-section" id="nav-scenarios">Scenario Console</a>
+      <a href="#import-csv" id="nav-import">Import Data</a>
+      <a href="#evaluation-section" id="nav-eval">Evaluation &amp; Audit</a>
+    </nav>
+    <div class="sp"></div>
+    <div class="pill status-pill">
+      <span class="status-dot"></span>
+      <span id="connection-status">Connecting to API…</span>
+    </div>
+    <div class="pill">F01 · Fraud &amp; Transaction Risk</div>
+    <div class="pill">Synthetic data · Rules mode</div>
+  </header>
+
+  <main>
+    <section class="intro-heading">
+      <h1>Case Queue</h1>
+      <p class="sub">Priorities are heuristic review labels, not fraud probabilities. Grouping connected transaction patterns into reviewable decision-support cases. <span class="mono">GET /api/cases</span></p>
+    </section>
+
+    <section id="run-result" class="notice card" aria-live="polite" hidden></section>
+
+    <!-- KPI Metric Cards -->
+    <section class="grid kpi-grid" aria-label="Case metrics summary">
+      <article class="card kpi dark">
+        <div class="l">Visible cases</div>
+        <div class="n" id="metric-all">—</div>
+        <div class="d">Matching active queue filters</div>
+      </article>
+      <article class="card kpi lime">
+        <div class="l">High priority</div>
+        <div class="n" id="metric-high">—</div>
+        <div class="d">Review first · not fraud probability</div>
+      </article>
+      <article class="card kpi">
+        <div class="l">Medium priority</div>
+        <div class="n" id="metric-medium">—</div>
+        <div class="d">Evidence requires review</div>
+      </article>
+      <article class="card kpi">
+        <div class="l">Low / Coverage</div>
+        <div class="n" id="metric-low">—</div>
+        <div class="d">History limitation or context</div>
+      </article>
+    </section>
+
+    <!-- Main Grid: Queue Table + Quick Side Panel -->
+    <div class="grid main-grid">
+      <section class="card queue" id="queue-section" aria-label="Cases">
+        <div class="ch">
+          <h2>Live review queue</h2>
+          <div class="queue-actions">
+            <button id="import-csv" class="pill btn" type="button">Import CSV</button>
+            <input id="csv-file" type="file" accept=".csv,text/csv" hidden>
+            <button id="refresh-cases" class="pill btn" type="button">Refresh cases</button>
+            <span class="chip" id="count">0 cases</span>
+            <span id="queue-count" class="sr-only">0</span>
+          </div>
+        </div>
+
+        <div id="view-toggle" class="view-toggle" hidden></div>
+
+        <div class="fl">
+          <span>Priority</span>
+          <div class="tools" id="fp" role="group" aria-label="Filter by priority"></div>
+          <select id="priority-filter" class="sr-only" aria-label="Filter by priority">
+            <option value="">All</option>
+            <option value="HIGH">HIGH</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="LOW">LOW</option>
+            <option value="INSUFFICIENT_HISTORY">INSUFFICIENT_HISTORY</option>
+          </select>
+
+          <span>Status</span>
+          <div class="tools" id="fs" role="group" aria-label="Filter by status"></div>
+          <select id="status-filter" class="sr-only" aria-label="Filter by status">
+            <option value="">All</option>
+            <option value="OPEN">OPEN</option>
+            <option value="INVESTIGATING">INVESTIGATING</option>
+            <option value="ESCALATED">ESCALATED</option>
+            <option value="CLOSED">CLOSED</option>
+          </select>
+        </div>
+
+        <div class="tw">
+          <table>
+            <thead>
+              <tr>
+                <th>Case</th>
+                <th>Priority</th>
+                <th>Rules fired</th>
+                <th>Txn / Acct</th>
+                <th class="amt">Amount span</th>
+                <th>Status</th>
+                <th>Opened</th>
+              </tr>
+            </thead>
+            <tbody id="queue-list"></tbody>
+          </table>
+        </div>
+
+        <p id="queue-limit" class="d" style="margin:8px 0 0" hidden>Showing at most 100 matching cases. Narrow filters or use pagination to navigate.</p>
+        <div id="queue-pagination" class="queue-pagination" hidden></div>
+        <p class="d queue-hint">Hold the pointer on a case for 1 second to preview its graph. Click a case to select it, then choose View graph or investigate below.</p>
+      </section>
+
+      <aside class="side">
+        <!-- Quick Detail Panel -->
+        <section class="card dtl" aria-live="polite">
+          <div class="ch">
+            <h2 class="mono" id="dt">—</h2>
+            <span class="b" id="dp">—</span>
+          </div>
+          <dl id="dl">
+            <dt>Source</dt><dd>—</dd>
+            <dt>Txn / Acct</dt><dd>—</dd>
+            <dt>Amount span</dt><dd>—</dd>
+            <dt>Status</dt><dd>—</dd>
+            <dt>Opened</dt><dd>—</dd>
+          </dl>
+          <div class="d" style="margin:14px 0 6px">Rules fired</div>
+          <div class="rules" id="dr"><span class="d">Select a case</span></div>
+          <div class="acts">
+            <button type="button" id="quick-escalate">Escalate</button>
+            <button type="button" class="p" id="oc">View graph</button>
+          </div>
+        </section>
+
+        <!-- Scenario Console Runner -->
+        <section class="card" id="scenario-section">
+          <div class="ch">
+            <h2>Scenario Console</h2>
+            <span class="chip">Deterministic replay</span>
+          </div>
+          <label class="d" for="scenario-select" style="display:block;margin:6px 0 8px">Replay a controlled scenario</label>
+          <select id="scenario-select" class="select-pill">
+            <option value="">Loading scenarios…</option>
+          </select>
+          <div class="acts" style="margin-top:10px">
+            <button id="replay-scenario" class="p" type="button">Replay scenario</button>
+            <button id="replay-all" type="button">Run all scenarios</button>
+          </div>
+          <p class="d" style="margin:10px 0 0">All built-in examples are synthetic fixtures, not real incidents.</p>
+        </section>
+      </aside>
+
+      <!-- Distribution Mix Cards -->
+      <section class="card mix">
+        <div class="ch"><h2>Priority</h2><span class="chip">Listed cases</span></div>
+        <div id="m1"></div>
+      </section>
+      <section class="card mix">
+        <div class="ch"><h2>Status</h2><span class="chip">Listed cases</span></div>
+        <div id="m2"></div>
+      </section>
+      <section class="card mix">
+        <div class="ch"><h2>Rules fired</h2><span class="chip">Listed cases</span></div>
+        <div id="m3"></div>
+      </section>
+    </div>
+
+    <!-- Deep Investigation Section -->
+    <section class="card investigation-card" id="investigation-section" aria-live="polite">
+      <div id="detail-empty" class="detail-empty">
+        <div class="empty-symbol" aria-hidden="true">◎</div>
+        <h2>Select a case to investigate</h2>
+        <p>Replay a scenario or select a case in the queue above. Review connected transactions, evidence items, limitations and human review chain before recording a decision.</p>
+      </div>
+      <div id="case-detail" hidden></div>
+    </section>
+
+    <!-- Evaluation & Audit Section -->
+    <section class="grid eval-grid" id="evaluation-section">
+      <article class="card info-card">
+        <p class="eyebrow">EVALUATION STATUS</p>
+        <h2>What the model does—and does not—know</h2>
+        <p id="evaluation-status">Checking evaluation metadata…</p>
+        <div class="notice-box">No trained model or real-world performance metric is bundled. Do not interpret a rule match or queue priority as proof of fraud.</div>
+      </article>
+      <article class="card info-card">
+        <p class="eyebrow">AUDITABILITY</p>
+        <h2>Tamper-evident review log</h2>
+        <p>Review decisions are stored with a per-case SHA-256 hash chain so accidental or partial changes can be detected. Without an external anchor a database owner can rewrite the whole chain or delete its tail.</p>
+        <p class="d">Use the "Verify audit chain" button in the review form to verify the active case's stored chain.</p>
+      </article>
+    </section>
+
+    <!-- Hover Preview Floating Card -->
+    <div class="pv" id="pv" hidden aria-hidden="true">
+      <div class="mh">
+        <h2 class="mono" id="pt"></h2>
+        <span class="b" id="pp"></span>
+        <span class="d">Preview</span>
+      </div>
+      <div class="gw">
+        <svg id="ps" viewBox="0 0 1000 520" role="img" aria-label="Graph preview"></svg>
+      </div>
+    </div>
+
+    <!-- Modal Dialog for Graph & Case View -->
+    <div class="ov" id="ov" hidden>
+      <div class="md" role="dialog" aria-modal="true" aria-labelledby="mt">
+        <div class="mh">
+          <h2 class="mono" id="mt"></h2>
+          <span class="b" id="mp"></span>
+          <span class="b" id="ms"></span>
+          <button type="button" class="x" id="mx">Close</button>
+        </div>
+        <div class="gw">
+          <p class="mono cap">Highlighted in dark ink: trigger transaction(s)</p>
+          <svg id="gs" viewBox="0 0 1000 520" role="img" class="case-graph" aria-label="Detailed transaction graph"></svg>
+        </div>
+        <div class="gm" id="gm"></div>
+        <p class="d" style="margin:12px 0 0">Synthetic demo graph. Line thickness follows amount. Priorities are heuristic review labels, not fraud probabilities.</p>
+      </div>
+    </div>
+
+    <!-- Global Toast Notification -->
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </main>
+
+  <footer class="note">
+    <span>TraceGuard · Srujana Tech Fest 2026 · F-01 prototype</span> · 
+    <span>Synthetic / local data only · No bank connection</span>
+  </footer>
+</div>
+</body>
+</html>

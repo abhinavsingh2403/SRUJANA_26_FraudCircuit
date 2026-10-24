@@ -66,6 +66,13 @@ Snapshot: 24 October 2026. Existing v0.4.0 API contract retained with backward-c
 - `backend/traceguard/static/app.js`
 - `backend/traceguard/static/index.html`
 - `backend/traceguard/static/styles.css`
+- `frontend/.gitignore`
+- `frontend/README.md`
+- `frontend/app.js`
+- `frontend/index.html`
+- `frontend/package.json`
+- `frontend/styles.css`
+- `frontend/vite.config.js`
 
 ## Risks and one next task
 

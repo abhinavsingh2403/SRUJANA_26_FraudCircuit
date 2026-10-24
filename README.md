@@ -11,8 +11,13 @@ TraceGuard is a hackathon prototype for explaining and prioritising potentially 
 - API provides replay, CSV import, case investigation, human review, review-audit verification and honest model/evaluation status.
 - The current model status is `not_configured`; no fraud performance metrics are claimed.
 - A dependency-free HTML/CSS/JavaScript investigation UI is served by FastAPI. A trained/validated ML model is not included.
+- A dedicated `frontend/` folder provides the standalone frontend workspace with Vite dev server and proxy support.
 
-## Start here
+## Repository structure
+
+- `backend/`: FastAPI backend, transaction ingestion, graph analysis, review log and comprehensive test suite.
+- `frontend/`: Dedicated frontend workspace with modern lemon/dark investigation UI, Vite dev server and proxy support.
+- `references/`: Srujana problem statement, rubric and background resources.
 
 1. Read [`AGENTS.md`](AGENTS.md).
 2. Read [`PROJECT_SPEC.md`](PROJECT_SPEC.md) and [`API_CONTRACT.md`](API_CONTRACT.md).
