@@ -37,3 +37,17 @@ Code was the authority. PROJECT_SPEC, backend README/model card and older demo t
 Keep the dependency-free same-origin UI. Add request sequencing, persistent run/audit warnings, raw-byte CSV upload and accessibility labels rather than a second frontend. Optional Playwright runs in an isolated database; fault injection is explicitly separated from the real API journey. Include static assets in built wheels via package-data.
 
 No Git repository existed in the supplied archive or workspace. No commit hash is claimed; preserve the supplied archive's history via the updated handoff and checksums, and let the team initialize Git.
+
+## 2026-10-24 — Frontend UI/UX redesign: Lemon/ink case queue & investigation workbench
+
+**Decision:** Integrate the requested lemon/ink UI/UX design system into the dependency-free static frontend (`backend/traceguard/static/{index.html,styles.css,app.js}`). Replace the simple wireframe with a rich analyst workbench featuring:
+1. Lemon radial-gradient background (`--lemon-soft`, `--lemon-mid`, `--lemon`) with dark ink contrast and rounded glassmorphism cards.
+2. 4 top KPI cards matching live API totals (Visible cases, High priority, Medium priority, Low / coverage limitation).
+3. Live review table queue with columns (Case, Priority, Rules fired, Txn / Acct, Amount span, Status, Opened), pill filter buttons synchronized with accessible selects, and multi-page pagination.
+4. Quick side panel with case summary, rules chips, single-click Escalate action, and "View graph" modal trigger.
+5. Dynamic topological/flow SVG graph generator rendering layered account nodes, amount labels, arrow polygons, and `<title>` transaction tags for both the 1-second dwell hover preview (`.pv`) and full modal dialog (`.ov .md`).
+6. Deep investigation workbench retaining the transaction timeline table, evidence items, truncation disclosures, audit chain verification, and human review form with explicit closure outcomes.
+7. Interactive Scenario Console and CSV Import dropzone/file upload wired directly to FastAPI endpoints.
+
+**Reason:** User requested integrating the design mockup as the frontend UI/UX of the project. The implementation adheres strictly to `AGENTS.md` by maintaining all backend API contracts, preserving honest disclosures (rules-only mode, unconfigured ML, non-probabilistic priorities), escaping all dynamic text to prevent XSS, and maintaining 100% test pass rate across all 96 unit tests, startup checks, and integration verification.
+

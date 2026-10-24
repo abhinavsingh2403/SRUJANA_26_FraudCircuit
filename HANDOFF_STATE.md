@@ -4,6 +4,14 @@ Snapshot: 24 October 2026. Existing v0.4.0 API contract retained with backward-c
 
 ## Completed
 
+- Frontend UI/UX modernized in place with lemon/dark glassmorphic aesthetic matching user design mockup:
+  - Responsive layout with radial lemon gradients, contrast dark pills, and glassmorphic cards.
+  - 4 dynamic KPI cards connected to live API totals (`#metric-all`, `#metric-high`, `#metric-medium`, `#metric-low`).
+  - Table review queue (`#queue-list`) with synchronized pill filters, keyboard accessibility, and pagination (`#queue-pagination`).
+  - Quick inspection side panel with case stats, rules fired chips, single-click Escalate, and "View graph" modal trigger.
+  - Interactive SVG graph generator with dynamic topological layering, amount edge labels, arrow polygons, and accessible `<title>` tags for both the 1-second hover preview (`.pv`) and modal dialog (`.ov .md`).
+  - Retained full analyst workbench with transaction timeline table (`.tx-table`), evidence items (`.evidence-card`), truncation disclosures, SHA-256 audit chain verification (`#audit-result`), and human review closure workflow.
+  - Full compatibility with all 96 unit tests, verify_integration.py, check_startup.py, and node syntax checks.
 - Existing dependency-free same-origin UI hardened in place; pagination controls and "Latest run" / "All cases" view toggling implemented.
 - R5 chronology fix rejects reverse/simultaneous internal edges. LOW summaries corrected; classification thresholds unchanged.
 - R3 amount-deviation rules corrected to cite supporting transactions from the full 30-day baseline rather than only the 24-hour window, with explicit evidence truncation tracking.
