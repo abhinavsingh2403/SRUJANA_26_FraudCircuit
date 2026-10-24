@@ -6,27 +6,14 @@ Snapshot: 24 October 2026. Existing v0.4.0 API contract retained with backward-c
 ## Branch `try_kr_rha` Updates
 
 - Retained and verified the original lemon/light color scheme (`#f6e96b`, `#fdf8d2`, `#fffdea`) across both `frontend/` and `backend/traceguard/static/`.
-- Verified backend connection via Vite reverse proxy (`/api`, `/health` -> `http://127.0.0.1:8000`).
-- Full backend test suite passed: 96/96 tests in 0.76s.
-
-
-- Frontend UI/UX modernized in place with lemon/dark glassmorphic aesthetic matching user design mockup:
-  - Responsive layout with radial lemon gradients, contrast dark pills, and glassmorphic cards.
-  - 4 dynamic KPI cards connected to live API totals (`#metric-all`, `#metric-high`, `#metric-medium`, `#metric-low`).
-  - Table review queue (`#queue-list`) with synchronized pill filters, keyboard accessibility, and pagination (`#queue-pagination`).
-  - Quick inspection side panel with case stats, rules fired chips, single-click Escalate, and "View graph" modal trigger.
-  - Interactive SVG graph generator with dynamic topological layering, amount edge labels, arrow polygons, and accessible `<title>` tags for both the 1-second hover preview (`.pv`) and modal dialog (`.ov .md`).
-  - Retained full analyst workbench with transaction timeline table (`.tx-table`), evidence items (`.evidence-card`), truncation disclosures, SHA-256 audit chain verification (`#audit-result`), and human review closure workflow.
-  - Full compatibility with all 96 unit tests, verify_integration.py, check_startup.py, and node syntax checks.
-- Existing dependency-free same-origin UI hardened in place; pagination controls and "Latest run" / "All cases" view toggling implemented.
-- R5 chronology fix rejects reverse/simultaneous internal edges. LOW summaries corrected; classification thresholds unchanged.
-- R3 amount-deviation rules corrected to cite supporting transactions from the full 30-day baseline rather than only the 24-hour window, with explicit evidence truncation tracking.
-- 96 backend tests, compileall, JS syntax checks, deterministic replay, live HTTP checks and Chromium acceptance journey passed. Full commands, initial failures and reports: `backend/docs/validation_run.md`.
-- Cross-platform startup and environment validator added (`traceguard/startup.py`, `traceguard/__main__.py`, and `scripts/check_startup.py`), starting cleanly from any working directory.
-- Separate 100k random / structured runs completed in 46.314s / 26.496s. Random has one MEDIUM case and 52 chains; structured has zero cases. No reported budget exhaustion. These generators do not establish real-world effectiveness or service latency.
-- Controlled holdout trade-offs unchanged: actionable TP72/FN12/FP0/TN48; any-case TP84/FN0/FP24/TN24. Generator-aligned labels, not Indian UPI results.
-- ML deliberately remains not_configured; no evaluated model, bank integration or external audit anchor added.
-- Built wheel includes the UI assets. Archive excludes DBs, caches, browser packages, build outputs and virtual environments. SHA256SUMS covers packaged files except itself.
+- Implemented peak-tier analyst workbench interactions across UI:
+  - **Instant Live Case Search**: Pre-indexed search bar in queue table filtering by Case ID, Account ID, Scenario, or Rule Code in real-time.
+  - **Bidirectional SVG Graph <-> Table Highlighting**: Hovering an edge/node in the SVG graph highlights and scrolls to the matching transaction/account in the timeline table, and hovering a row in the table illuminates the corresponding edge in the graph with glowing halo accents.
+  - **Tactile CSV Drag-and-Drop Dropzone**: Added responsive dropzone supporting drag-and-drop CSV uploads with dragover feedback.
+  - **1-Click Copy**: Added tactile copy button for Case IDs with instant clipboard feedback.
+  - **Keyboard Hotkeys**: Added global analyst navigation (`J`/`K` or `Down`/`Up` to navigate cases, `G` to open graph modal, `Esc` to close).
+  - **Tamper-Evident SHA-256 Audit Visualization**: Verification output displaying chain validity and head hash snippets.
+- Full backend test suite passed: 96/96 tests in 1.04s.
 
 ## Files changed or added relative to supplied ZIP
 

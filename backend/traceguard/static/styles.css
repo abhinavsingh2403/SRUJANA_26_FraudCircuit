@@ -1286,3 +1286,180 @@ th.amt {
     display: none;
   }
 }
+
+
+/* Peak-Tier Workbench Controls (Lemon Design System) */
+
+/* Search Input */
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 200px;
+  max-width: 280px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 6px 12px 6px 30px;
+  font-family: inherit;
+  font-size: 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.search-input:focus {
+  border-color: #111;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(246, 233, 107, 0.45);
+}
+
+/* CSV Drag-and-Drop Dropzone */
+.dropzone {
+  border: 2px dashed rgba(17, 17, 17, 0.2);
+  border-radius: 18px;
+  padding: 20px 14px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 10px;
+}
+
+.dropzone:hover,
+.dropzone.dragover {
+  border-color: #111;
+  background: #fffdea;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(17, 17, 17, 0.08);
+}
+
+.dropzone-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.dropzone-text {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 2px;
+}
+
+.dropzone-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* 1-Click Copy Pill */
+.copy-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.9);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.copy-pill:hover {
+  background: #ffffff;
+  border-color: #111;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(17, 17, 17, 0.1);
+}
+
+.copy-pill:active {
+  transform: scale(0.96);
+}
+
+/* Bidirectional Graph ? Table Highlighting */
+.highlighted-tx td {
+  background: #fdf8d2 !important;
+  font-weight: 600;
+}
+
+line.highlighted-edge {
+  stroke: #111111 !important;
+  stroke-width: 6px !important;
+  filter: drop-shadow(0 0 4px #f6e96b);
+}
+
+polygon.highlighted-edge {
+  fill: #111111 !important;
+}
+
+circle.highlighted-node {
+  fill: #f6e96b !important;
+  stroke: #111111 !important;
+  stroke-width: 3.5px !important;
+}
+
+/* Audit Result Box */
+.audit-result {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.audit-result.valid {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #065f46;
+}
+
+.audit-result.invalid {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #991b1b;
+}
+
+.audit-result code {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+/* Keyboard Shortcuts Banner */
+.kbd-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.kbd-hint kbd {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(17, 17, 17, 0.07);
+  border: 1px solid rgba(17, 17, 17, 0.18);
+  border-radius: 4px;
+  padding: 1px 5px;
+  box-shadow: 0 1px 0 rgba(17, 17, 17, 0.1);
+  color: var(--ink);
+}

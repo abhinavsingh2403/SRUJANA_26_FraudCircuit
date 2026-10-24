@@ -80,6 +80,10 @@
         <div id="view-toggle" class="view-toggle" hidden></div>
 
         <div class="fl">
+          <div class="search-wrap">
+            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="search" id="queue-search" placeholder="Search case ID, account, rule..." aria-label="Search cases" class="search-input">
+          </div>
           <span>Priority</span>
           <div class="tools" id="fp" role="group" aria-label="Filter by priority"></div>
           <select id="priority-filter" class="sr-only" aria-label="Filter by priority">
@@ -160,6 +164,19 @@
             <button id="replay-all" type="button">Run all scenarios</button>
           </div>
           <p class="d" style="margin:10px 0 0">All built-in examples are synthetic fixtures, not real incidents.</p>
+        </section>
+
+        <!-- CSV Import Dropzone -->
+        <section class="card" id="import-section">
+          <div class="ch">
+            <h2>Data Ingestion</h2>
+            <span class="chip">Max 5 MiB</span>
+          </div>
+          <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Drop transaction CSV here or click to browse">
+            <span class="dropzone-icon" aria-hidden="true">??</span>
+            <p class="dropzone-text">Drop transaction CSV or click to browse</p>
+            <p class="dropzone-sub">Supports UPI transaction records</p>
+          </div>
         </section>
       </aside>
 

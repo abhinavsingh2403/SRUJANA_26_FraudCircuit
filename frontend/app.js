@@ -18,6 +18,7 @@
     viewMode: 'all',
     filterPriority: 'All',
     filterStatus: 'All',
+    searchQuery: '',
     hoverTimer: 0,
     hoverIndex: -1,
     hoverCaseData: null,
@@ -290,7 +291,7 @@
         const col = isTrigger ? '#111' : '#b8b8b0';
         const titleText = `${e[4] || 'tx'}: ${e[0]} → ${e[1]}, amount ${e[2]}, ${e[5] || ''}`;
 
-        const el = `<line x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${col}" stroke-width="${w.toFixed(1)}"><title>${escapeHtml(titleText)}</title></line><polygon fill="${col}" points="${ex.toFixed(1)},${ey.toFixed(1)} ${(bx + nx * hw).toFixed(1)},${(by + ny * hw).toFixed(1)} ${(bx - nx * hw).toFixed(1)},${(by - ny * hw).toFixed(1)}"/>`;
+        const el = `<line class="graph-edge" data-tx="${escapeHtml(e[4] || '')}" x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${col}" stroke-width="${w.toFixed(1)}"><title>${escapeHtml(titleText)}</title></line><polygon class="graph-edge" data-tx="${escapeHtml(e[4] || '')}" fill="${col}" points="${ex.toFixed(1)},${ey.toFixed(1)} ${(bx + nx * hw).toFixed(1)},${(by + ny * hw).toFixed(1)} ${(bx - nx * hw).toFixed(1)},${(by - ny * hw).toFixed(1)}"/>`;
         if (isTrigger) top += el; else base += el;
 
         const t = nl > 2 ? 0.5 : 0.55;
@@ -306,11 +307,67 @@
     Object.keys(pos).forEach(n => {
       const p = pos[n];
       const displayLabel = n.length > 10 ? n.slice(0, 8) + '…' : n;
-      nodes += `<circle cx="${p.x}" cy="${p.y}" r="${R}" fill="#fff" stroke="#111" stroke-width="2.5"><title>${escapeHtml(n)}</title></circle><text x="${p.x}" y="${p.y + (sm ? 4 : 5)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 11 : 13}" font-weight="700" fill="#111">${escapeHtml(displayLabel)}</text>`;
+      nodes += `<circle class="graph-node" data-acct="${escapeHtml(n)}" cx="${p.x}" cy="${p.y}" r="${R}" fill="#fff" stroke="#111" stroke-width="2.5"><title>${escapeHtml(n)}</title></circle><text class="graph-node" data-acct="${escapeHtml(n)}" x="${p.x}" y="${p.y + (sm ? 4 : 5)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 11 : 13}" font-weight="700" fill="#111">${escapeHtml(displayLabel)}</text>`;
     });
 
     svg.innerHTML = base + top + nodes + lab;
     svg.setAttribute('aria-label', `Transaction graph with ${g.E.length} transactions between ${Object.keys(pos).length} accounts`);
+
+    if (!sm) {
+      svg.onmouseover = (ev) => {
+        const edge = ev.target.closest('.graph-edge');
+        if (edge && edge.dataset.tx) {
+          highlightTx(edge.dataset.tx);
+          return;
+        }
+        const nodeEl = ev.target.closest('.graph-node');
+        if (nodeEl && nodeEl.dataset.acct) {
+          highlightAcct(nodeEl.dataset.acct);
+          return;
+        }
+      };
+      svg.onmouseout = () => {
+        clearHighlights();
+      };
+    }
+  }
+
+  function highlightTx(txId) {
+    if (!txId) return;
+    document.querySelectorAll('.graph-edge').forEach(el => {
+      el.classList.toggle('highlighted-edge', el.dataset.tx === txId);
+    });
+    document.querySelectorAll('.tx-row').forEach(row => {
+      const match = row.dataset.txId === txId;
+      row.classList.toggle('highlighted-tx', match);
+      if (match) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+  }
+
+  function highlightGraphEdge(txId) {
+    if (!txId) return;
+    document.querySelectorAll('.graph-edge').forEach(el => {
+      el.classList.toggle('highlighted-edge', el.dataset.tx === txId);
+    });
+  }
+
+  function highlightAcct(acctId) {
+    if (!acctId) return;
+    document.querySelectorAll('.graph-node').forEach(el => {
+      el.classList.toggle('highlighted-node', el.dataset.acct === acctId);
+    });
+    document.querySelectorAll('.tx-row').forEach(row => {
+      const match = row.dataset.sender === acctId || row.dataset.recipient === acctId;
+      row.classList.toggle('highlighted-tx', match);
+    });
+  }
+
+  function clearHighlights() {
+    document.querySelectorAll('.highlighted-edge').forEach(el => el.classList.remove('highlighted-edge'));
+    document.querySelectorAll('.highlighted-node').forEach(el => el.classList.remove('highlighted-node'));
+    document.querySelectorAll('.highlighted-tx').forEach(el => el.classList.remove('highlighted-tx'));
   }
 
   function updateMetrics() {
@@ -414,6 +471,14 @@
 
   function updateSidePanel(caseData) {
     $('dt').textContent = caseData.case_id;
+    const copyBtn = $('copy-case-id');
+    if (copyBtn) {
+      copyBtn.style.display = 'inline-flex';
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(caseData.case_id);
+        showToast(`Copied ${caseData.case_id}`);
+      };
+    }
     const dp = $('dp');
     dp.textContent = lab(caseData.priority);
     dp.className = `b ${caseData.priority}`;
@@ -791,7 +856,18 @@
     const body = node('tbody');
     const triggerSet = new Set(caseData.transaction_ids || []);
     for (const tx of transactions) {
-      const row = node('tr');
+      const row = node('tr', 'tx-row');
+      row.dataset.txId = tx.transaction_id;
+      row.dataset.sender = tx.sender_id;
+      row.dataset.recipient = tx.recipient_id;
+
+      row.addEventListener('mouseenter', () => {
+        highlightGraphEdge(tx.transaction_id);
+      });
+      row.addEventListener('mouseleave', () => {
+        clearHighlights();
+      });
+
       const typeLabel = tx.transaction_type ? `\n${tx.transaction_type}` : '';
       row.append(
         node('td', 'mono', `${tx.transaction_id}${typeLabel}`),
@@ -1312,6 +1388,92 @@
     refreshCases(false);
   });
   $('csv-file').addEventListener('change', event => importCsv(event.target.files?.[0]));
+
+  // Search input listener
+  const searchInput = $('queue-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', e => {
+      state.searchQuery = e.target.value;
+      renderQueue();
+    });
+  }
+
+  // Keyboard Shortcuts
+  document.addEventListener('keydown', e => {
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+
+    if (e.key === 'Escape') {
+      const ov = $('ov');
+      if (ov && !ov.hidden) {
+        ov.hidden = true;
+        return;
+      }
+      hidePv();
+      return;
+    }
+
+    if (e.key === 'g' || e.key === 'G') {
+      if (state.selectedCaseData) {
+        openModal(state.selectedCaseData);
+      }
+      return;
+    }
+
+    if (e.key === 'j' || e.key === 'J' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      navigateCase(1);
+      return;
+    }
+
+    if (e.key === 'k' || e.key === 'K' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      navigateCase(-1);
+      return;
+    }
+  });
+
+  function navigateCase(direction) {
+    if (!state.cases.length) return;
+    let currentIndex = state.cases.findIndex(c => c.case_id === state.selectedId);
+    if (currentIndex === -1) currentIndex = 0;
+    else currentIndex = Math.max(0, Math.min(state.cases.length - 1, currentIndex + direction));
+    const nextCase = state.cases[currentIndex];
+    if (nextCase) {
+      loadCase(nextCase.case_id);
+    }
+  }
+
+  // Drag-and-drop dropzone setup
+  const dropzone = $('dropzone');
+  if (dropzone) {
+    dropzone.addEventListener('click', () => $('csv-file').click());
+    dropzone.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        $('csv-file').click();
+      }
+    });
+    ['dragenter', 'dragover'].forEach(name => {
+      dropzone.addEventListener(name, e => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.add('dragover');
+      });
+    });
+    ['dragleave', 'drop'].forEach(name => {
+      dropzone.addEventListener(name, e => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove('dragover');
+      });
+    });
+    dropzone.addEventListener('drop', e => {
+      const files = e.dataTransfer?.files;
+      if (files && files.length > 0) {
+        importCsv(files[0]);
+      }
+    });
+  }
 
   // Initialize
   renderFilterButtons();
