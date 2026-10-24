@@ -1,45 +1,20 @@
 :root {
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  
-  /* Executive Emerald Green & Pure White Design System */
-  --bg-canvas: #f6faf7;
-  --bg-canvas-subtle: #edf7f1;
-  --emerald: #10b981;
-  --emerald-dark: #059669;
-  --forest: #064e3b;
-  --mint-subtle: #f0fdf4;
-  --mint-light: #d1fae5;
-  --emerald-glow: rgba(16, 185, 129, 0.28);
-  
-  --lemon: #059669;
-  --lemon-soft: #f0fdf4;
-  --lemon-mid: #d1fae5;
-  --amber: #059669;
-  
-  --card: #ffffff;
+  --lemon: #f6e96b;
+  --lemon-soft: #fdf8d2;
+  --lemon-mid: #f7efa0;
+  --card: rgba(255, 255, 255, 0.88);
   --card-solid: #ffffff;
-  --line: rgba(16, 185, 129, 0.18);
-  --line-strong: rgba(6, 78, 59, 0.25);
-  --ink: #0f172a;
-  --ink-secondary: #334155;
-  --muted: #64748b;
-  --dark: #064e3b;
+  --line: rgba(17, 17, 17, 0.12);
+  --line-strong: rgba(17, 17, 17, 0.22);
+  --ink: #111111;
+  --muted: #58584d;
+  --dark: #111111;
   --on-dark: #ffffff;
-  
-  --danger: #e11d48;
-  --danger-bg: #ffe4e6;
-  --warning: #d97706;
-  --warning-bg: #fef3c7;
-  --success: #059669;
-  --success-bg: #d1fae5;
-  --info: #0284c7;
-  --info-bg: #e0f2fe;
-
-  --shadow-sm: 0 1px 3px rgba(6, 78, 59, 0.05), 0 1px 2px rgba(6, 78, 59, 0.03);
-  --shadow: 0 4px 18px -2px rgba(6, 78, 59, 0.06), 0 1px 3px rgba(6, 78, 59, 0.04);
-  --shadow-lg: 0 16px 36px -4px rgba(6, 78, 59, 0.12), 0 4px 8px -2px rgba(6, 78, 59, 0.04);
-  --radius: 20px;
+  --shadow: 0 1px 2px rgba(17, 17, 17, 0.05), 0 8px 24px rgba(17, 17, 17, 0.07);
+  --shadow-lg: 0 16px 36px rgba(17, 17, 17, 0.14);
+  --radius: 24px;
   color-scheme: light;
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
@@ -59,16 +34,13 @@ body {
   margin: 0;
   font-family: var(--font);
   color: var(--ink);
-  background: var(--bg-canvas);
-  background-image: 
-    radial-gradient(1100px 700px at 15% 5%, #e8f5ee 0%, transparent 65%),
-    radial-gradient(900px 600px at 85% 95%, #ebf7f0 0%, transparent 60%),
-    radial-gradient(700px 450px at 50% 50%, #f6faf7 0%, transparent 100%);
+  background: var(--lemon-soft);
+  background-image: radial-gradient(900px 500px at 10% 0%, var(--lemon-mid), transparent 70%),
+                    radial-gradient(900px 600px at 100% 100%, #fffef2, transparent 70%);
   background-attachment: fixed;
   min-height: 100vh;
   min-width: 320px;
   overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
 }
 
 .wrap {
@@ -267,7 +239,7 @@ h1 {
   white-space: nowrap;
 }
 
-/* Relative Themed KPI Metric Cards */
+/* Original KPI Cards with Smooth Animations */
 .kpi-grid {
   margin-bottom: 16px;
 }
@@ -278,7 +250,7 @@ h1 {
   overflow: hidden;
   border-radius: var(--radius);
   padding: 22px;
-  background: #ffffff;
+  background: var(--card);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
   transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease;
@@ -290,89 +262,42 @@ h1 {
 }
 
 .kpi .l {
-  font-size: 11.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
 }
 
 .kpi .n {
   font-size: 38px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-family: var(--font-mono);
 }
 
 .kpi .d {
-  font-size: 11.5px;
-  line-height: 1.4;
+  font-size: 12px;
+  color: var(--muted);
 }
 
-/* Card 1: Visible Cases - Master Forest Green Hero Anchor */
 .kpi.dark {
-  background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  box-shadow: 0 8px 24px -4px rgba(6, 78, 59, 0.25);
-}
-.kpi.dark .l {
-  color: #a7f3d0;
-}
-.kpi.dark .n {
+  background: #111111;
   color: #ffffff;
+  border-color: transparent;
 }
+
+.kpi.dark .l,
 .kpi.dark .d {
-  color: #d1fae5;
+  color: inherit;
+  opacity: 0.75;
 }
 
-/* Card 2: High Priority - Relative Crimson/Rose Alert Card */
 .kpi.lime {
-  background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%);
-  border: 1px solid rgba(225, 29, 72, 0.25);
-  box-shadow: 0 4px 16px -2px rgba(225, 29, 72, 0.08);
-}
-.kpi.lime .l {
-  color: #be123c;
-}
-.kpi.lime .n {
-  color: #e11d48;
-}
-.kpi.lime .d {
-  color: #881337;
-}
-
-/* Card 3: Medium Priority - Relative Amber Warning Card */
-.kpi:nth-child(3) {
-  background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
-  border: 1px solid rgba(217, 119, 6, 0.25);
-  box-shadow: 0 4px 16px -2px rgba(217, 119, 6, 0.08);
-}
-.kpi:nth-child(3) .l {
-  color: #b45309;
-}
-.kpi:nth-child(3) .n {
-  color: #d97706;
-}
-.kpi:nth-child(3) .d {
-  color: #78350f;
-}
-
-/* Card 4: Low / Coverage - Relative Mint Green Routine Card */
-.kpi:nth-child(4) {
-  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  box-shadow: 0 4px 16px -2px rgba(16, 185, 129, 0.08);
-}
-.kpi:nth-child(4) .l {
-  color: #047857;
-}
-.kpi:nth-child(4) .n {
-  color: #059669;
-}
-.kpi:nth-child(4) .d {
-  color: #065f46;
+  background: var(--lemon);
+  color: #111111;
+  border-color: transparent;
 }
 
 .kpi.lime .l,
@@ -467,19 +392,17 @@ table {
 
 th {
   text-align: left;
-  color: var(--forest);
-  font-weight: 700;
-  font-size: 11.5px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 11px 14px;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--line);
-  background: #f0fdf4;
+  background: rgba(253, 248, 210, 0.45);
   white-space: nowrap;
 }
 
 td {
-  padding: 12px 14px;
+  padding: 11px 14px;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
 }
@@ -490,18 +413,17 @@ tbody tr {
 }
 
 tbody tr:hover td {
-  background: #f0fdf4;
+  background: rgba(246, 233, 107, 0.25);
 }
 
 tbody tr.sel td,
 tbody tr.active td {
-  background: #ecfdf5;
-  color: var(--forest);
+  background: rgba(246, 233, 107, 0.55);
 }
 
 tbody tr.sel td:first-child,
 tbody tr.active td:first-child {
-  box-shadow: inset 4px 0 0 #059669;
+  box-shadow: inset 4px 0 0 #111111;
 }
 
 tbody tr:focus-visible {
@@ -926,7 +848,7 @@ th.amt {
 .graph-wrap {
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: #f0fdf4;
+  background: #fffdea;
   padding: 14px;
   margin-bottom: 18px;
   overflow-x: auto;
@@ -1173,12 +1095,12 @@ th.amt {
 .pv {
   position: fixed;
   z-index: 40;
-  width: 440px;
+  width: 500px;
   max-width: calc(100vw - 24px);
   background: #ffffff;
   border: 1px solid var(--line);
   border-radius: 20px;
-  padding: 14px;
+  padding: 16px;
   box-shadow: 0 18px 44px rgba(17, 17, 17, 0.22);
   pointer-events: none;
   backdrop-filter: blur(20px);
@@ -1203,7 +1125,7 @@ th.amt {
 .pv .gw {
   padding: 6px;
   border-radius: 14px;
-  background: #f0fdf4;
+  background: #fffdea;
   border: 1px solid var(--line);
 }
 
@@ -1284,7 +1206,7 @@ th.amt {
 }
 
 .gw {
-  background: #f0fdf4;
+  background: #fffdea;
   border: 1px solid var(--line);
   border-radius: 18px;
   padding: 14px 14px 6px;
@@ -1507,7 +1429,7 @@ th.amt {
 
 .scenario-expected {
   font-size: 11px;
-  background: #f0fdf4;
+  background: #fffdea;
   border: 1px solid var(--lemon-mid);
   border-radius: 8px;
   padding: 8px 10px;

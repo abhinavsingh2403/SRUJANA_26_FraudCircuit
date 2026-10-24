@@ -161,7 +161,7 @@
     );
   }
 
-  /* Dynamic Topological / Flow Layering for Any Case */
+  /* Cycle-Aware Dynamic Topological Layering */
   function buildGraphLayout(caseData) {
     const transactions = allCaseTransactions(caseData);
     const accountIds = [...new Set(transactions.flatMap(tx => [tx.sender_id, tx.recipient_id]).filter(Boolean))];
@@ -170,55 +170,65 @@
     }
 
     const inDegree = {};
-    const outDegree = {};
     const adj = {};
     accountIds.forEach(id => {
       inDegree[id] = 0;
-      outDegree[id] = 0;
-      adj[id] = new Set();
+      adj[id] = [];
     });
 
     const displayTx = transactions.slice(0, 60);
     displayTx.forEach(tx => {
       if (inDegree[tx.recipient_id] !== undefined) inDegree[tx.recipient_id]++;
-      if (outDegree[tx.sender_id] !== undefined) outDegree[tx.sender_id]++;
-      if (adj[tx.sender_id]) adj[tx.sender_id].add(tx.recipient_id);
+      if (adj[tx.sender_id]) adj[tx.sender_id].push(tx.recipient_id);
     });
 
-    const layerMap = {};
-    const visited = new Set();
-    const queue = [];
+    // Detect back-edges (cycles) using DFS so backward transactions don't collapse DAG layers
+    const WHITE = 0, GRAY = 1, BLACK = 2;
+    const color = {};
+    accountIds.forEach(id => { color[id] = WHITE; });
+    const backEdges = new Set();
 
-    const sources = accountIds.filter(id => inDegree[id] === 0);
-    if (sources.length > 0) {
-      sources.forEach(id => {
-        layerMap[id] = 0;
-        queue.push(id);
-        visited.add(id);
-      });
-    } else {
-      layerMap[accountIds[0]] = 0;
-      queue.push(accountIds[0]);
-      visited.add(accountIds[0]);
+    function dfs(u) {
+      color[u] = GRAY;
+      for (const v of adj[u] || []) {
+        if (color[v] === GRAY) {
+          backEdges.add(u + '>' + v);
+        } else if (color[v] === WHITE) {
+          dfs(v);
+        }
+      }
+      color[u] = BLACK;
     }
 
+    const sources = accountIds.filter(id => inDegree[id] === 0);
+    (sources.length ? sources : [accountIds[0]]).forEach(s => {
+      if (color[s] === WHITE) dfs(s);
+    });
+    accountIds.forEach(a => {
+      if (color[a] === WHITE) dfs(a);
+    });
+
+    // Layer assignment following forward DAG flow
+    const layerMap = {};
+    const startNodes = sources.length ? sources : [accountIds[0]];
+    startNodes.forEach(s => { layerMap[s] = 0; });
+
+    const queue = [...startNodes];
     while (queue.length > 0) {
       const curr = queue.shift();
-      const currLayer = layerMap[curr] || 0;
-      for (const nxt of (adj[curr] || [])) {
+      const currLayer = layerMap[curr];
+      for (const nxt of adj[curr] || []) {
+        if (backEdges.has(curr + '>' + nxt)) continue; // skip back-edge in layer advance
         if (layerMap[nxt] === undefined || layerMap[nxt] < currLayer + 1) {
-          layerMap[nxt] = Math.min(currLayer + 1, 4);
-          if (!visited.has(nxt)) {
-            visited.add(nxt);
-            queue.push(nxt);
-          }
+          layerMap[nxt] = currLayer + 1;
+          queue.push(nxt);
         }
       }
     }
 
     accountIds.forEach(id => {
       if (layerMap[id] === undefined) {
-        layerMap[id] = outDegree[id] === 0 ? 2 : 1;
+        layerMap[id] = 1;
       }
     });
 
@@ -248,16 +258,30 @@
       svg.innerHTML = '<text x="500" y="260" text-anchor="middle" font-size="14" fill="#58584d">No connected graph data</text>';
       return;
     }
-    const R = sm ? 22 : 30;
+    const baseR = sm ? 18 : 24;
     const pos = {};
     const nl = g.L.length;
 
     g.L.forEach((col, ci) => {
-      const x = nl === 1 ? 500 : 130 + ci * (740 / (nl - 1));
-      const gap = Math.min(sm ? 70 : 110, (sm ? 280 : 380) / Math.max(1, col.length));
-      col.forEach((n, i) => {
-        pos[n] = { x: x, y: 260 + (i - (col.length - 1) / 2) * gap };
-      });
+      const x = nl === 1 ? 500 : 110 + ci * (780 / (nl - 1));
+      if (col.length > 5) {
+        // Multi-node fanout: stagger across two sub-columns to guarantee ample breathing room
+        const rSub = sm ? 15 : 20;
+        const subColRows = Math.ceil(col.length / 2);
+        const subGap = Math.min(sm ? 44 : 64, (sm ? 340 : 420) / Math.max(1, subColRows));
+        col.forEach((n, i) => {
+          const subColIdx = i % 2;
+          const rowIdx = Math.floor(i / 2);
+          const xOffset = subColIdx === 0 ? -26 : 26;
+          const y = 260 + (rowIdx - (subColRows - 1) / 2) * subGap;
+          pos[n] = { x: x + xOffset, y: y, r: rSub };
+        });
+      } else {
+        const gap = Math.min(sm ? 70 : 110, (sm ? 320 : 400) / Math.max(1, col.length));
+        col.forEach((n, i) => {
+          pos[n] = { x: x, y: 260 + (i - (col.length - 1) / 2) * gap, r: baseR };
+        });
+      }
     });
 
     const max = Math.max(1, ...g.E.map(e => e[2]));
@@ -268,37 +292,45 @@
     });
 
     let base = '', top = '', lab = '';
+    const placedLabels = [];
+
     Object.keys(grp).forEach(k => {
       const list = grp[k];
       list.forEach((e, i) => {
         const a = pos[e[0]], b = pos[e[1]];
         if (!a || !b) return;
+        const ra = a.r || baseR;
+        const rb = b.r || baseR;
         const dx = b.x - a.x, dy = b.y - a.y;
         const len = Math.sqrt(dx * dx + dy * dy) || 1;
         const ux = dx / len, uy = dy / len;
         const nx = -uy, ny = ux;
-        const off = (i - (list.length - 1) / 2) * (list.length > 2 ? (sm ? 16 : 24) : (sm ? 20 : 28));
-        const w = Math.max(2, 2.5 + (sm ? 4 : 7) * (e[2] / max));
-        const hl = sm ? 10 + w * 1.5 : 14 + w * 2.2;
-        const hw = sm ? w * 1.2 + 3 : w * 1.5 + 4;
-        const sx = a.x + ux * R + nx * off;
-        const sy = a.y + uy * R + ny * off;
-        const ex = b.x - ux * R + nx * off;
-        const ey = b.y - uy * R + ny * off;
+        const off = (i - (list.length - 1) / 2) * (list.length > 2 ? (sm ? 14 : 20) : (sm ? 18 : 24));
+        const w = Math.max(2, 2.2 + (sm ? 3.5 : 6) * (e[2] / max));
+        const hl = sm ? 9 + w * 1.3 : 13 + w * 2.0;
+        const hw = sm ? w * 1.1 + 3 : w * 1.4 + 4;
+        const sx = a.x + ux * ra + nx * off;
+        const sy = a.y + uy * ra + ny * off;
+        const ex = b.x - ux * rb + nx * off;
+        const ey = b.y - uy * rb + ny * off;
         const bx = ex - ux * hl;
         const by = ey - uy * hl;
         const isTrigger = e[3] === 1;
-        const col = isTrigger ? '#059669' : '#94a3b8';
+        const col = isTrigger ? '#111' : '#b8b8b0';
         const titleText = `${e[4] || 'tx'}: ${e[0]} → ${e[1]}, amount ${e[2]}, ${e[5] || ''}`;
 
         const el = `<line class="graph-edge" data-tx="${escapeHtml(e[4] || '')}" x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${col}" stroke-width="${w.toFixed(1)}"><title>${escapeHtml(titleText)}</title></line><polygon class="graph-edge" data-tx="${escapeHtml(e[4] || '')}" fill="${col}" points="${ex.toFixed(1)},${ey.toFixed(1)} ${(bx + nx * hw).toFixed(1)},${(by + ny * hw).toFixed(1)} ${(bx - nx * hw).toFixed(1)},${(by - ny * hw).toFixed(1)}"/>`;
         if (isTrigger) top += el; else base += el;
 
-        const t = nl > 2 ? 0.5 : 0.55;
+        const t = nl > 2 ? 0.48 : 0.52;
         const lx = sx + (bx - sx) * t;
-        const ly = sy + (by - sy) * t - w / 2 - 6;
+        const ly = sy + (by - sy) * t - w / 2 - 5;
         if (!sm || isTrigger) {
-          lab += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 16 : 12}" font-weight="700" fill="#064e3b" stroke="#ffffff" stroke-width="${sm ? 5 : 4}" paint-order="stroke">${inr(e[2])}</text>`;
+          const collides = placedLabels.some(p => Math.hypot(p.x - lx, p.y - ly) < (sm ? 28 : 22));
+          if (!collides) {
+            placedLabels.push({ x: lx, y: ly });
+            lab += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 13 : 12}" font-weight="700" fill="#111" stroke="#fffdea" stroke-width="${sm ? 4 : 3}" paint-order="stroke">${inr(e[2])}</text>`;
+          }
         }
       });
     });
@@ -306,8 +338,10 @@
     let nodes = '';
     Object.keys(pos).forEach(n => {
       const p = pos[n];
-      const displayLabel = n.length > 10 ? n.slice(0, 8) + '…' : n;
-      nodes += `<circle class="graph-node" data-acct="${escapeHtml(n)}" cx="${p.x}" cy="${p.y}" r="${R}" fill="#ffffff" stroke="#059669" stroke-width="2.5"><title>${escapeHtml(n)}</title></circle><text class="graph-node" data-acct="${escapeHtml(n)}" x="${p.x}" y="${p.y + (sm ? 4 : 5)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 11 : 12}" font-weight="700" fill="#064e3b">${escapeHtml(displayLabel)}</text>`;
+      const rNode = p.r || baseR;
+      const displayLabel = n.length > 9 ? n.slice(0, 7) + '…' : n;
+      const fontSize = rNode < 18 ? 9.5 : (sm ? 10.5 : 12);
+      nodes += `<circle class="graph-node" data-acct="${escapeHtml(n)}" cx="${p.x}" cy="${p.y}" r="${rNode}" fill="#fff" stroke="#111" stroke-width="2.5"><title>${escapeHtml(n)}</title></circle><text class="graph-node" data-acct="${escapeHtml(n)}" x="${p.x}" y="${p.y + (rNode < 18 ? 3.5 : 4.5)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${fontSize}" font-weight="700" fill="#111">${escapeHtml(displayLabel)}</text>`;
     });
 
     svg.innerHTML = base + top + nodes + lab;
