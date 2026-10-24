@@ -1,0 +1,25 @@
+[
+  {
+    "mode": "randomized-unlabeled",
+    "seed": 20261024,
+    "rows": 20000,
+    "elapsed_seconds": 3.144,
+    "cases": 1,
+    "cases_by_priority": {
+      "HIGH": 0,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INSUFFICIENT_HISTORY": 0
+    },
+    "graph_stats": {
+      "transactions_analyzed": 20000,
+      "directed_cycles_detected": 0,
+      "layered_chains_detected": 27,
+      "cycle_search_budget_exhausted": 0,
+      "chain_search_budget_exhausted": 0,
+      "graph_search_expansion_limit": 64,
+      "graph_analysis_incomplete": 0
+    },
+    "interpretation": "Unlabeled randomized graph stress. Case counts are not false-positive counts because transactions have no reliable ground truth."
+  }
+]

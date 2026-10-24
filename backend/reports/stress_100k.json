@@ -1,0 +1,23 @@
+[
+  {
+    "mode": "structured-payroll",
+    "seed": 20261024,
+    "rows": 100000,
+    "elapsed_seconds": 18.201,
+    "cases": 0,
+    "cases_by_priority": {
+      "HIGH": 0,
+      "MEDIUM": 0,
+      "LOW": 0,
+      "INSUFFICIENT_HISTORY": 0
+    },
+    "graph_stats": {
+      "transactions_analyzed": 100000,
+      "directed_cycles_detected": 0,
+      "layered_chains_detected": 0,
+      "cycle_search_budget_exhausted": 0,
+      "chain_search_budget_exhausted": 0
+    },
+    "interpretation": "Known regular-payout generator; observed cases are deviations from this constructed benign pattern."
+  }
+]

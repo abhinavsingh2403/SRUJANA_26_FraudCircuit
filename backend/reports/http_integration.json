@@ -1,0 +1,16 @@
+{
+  "/": 200,
+  "/static/app.js": 200,
+  "/health": 200,
+  "/api/scenarios": 200,
+  "/api/cases": 200,
+  "/api/evaluation/summary": 200,
+  "replay_all": {
+    "scenario_count": 14,
+    "transaction_count": 130,
+    "case_count": 13
+  },
+  "malformed_csv_atomic": true,
+  "review_and_audit": true,
+  "model_not_configured": true
+}

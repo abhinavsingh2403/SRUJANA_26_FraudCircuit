@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "browser": "153.0.8010.0",
+  "checks": [
+    "fresh empty queue",
+    "real replay → queue → evidence/timeline/graph",
+    "closure validation, saved outcome, reopen, real audit verification",
+    "zero-case replay scopes queue without leaving stale cases",
+    "105-case import, pagination controls and multi-page queue navigation",
+    "malformed CSV rejected atomically",
+    "invalid UTF-8 bytes reach server unchanged",
+    "real bounded import, visible truncation, repeated transfers retained, imported markup rendered as text",
+    "API-unavailable state clears stale details and metrics; recovery",
+    "case-detail failure does not retain a previous review form",
+    "out-of-order detail response ignored",
+    "truncation disclosed even when transaction arrays are empty (injected response)",
+    "incomplete-analysis warning persists beyond toast (injected low-budget response)",
+    "real replay-all and honest evaluation status",
+    "1366px and 390px viewport overflow checks; named review controls"
+  ],
+  "page_errors": []
+}

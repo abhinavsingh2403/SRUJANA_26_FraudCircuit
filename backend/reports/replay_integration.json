@@ -1,0 +1,211 @@
+[
+  {
+    "scenario_id": "rapid-pass-through",
+    "transaction_count": 2,
+    "run_id": "run_3bd13327f46c15942c2f",
+    "cases": [
+      {
+        "case_id": "case_568fb9da54b2e36237aa",
+        "priority": "LOW",
+        "rule_codes": [
+          "R1_RAPID_PASS_THROUGH"
+        ],
+        "summary": "Signals remain visible at LOW review priority under the configured policy; this is not evidence of benign activity."
+      }
+    ]
+  },
+  {
+    "scenario_id": "fan-in-dispersal",
+    "transaction_count": 7,
+    "run_id": "run_79b333ccbb1a05207148",
+    "cases": [
+      {
+        "case_id": "case_1d470414a2c1a9168733",
+        "priority": "MEDIUM",
+        "rule_codes": [
+          "R1_RAPID_PASS_THROUGH",
+          "R2B_FAN_OUT_BURST",
+          "R2_FAN_IN_DISPERSAL"
+        ],
+        "summary": "At least one configured risk signal was triggered; review its supporting evidence and context."
+      }
+    ]
+  },
+  {
+    "scenario_id": "legitimate-high-volume",
+    "transaction_count": 15,
+    "run_id": "run_cae5895cec53c9d301c3",
+    "cases": []
+  },
+  {
+    "scenario_id": "legitimate-settlement-context",
+    "transaction_count": 10,
+    "run_id": "run_06f9360704ffa5ea3b22",
+    "cases": [
+      {
+        "case_id": "case_516785f249110eb0bc7b",
+        "priority": "LOW",
+        "rule_codes": [
+          "R2B_FAN_OUT_BURST",
+          "R2_FAN_IN_DISPERSAL"
+        ],
+        "summary": "Signals remain visible at LOW review priority under the configured policy; this is not evidence of benign activity."
+      }
+    ]
+  },
+  {
+    "scenario_id": "insufficient-history",
+    "transaction_count": 26,
+    "run_id": "run_9df79f22c258289d37a6",
+    "cases": [
+      {
+        "case_id": "case_0f08f0297e9ccbbc5517",
+        "priority": "INSUFFICIENT_HISTORY",
+        "rule_codes": [],
+        "summary": "Available account-specific history is insufficient; the case is coverage-limited and is not a fraud signal."
+      }
+    ]
+  },
+  {
+    "scenario_id": "delayed-pass-through-90m",
+    "transaction_count": 2,
+    "run_id": "run_a2495f0c9a6b7d4fd6ac",
+    "cases": [
+      {
+        "case_id": "case_2b9e2fc4ab7c6a5dccd7",
+        "priority": "LOW",
+        "rule_codes": [
+          "R1_RAPID_PASS_THROUGH"
+        ],
+        "summary": "Signals remain visible at LOW review priority under the configured policy; this is not evidence of benign activity."
+      }
+    ]
+  },
+  {
+    "scenario_id": "fan-in-collector",
+    "transaction_count": 8,
+    "run_id": "run_8d6b6eb7c6d100fbfc4e",
+    "cases": [
+      {
+        "case_id": "case_57cac64b122fb02d99f4",
+        "priority": "LOW",
+        "rule_codes": [
+          "R2A_FAN_IN_CLUSTER"
+        ],
+        "summary": "Signals remain visible at LOW review priority under the configured policy; this is not evidence of benign activity."
+      }
+    ]
+  },
+  {
+    "scenario_id": "single-inflow-four-way-split",
+    "transaction_count": 5,
+    "run_id": "run_9e7ffc1477c842eee784",
+    "cases": [
+      {
+        "case_id": "case_faf8b313150a16914621",
+        "priority": "MEDIUM",
+        "rule_codes": [
+          "R2B_FAN_OUT_BURST"
+        ],
+        "summary": "At least one configured risk signal was triggered; review its supporting evidence and context."
+      }
+    ]
+  },
+  {
+    "scenario_id": "repeated-value-burst",
+    "transaction_count": 20,
+    "run_id": "run_f4f018e8dcbb75fd47ac",
+    "cases": [
+      {
+        "case_id": "case_87a025630f41928a3a2e",
+        "priority": "MEDIUM",
+        "rule_codes": [
+          "R2B_FAN_OUT_BURST",
+          "R6_REPEATED_VALUE_BURST"
+        ],
+        "summary": "At least one configured risk signal was triggered; review its supporting evidence and context."
+      }
+    ]
+  },
+  {
+    "scenario_id": "directed-cycle",
+    "transaction_count": 3,
+    "run_id": "run_71bd12fde8550b7e029b",
+    "cases": [
+      {
+        "case_id": "case_e2a1aa2e467d97acfc16",
+        "priority": "MEDIUM",
+        "rule_codes": [
+          "R1_RAPID_PASS_THROUGH",
+          "R4_DIRECTED_CYCLE"
+        ],
+        "summary": "At least one configured risk signal was triggered; review its supporting evidence and context."
+      }
+    ]
+  },
+  {
+    "scenario_id": "layered-chain",
+    "transaction_count": 4,
+    "run_id": "run_866c3bfdbaed7d177358",
+    "cases": [
+      {
+        "case_id": "case_770d860a8456929227e8",
+        "priority": "MEDIUM",
+        "rule_codes": [
+          "R1_RAPID_PASS_THROUGH",
+          "R5_LAYERED_CHAIN"
+        ],
+        "summary": "At least one configured risk signal was triggered; review its supporting evidence and context."
+      }
+    ]
+  },
+  {
+    "scenario_id": "dormant-reactivation",
+    "transaction_count": 7,
+    "run_id": "run_812bc1100835bc2c2650",
+    "cases": [
+      {
+        "case_id": "case_ba7165f8f71811b03158",
+        "priority": "MEDIUM",
+        "rule_codes": [
+          "R7_DORMANT_REACTIVATION"
+        ],
+        "summary": "At least one configured risk signal was triggered; review its supporting evidence and context."
+      }
+    ]
+  },
+  {
+    "scenario_id": "compound-layered-cycle",
+    "transaction_count": 14,
+    "run_id": "run_b060d63aa38f5028a1c6",
+    "cases": [
+      {
+        "case_id": "case_490c3522e39d88a055d0",
+        "priority": "HIGH",
+        "rule_codes": [
+          "R1_RAPID_PASS_THROUGH",
+          "R2B_FAN_OUT_BURST",
+          "R4_DIRECTED_CYCLE",
+          "R5_LAYERED_CHAIN",
+          "R6_REPEATED_VALUE_BURST"
+        ],
+        "summary": "Multiple distinct risk rules occurred across multiple trigger transactions; investigate the linked sequence."
+      }
+    ]
+  },
+  {
+    "scenario_id": "amount-deviation",
+    "transaction_count": 7,
+    "run_id": "run_52a1ff3226871e4775ad",
+    "cases": [
+      {
+        "case_id": "case_806d551e18d9de045412",
+        "priority": "MEDIUM",
+        "rule_codes": [
+          "R3_AMOUNT_DEVIATION"
+        ],
+        "summary": "At least one configured risk signal was triggered; review its supporting evidence and context."
+      }
+    ]
+  }
+]

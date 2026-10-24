@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+traceguard.db
+traceguard.db-shm
+traceguard.db-wal
+*.joblib
+*.pkl
+*.parquet
+.env
+.DS_Store

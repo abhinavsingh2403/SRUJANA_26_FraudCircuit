@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="TraceGuard is a prototype workbench for explaining potentially suspicious transaction patterns.">
+  <title>TraceGuard — Investigation Workbench</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="TraceGuard home">
+      <span class="brand-mark" aria-hidden="true">T</span>
+      <span><strong>TraceGuard</strong><small>TRANSACTION INVESTIGATION</small></span>
+    </a>
+    <div class="top-status"><span class="status-dot"></span><span id="connection-status">Connecting to API…</span><span class="mode-pill">RULES MODE · ML NOT CONFIGURED</span></div>
+  </header>
+  <main class="page-shell">
+    <section class="intro-row">
+      <div>
+        <p class="eyebrow">F-01 · FINANCIAL FRAUD AND TRANSACTION RISK</p>
+        <h1>See the pattern,<br><span>not just the payment.</span></h1>
+        <p class="intro-copy">TraceGuard groups related transaction signals into reviewable cases. It provides decision support—not a finding of fraud.</p>
+      </div>
+      <div class="intro-actions">
+        <button id="import-csv" class="button button-secondary file-button" type="button">Import CSV</button>
+        <input id="csv-file" type="file" accept=".csv,text/csv" hidden>
+        <button id="refresh-cases" class="button button-secondary" type="button">Refresh cases</button>
+      </div>
+    </section>
+
+    <section class="metric-grid" aria-label="Current case counts">
+      <article class="metric-card"><span class="metric-label">Visible cases</span><strong id="metric-all">—</strong><small>Matching selected filters</small></article>
+      <article class="metric-card metric-high"><span class="metric-label">High priority</span><strong id="metric-high">—</strong><small>Review first · not fraud probability</small></article>
+      <article class="metric-card metric-medium"><span class="metric-label">Medium priority</span><strong id="metric-medium">—</strong><small>Evidence requires review</small></article>
+      <article class="metric-card metric-low"><span class="metric-label">Low / coverage</span><strong id="metric-low">—</strong><small>Context or history limitation</small></article>
+    </section>
+
+    <section id="run-result" class="notice" aria-live="polite" hidden></section>
+    <section class="workbench">
+      <aside class="queue-panel panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">WORK QUEUE</p><h2>Investigation cases</h2></div>
+          <span class="count-badge" id="queue-count">0</span>
+        </div>
+        <div class="queue-controls">
+          <label class="sr-only" for="priority-filter">Filter by priority</label>
+          <select id="priority-filter"><option value="">All priorities</option><option>HIGH</option><option>MEDIUM</option><option>LOW</option><option>INSUFFICIENT_HISTORY</option></select>
+          <label class="sr-only" for="status-filter">Filter by status</label>
+          <select id="status-filter"><option value="">All statuses</option><option>OPEN</option><option>INVESTIGATING</option><option>ESCALATED</option><option>CLOSED</option></select>
+        </div>
+        <div class="scenario-runner">
+          <label for="scenario-select">Replay a controlled scenario</label>
+          <select id="scenario-select"><option value="">Loading scenarios…</option></select>
+          <button id="replay-scenario" class="button button-primary button-full" type="button">Replay scenario</button>
+          <button id="replay-all" class="button button-secondary button-full replay-all-button" type="button">Run all scenarios</button>
+          <p class="micro-copy">All built-in examples are synthetic fixtures, not real incidents.</p>
+        </div>
+        <p id="queue-limit" class="notice" hidden>Showing at most 100 matching cases. These counts are not database totals; narrow the filters or use the API.</p>
+        <div id="view-toggle" class="view-toggle" hidden></div>
+        <div id="queue-list" class="queue-list" aria-live="polite"><div class="empty-state">Loading cases…</div></div>
+        <div id="queue-pagination" class="queue-pagination" hidden></div>
+      </aside>
+
+      <section class="detail-panel panel" aria-live="polite">
+        <div id="detail-empty" class="detail-empty">
+          <div class="empty-symbol" aria-hidden="true">◎</div>
+          <h2>Select a case to investigate</h2>
+          <p>Replay a scenario or select a case in the queue. Review the connected transactions, evidence and limitations before changing its status.</p>
+        </div>
+        <div id="case-detail" hidden></div>
+      </section>
+    </section>
+
+    <section class="bottom-grid">
+      <article class="panel info-panel">
+        <p class="eyebrow">EVALUATION STATUS</p><h2>What the model does—and does not—know</h2>
+        <p id="evaluation-status">Checking evaluation metadata…</p>
+        <div class="notice">No trained model or real-world performance metric is bundled. Do not interpret a rule match or queue priority as proof of fraud.</div>
+      </article>
+      <article class="panel info-panel">
+        <p class="eyebrow">AUDITABILITY</p><h2>Review history</h2>
+        <p>Review decisions are stored with a per-case hash chain so accidental or partial changes can be detected. The chain is not externally anchored and is not tamper-proof against a database owner.</p>
+        <p class="micro-copy">Use the case audit action to verify a selected case's stored review chain.</p>
+      </article>
+    </section>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    <footer><span>TraceGuard · Srujana Tech Fest 2026 · F-01 prototype</span><span>Local/demo data only · No bank connection</span></footer>
+  </main>
+</body>
+</html>
