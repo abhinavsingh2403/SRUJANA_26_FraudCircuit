@@ -103,6 +103,15 @@ def frontend_home() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.get("/{page_name}.html", include_in_schema=False)
+def frontend_page(page_name: str) -> FileResponse:
+    """Serve multi-page HTML entry points."""
+    page_file = STATIC_DIR / f"{page_name}.html"
+    if page_file.is_file():
+        return FileResponse(page_file)
+    raise HTTPException(status_code=404, detail="Page not found")
+
+
 @app.get("/health", tags=["system"])
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "traceguard-backend", "model_status": "not_configured"}

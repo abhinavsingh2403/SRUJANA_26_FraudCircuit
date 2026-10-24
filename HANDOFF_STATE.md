@@ -66,8 +66,11 @@ Snapshot: 24 October 2026. Existing v0.4.0 API contract retained with backward-c
 - `frontend/.gitignore`
 - `frontend/README.md`
 - `frontend/app.js`
+- `frontend/evaluation.html`
+- `frontend/import.html`
 - `frontend/index.html`
 - `frontend/package.json`
+- `frontend/scenarios.html`
 - `frontend/styles.css`
 - `frontend/vite.config.js`
 
