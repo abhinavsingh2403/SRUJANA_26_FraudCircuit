@@ -58,6 +58,7 @@ Snapshot: 24 October 2026. Existing v0.4.0 API contract retained with backward-c
 - `backend/traceguard/static/app.js`
 - `backend/traceguard/static/index.html`
 - `backend/traceguard/static/styles.css`
+- `frontend/` (Modern React 19 + TypeScript + Vite + Tailwind CSS + Cytoscape.js Dark Intelligence Workbench)
 
 ## Risks and one next task
 
