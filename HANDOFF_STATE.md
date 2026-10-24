@@ -56,14 +56,14 @@ Snapshot: 24 October 2026. Existing v0.4.0 API contract retained with backward-c
 - `backend/traceguard/main.py`
 - `backend/traceguard/rules.py`
 - `backend/traceguard/startup.py`
-- `backend/traceguard/static/app.js`
-- `backend/traceguard/static/index.html`
-- `backend/traceguard/static/styles.css`
 - `frontend/.gitignore`
 - `frontend/README.md`
 - `frontend/app.js`
+- `frontend/evaluation.html`
+- `frontend/import.html`
 - `frontend/index.html`
 - `frontend/package.json`
+- `frontend/scenarios.html`
 - `frontend/styles.css`
 - `frontend/vite.config.js`
 

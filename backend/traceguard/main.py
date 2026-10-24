@@ -92,13 +92,24 @@ app.add_middleware(
     max_age=600,
 )
 
-STATIC_DIR = Path(__file__).resolve().parent / "static"
+_pkg_dir = Path(__file__).resolve().parent
+_repo_frontend = _pkg_dir.parents[1] / "frontend"
+STATIC_DIR = _repo_frontend if _repo_frontend.is_dir() else (_pkg_dir / "static")
 
 
 @app.get("/", include_in_schema=False)
 def frontend_home() -> FileResponse:
     """Serve the dependency-free same-origin investigation UI."""
     return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/{page_name}.html", include_in_schema=False)
+def frontend_page(page_name: str) -> FileResponse:
+    """Serve multi-page HTML entry points."""
+    page_file = STATIC_DIR / f"{page_name}.html"
+    if page_file.is_file():
+        return FileResponse(page_file)
+    raise HTTPException(status_code=404, detail="Page not found")
 
 
 @app.get("/health", tags=["system"])

@@ -1371,6 +1371,168 @@
     }
   }
 
+  /* Multi-page Routing & View Management */
+  const PAGES = ['queue', 'scenarios', 'import', 'evaluation'];
+
+  function showPage(pageId) {
+    if (!PAGES.includes(pageId)) pageId = 'queue';
+    state.activePage = pageId;
+
+    PAGES.forEach(p => {
+      const el = $(`page-${p}`);
+      if (el) el.hidden = (p !== pageId);
+      const navLink = $(`nav-${p}`);
+      if (navLink) {
+        navLink.classList.toggle('on', p === pageId);
+        if (p === pageId) navLink.setAttribute('aria-current', 'page');
+        else navLink.removeAttribute('aria-current');
+      }
+    });
+
+    if (pageId === 'scenarios') renderScenarioGrid();
+  }
+
+  function handleRoute() {
+    const raw = window.location.hash.replace(/^#\/?/, '').toLowerCase();
+    const page = PAGES.includes(raw) ? raw : 'queue';
+    showPage(page);
+  }
+
+  window.addEventListener('hashchange', handleRoute);
+
+  function renderScenarioGrid() {
+    const grid = $('scenario-grid');
+    if (!grid) return;
+    grid.replaceChildren();
+
+    if (!state.scenarios.length) {
+      grid.append(node('div', 'd', 'No scenarios available to display.'));
+      return;
+    }
+
+    state.scenarios.forEach(sc => {
+      const item = node('article', 'scenario-item');
+
+      const header = node('div', 'scenario-item-header');
+      header.append(
+        node('h3', '', sc.title || sc.id),
+        node('span', 'chip mono', sc.id)
+      );
+
+      const purpose = node('p', 'scenario-purpose', sc.purpose || 'Synthetic scenario fixture.');
+      const expected = node('div', 'scenario-expected', `Expected: ${sc.expected || 'Rule verification'}`);
+
+      const btn = node('button', 'pill btn', 'Replay fixture');
+      btn.type = 'button';
+      btn.style.width = '100%';
+      btn.style.background = 'var(--lemon-soft)';
+      btn.style.border = '1px solid var(--lemon-mid)';
+
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        btn.textContent = 'Replaying…';
+        try {
+          const gap = parseFloat($('param-gap')?.value) || 1.0;
+          const amt = parseFloat($('param-amount')?.value) || 1.0;
+          const params = (gap !== 1.0 || amt !== 1.0) ? { gap_scale: gap, amount_scale: amt } : {};
+          const result = await api(`/api/scenarios/${encodeURIComponent(sc.id)}/replay`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ params }),
+          });
+          runResult(`Analysis complete: ${result.transaction_count} transactions; ${result.case_count} case(s).`, result);
+          state.latestRunId = result.run_id || null;
+          state.viewMode = result.case_count > 0 ? 'run' : 'all';
+          state.offset = 0;
+          showToast(`Replayed ${sc.id}: generated ${result.case_count} case(s).`);
+          window.location.hash = '#/queue';
+          await refreshCases(false);
+          if (result.cases?.length) await loadCase(result.cases[0].case_id);
+        } catch (err) {
+          showToast(`Replay failed: ${err.message}`, true);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Replay fixture';
+        }
+      });
+
+      item.append(header, purpose, expected, btn);
+      grid.append(item);
+    });
+  }
+
+  // Multi-page specific event listeners
+  const scenarioAllBtn = $('scenario-page-replay-all');
+  if (scenarioAllBtn) {
+    scenarioAllBtn.addEventListener('click', async () => {
+      await replayAllScenarios();
+      window.location.hash = '#/queue';
+    });
+  }
+
+  // Import drag-and-drop
+  const dropZone = $('drop-zone');
+  const browseBtn = $('browse-csv-btn');
+  if (browseBtn) browseBtn.addEventListener('click', () => $('csv-file').click());
+  if (dropZone) {
+    dropZone.addEventListener('click', e => {
+      if (e.target !== browseBtn) $('csv-file').click();
+    });
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer?.files?.[0];
+      if (file) {
+        importCsv(file).then(() => {
+          window.location.hash = '#/queue';
+        });
+      }
+    });
+  }
+
+  const copySampleBtn = $('copy-sample-csv');
+  if (copySampleBtn) {
+    copySampleBtn.addEventListener('click', () => {
+      const text = $('sample-csv-text')?.textContent || '';
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Sample CSV copied to clipboard.');
+      }).catch(() => {
+        showToast('Could not copy to clipboard.', true);
+      });
+    });
+  }
+
+  // Live Audit Inspector on Evaluation page
+  const auditBtn = $('audit-inspector-btn');
+  const auditInput = $('audit-inspector-input');
+  const auditBox = $('audit-inspector-result');
+  if (auditBtn && auditInput && auditBox) {
+    auditBtn.addEventListener('click', async () => {
+      const cid = auditInput.value.trim();
+      if (!cid) {
+        showToast('Enter a case_id to verify audit chain.', true);
+        return;
+      }
+      auditBtn.disabled = true;
+      try {
+        const result = await api(`/api/cases/${encodeURIComponent(cid)}/audit`);
+        auditBox.hidden = false;
+        auditBox.innerHTML = `<strong>Case ${escapeHtml(cid)}:</strong> Review chain ${result.valid ? '<span style="color:#2ea043;font-weight:700">chain valid</span>' : '<span style="color:#962222;font-weight:700">INVALID</span>'}. Verified <strong>${result.event_count ?? 0}</strong> event(s).<br><small style="color:var(--muted)">${escapeHtml(result.warning || 'Without an external anchor a database owner can rewrite the whole chain or delete its tail.')}</small>`;
+      } catch (err) {
+        auditBox.hidden = false;
+        auditBox.textContent = `Audit check failed: ${err.message}`;
+        showToast(`Audit failed: ${err.message}`, true);
+      } finally {
+        auditBtn.disabled = false;
+      }
+    });
+  }
+
   // Setup event listeners
   $('import-csv').addEventListener('click', () => $('csv-file').click());
   $('replay-scenario').addEventListener('click', replayScenario);
@@ -1479,5 +1641,6 @@
   renderFilterButtons();
   loadScenarios();
   loadEvaluation();
+  handleRoute();
   refreshCases(false);
 })();

@@ -51,3 +51,17 @@ No Git repository existed in the supplied archive or workspace. No commit hash i
 
 **Reason:** User requested integrating the design mockup as the frontend UI/UX of the project. The implementation adheres strictly to `AGENTS.md` by maintaining all backend API contracts, preserving honest disclosures (rules-only mode, unconfigured ML, non-probabilistic priorities), escaping all dynamic text to prevent XSS, and maintaining 100% test pass rate across all 96 unit tests, startup checks, and integration verification.
 
+## 2026-10-24 — Multi-page frontend architecture
+
+**Decision:** Transform the frontend into a structured multi-page application with 4 dedicated module pages:
+1. `#/queue` (Case Queue & Investigation Workbench): KPI metrics, live review table, quick side panel, and deep investigation workbench.
+2. `#/scenarios` (Scenario Console): 14 scenario cards, parameter sliders (`gap_scale`, `amount_scale`), replay actions, and batch runner.
+3. `#/import` (Import Data): Drag-and-drop CSV upload zone, schema specification table, copyable sample CSV template, and atomic rollback disclosures.
+4. `#/evaluation` (Evaluation & Audit): Transparent ML status disclosure (`not_configured`), priority classification policy, and live SHA-256 review chain inspector.
+
+Provide both client-side hash routing (`window.location.hash`) and standalone HTML entry points (`scenarios.html`, `import.html`, `evaluation.html`) served via FastAPI endpoint `/{page_name}.html`.
+
+**Reason:** User requested multi-page capability to separate concerns and prevent an overly long single-page scroll. Preserved 100% compatibility with all automated test suites, startup validators, and API contracts.
+
+
+

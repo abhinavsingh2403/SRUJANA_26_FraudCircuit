@@ -1287,6 +1287,214 @@ th.amt {
   }
 }
 
+/* Multi-page Navigation & Views */
+.page-view {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-view {
+    animation: none;
+  }
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+/* Scenario Console Page */
+.scenario-controls-bar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+
+.param-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.param-group label {
+  font-weight: 600;
+}
+
+.param-group input {
+  width: 80px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  background: var(--card-solid);
+}
+
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.scenario-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: var(--card-solid);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 16px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.scenario-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(17, 17, 17, 0.08);
+}
+
+.scenario-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.scenario-item-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.scenario-purpose {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+
+.scenario-expected {
+  font-size: 11px;
+  background: #fffdea;
+  border: 1px solid var(--lemon-mid);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #5c5415;
+  margin-bottom: 12px;
+}
+
+/* Import Data Page */
+.drop-zone {
+  border: 2px dashed rgba(17, 17, 17, 0.2);
+  border-radius: 20px;
+  padding: 44px 20px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 24px;
+}
+
+.drop-zone:hover,
+.drop-zone.drag-over {
+  background: var(--lemon-soft);
+  border-color: var(--dark);
+}
+
+.drop-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--dark);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  margin: 0 auto 14px;
+}
+
+.drop-zone h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.drop-zone p {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.schema-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+.schema-table th {
+  background: var(--lemon-soft);
+  padding: 8px 12px;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+
+.schema-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.code-box {
+  background: #111;
+  color: #f7efa0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  padding: 14px;
+  border-radius: 12px;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 10px 0;
+}
+
+/* Audit Inspector in Evaluation Page */
+.audit-inspector-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 12px 0 16px;
+}
+
+.audit-inspector-bar input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+
 
 /* Peak-Tier Workbench Controls (Lemon Design System) */
 
@@ -1323,45 +1531,6 @@ th.amt {
   border-color: #111;
   background: #ffffff;
   box-shadow: 0 0 0 3px rgba(246, 233, 107, 0.45);
-}
-
-/* CSV Drag-and-Drop Dropzone */
-.dropzone {
-  border: 2px dashed rgba(17, 17, 17, 0.2);
-  border-radius: 18px;
-  padding: 20px 14px;
-  text-align: center;
-  background: rgba(255, 255, 255, 0.5);
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  margin-top: 10px;
-}
-
-.dropzone:hover,
-.dropzone.dragover {
-  border-color: #111;
-  background: #fffdea;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(17, 17, 17, 0.08);
-}
-
-.dropzone-icon {
-  font-size: 24px;
-  margin-bottom: 4px;
-  display: block;
-}
-
-.dropzone-text {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--ink);
-  margin: 0 0 2px;
-}
-
-.dropzone-sub {
-  font-size: 11px;
-  color: var(--muted);
-  margin: 0;
 }
 
 /* 1-Click Copy Pill */
