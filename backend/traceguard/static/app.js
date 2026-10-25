@@ -2215,10 +2215,10 @@
       if (!cachedReviews.length) {
         td.innerHTML = `
           <div style="max-width:440px;margin:0 auto;text-align:center;">
-            <div style="font-size:36px;margin-bottom:10px;">📜</div>
+            <div class="eyebrow" style="margin-bottom:8px;letter-spacing:0.06em;">AUDIT LEDGER EMPTY</div>
             <h3 style="font-size:16px;font-weight:700;margin-bottom:6px;color:var(--ink);">No Human Review Decisions Logged Yet</h3>
             <p class="d" style="margin-bottom:16px;line-height:1.5;">Review events are generated when compliance analysts inspect a case in the queue, select an outcome (Confirmed Suspicious, False Positive, or Inconclusive), and record a decision.</p>
-            <a href="#/queue" class="pill btn" style="display:inline-flex;align-items:center;gap:6px;background:var(--dark);color:#fff;text-decoration:none;">Open Case Queue ➔</a>
+            <a href="#/queue" class="pill btn" style="display:inline-flex;align-items:center;gap:6px;background:var(--dark);color:#fff;text-decoration:none;">Open Case Queue</a>
           </div>
         `;
       } else {
@@ -2273,7 +2273,7 @@
 
       // 5. Reviewer
       const tdReviewer = node('td', 'mono');
-      const revTag = node('span', 'chip', `👤 ${rev.reviewer || 'analyst'}`);
+      const revTag = node('span', 'chip', `Reviewer: ${rev.reviewer || 'analyst'}`);
       revTag.style.fontSize = '11px';
       tdReviewer.append(revTag);
 

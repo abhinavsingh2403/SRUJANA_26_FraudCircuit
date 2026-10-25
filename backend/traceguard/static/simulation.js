@@ -27,34 +27,208 @@ function svg(tag, attrs, text) {
 function drawGraph(data) {
   const g = $('graph'); g.replaceChildren();
   const defs = svg('defs');
-  for (const [id,color] of [['normal','#398e83'],['latest','#c66b16']]) {
-    const marker=svg('marker',{id,viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:7,markerHeight:7,orient:'auto-start-reverse'});
-    marker.append(svg('path',{d:'M 0 0 L 10 5 L 0 10 z',fill:color}));defs.append(marker);
+  for (const [id, color] of [['normal', '#398e83'], ['latest', '#c66b16']]) {
+    const marker = svg('marker', { id, viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' });
+    marker.append(svg('path', { d: 'M 0 1.5 L 8 5 L 0 8.5 z', fill: color }));
+    defs.append(marker);
   }
   g.append(defs);
-  const nodes=data.graph.nodes, edges=data.graph.edges;
-  if (!nodes.length) { g.append(svg('text',{x:450,y:270,'text-anchor':'middle'},'Press Next transaction or Play to reveal the first transfer.')); return; }
-  const positions = new Map(nodes.map((n,i) => {const a=2*Math.PI*i/nodes.length-Math.PI/2;return [n.id,{x:450+330*Math.cos(a),y:270+195*Math.sin(a),label:`A${i+1}`}];}));
-  const groups = new Map();
-  for (const t of edges) { const key=[t.sender_id,t.recipient_id].sort().join('|'); if(!groups.has(key))groups.set(key,[]);groups.get(key).push(t); }
-  for (const t of edges) {
-    const a=positions.get(t.sender_id),b=positions.get(t.recipient_id),rows=groups.get([t.sender_id,t.recipient_id].sort().join('|'));
-    const offset=(rows.indexOf(t)-(rows.length-1)/2)*22;
-    const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1;
-    const cx=(a.x+b.x)/2-dy/len*offset,cy=(a.y+b.y)/2+dx/len*offset;
-    const latest=t.transaction_id===data.current_transaction?.transaction_id;
-    const highlighted = latest || t.supporting_rules.length > 0;
-    const path=svg('path',{d:`M ${a.x+dx/len*25} ${a.y+dy/len*25} Q ${cx} ${cy} ${b.x-dx/len*29} ${b.y-dy/len*29}`,fill:'none',stroke:highlighted?'#c66b16':'#398e83','stroke-width':latest?3:1.8,'stroke-dasharray':t.supporting_rules.length?'6 4':'none','marker-end':`url(#${highlighted?'latest':'normal'})`});
-    path.append(svg('title',{},`${t.transaction_id}: ${t.sender_id} → ${t.recipient_id}; ${money(t)}; ${t.supporting_rules.join(', ') || 'no supporting rules'}`));g.append(path);
-    if (edges.length<=24) g.append(svg('text',{x:(a.x+2*cx+b.x)/4,y:(a.y+2*cy+b.y)/4-5,'text-anchor':'middle',class:'edge-label'},money(t)));
+
+  const nodes = data.graph.nodes, edges = data.graph.edges;
+  if (!nodes.length) {
+    g.append(svg('text', { x: 450, y: 270, 'text-anchor': 'middle', 'font-family': 'ui-sans-serif, system-ui, sans-serif', 'font-size': '13px', fill: '#64748b' }, 'Select a scenario and click Next or Play to reveal the transaction graph.'));
+    return;
   }
+
+  const currentTx = data.current_transaction;
+  const nodeCount = nodes.length;
+  // Compute adaptive layout radius for optimal spacing and zero edge clipping
+  const rx = nodeCount <= 3 ? 270 : nodeCount <= 6 ? 310 : 340;
+  const ry = nodeCount <= 3 ? 150 : nodeCount <= 6 ? 175 : 195;
+  const r = 24;
+
+  const positions = new Map(nodes.map((n, i) => {
+    const angle = (2 * Math.PI * i) / nodeCount - Math.PI / 2;
+    return [n.id, {
+      x: 450 + rx * Math.cos(angle),
+      y: 270 + ry * Math.sin(angle),
+      angle,
+      label: `A${i + 1}`,
+      id: n.id
+    }];
+  }));
+
+  const groups = new Map();
+  for (const t of edges) {
+    const key = [t.sender_id, t.recipient_id].sort().join('|');
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(t);
+  }
+
+  // Draw Edges with mathematically exact perimeter bounds
+  for (const t of edges) {
+    const a = positions.get(t.sender_id);
+    const b = positions.get(t.recipient_id);
+    if (!a || !b) continue;
+
+    const rows = groups.get([t.sender_id, t.recipient_id].sort().join('|')) || [t];
+    const offset = (rows.indexOf(t) - (rows.length - 1) / 2) * 22;
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const cx = (a.x + b.x) / 2 - (dy / len) * offset;
+    const cy = (a.y + b.y) / 2 + (dx / len) * offset;
+
+    const isLatest = currentTx && t.transaction_id === currentTx.transaction_id;
+    const isSupporting = t.supporting_rules && t.supporting_rules.length > 0;
+    const isHighlighted = isLatest || isSupporting;
+
+    const startX = a.x + (dx / len) * (r + 2);
+    const startY = a.y + (dy / len) * (r + 2);
+    const endX = b.x - (dx / len) * (r + 8);
+    const endY = b.y - (dy / len) * (r + 8);
+
+    const path = svg('path', {
+      d: `M ${startX} ${startY} Q ${cx} ${cy} ${endX} ${endY}`,
+      fill: 'none',
+      stroke: isHighlighted ? '#c66b16' : '#398e83',
+      'stroke-width': isLatest ? 3 : 1.8,
+      'stroke-dasharray': isSupporting ? '6 4' : 'none',
+      'marker-end': `url(#${isHighlighted ? 'latest' : 'normal'})`
+    });
+
+    const ruleInfo = isSupporting ? t.supporting_rules.join(', ') : 'nominal transfer';
+    path.append(svg('title', {}, `${t.transaction_id}: ${t.sender_id} -> ${t.recipient_id}; Amount: ${money(t)}; Status: ${ruleInfo}`));
+    g.append(path);
+
+    if (edges.length <= 24) {
+      const labelX = (a.x + 2 * cx + b.x) / 4;
+      const labelY = (a.y + 2 * cy + b.y) / 4 - 5;
+      const edgeTxt = svg('text', {
+        x: labelX,
+        y: labelY,
+        'text-anchor': 'middle',
+        class: 'edge-label',
+        'font-family': 'ui-monospace, Menlo, Consolas, monospace',
+        'font-size': '11px',
+        'font-weight': '600',
+        fill: isLatest ? '#9a3412' : '#1e293b'
+      }, money(t));
+      g.append(edgeTxt);
+    }
+  }
+
+  // Draw Nodes with exterior radial labels that NEVER overlap arrows
   for (const n of nodes) {
-    const p=positions.get(n.id),group=svg('g',{tabindex:0,role:'button','aria-label':`Inspect ${n.id}`});
-    group.append(svg('circle',{cx:p.x,cy:p.y,r:24,fill:'#fff',stroke:'#245d51','stroke-width':2}),svg('text',{x:p.x,y:p.y+4,'text-anchor':'middle'},p.label),svg('text',{x:p.x,y:p.y+42,'text-anchor':'middle'},n.id.length>20?n.id.slice(-18):n.id),svg('title',{},n.id));
-    const inspect=()=>{const incoming=edges.filter(t=>t.recipient_id===n.id),outgoing=edges.filter(t=>t.sender_id===n.id);$('account').textContent=`${n.id} · ${incoming.length} incoming / ${outgoing.length} outgoing transfers · received ${incoming.reduce((s,t)=>s+t.amount,0).toLocaleString()} / sent ${outgoing.reduce((s,t)=>s+t.amount,0).toLocaleString()} fixture units. These are observed flows, not balances.`;};
-    group.addEventListener('click',inspect);group.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();inspect();}});g.append(group);
+    const p = positions.get(n.id);
+    const isSender = currentTx && n.id === currentTx.sender_id;
+    const isRecipient = currentTx && n.id === currentTx.recipient_id;
+    const isActive = isSender || isRecipient;
+
+    const group = svg('g', {
+      tabindex: 0,
+      role: 'button',
+      'aria-label': `Inspect account ${n.id}`
+    });
+
+    // Outer glow ring for active transaction participants
+    if (isActive) {
+      group.append(svg('circle', {
+        cx: p.x,
+        cy: p.y,
+        r: r + 5,
+        fill: 'none',
+        stroke: isSender ? '#c66b16' : '#087f72',
+        'stroke-width': 2.5,
+        'stroke-dasharray': isSender ? '4 3' : 'none',
+        opacity: 0.9
+      }));
+    }
+
+    // Main Node Circle
+    group.append(svg('circle', {
+      cx: p.x,
+      cy: p.y,
+      r,
+      fill: '#ffffff',
+      stroke: isActive ? (isSender ? '#c66b16' : '#087f72') : '#1e293b',
+      'stroke-width': isActive ? 2.5 : 2
+    }));
+
+    // Center Node Abbreviation (A1, A2...)
+    group.append(svg('text', {
+      x: p.x,
+      y: p.y + 4.5,
+      'text-anchor': 'middle',
+      'font-family': 'ui-monospace, Menlo, Consolas, monospace',
+      'font-size': '12px',
+      'font-weight': '700',
+      fill: '#0f172a'
+    }, p.label));
+
+    // Calculate exterior label position radially away from graph center
+    const cosA = Math.cos(p.angle);
+    const sinA = Math.sin(p.angle);
+    let lx = p.x;
+    let ly = p.y;
+    let anchor = 'middle';
+
+    if (sinA < -0.3) {
+      // Top hemisphere: place label cleanly above circle
+      ly = p.y - r - 8;
+      anchor = 'middle';
+    } else if (sinA > 0.3) {
+      // Bottom hemisphere: place label cleanly below circle
+      ly = p.y + r + 16;
+      anchor = 'middle';
+    } else if (cosA < 0) {
+      // Left side: place label to the left
+      lx = p.x - r - 10;
+      ly = p.y + 4;
+      anchor = 'end';
+    } else {
+      // Right side: place label to the right
+      lx = p.x + r + 10;
+      ly = p.y + 4;
+      anchor = 'start';
+    }
+
+    const displayId = n.id.length > 20 ? `${n.id.slice(0, 10)}...${n.id.slice(-6)}` : n.id;
+    const labelText = svg('text', {
+      x: lx,
+      y: ly,
+      'text-anchor': anchor,
+      'font-family': 'ui-monospace, Menlo, Consolas, monospace',
+      'font-size': '11px',
+      'font-weight': '600',
+      fill: isActive ? '#0f172a' : '#475569',
+      'paint-order': 'stroke fill',
+      stroke: '#f7faf8',
+      'stroke-width': '4px',
+      'stroke-linejoin': 'round',
+      'pointer-events': 'none'
+    }, displayId);
+
+    group.append(labelText);
+    group.append(svg('title', {}, n.id));
+
+    const inspect = () => {
+      const incoming = edges.filter(t => t.recipient_id === n.id);
+      const outgoing = edges.filter(t => t.sender_id === n.id);
+      $('account').textContent = `${n.id} · ${incoming.length} incoming / ${outgoing.length} outgoing transfers · received ${incoming.reduce((s, t) => s + t.amount, 0).toLocaleString()} / sent ${outgoing.reduce((s, t) => s + t.amount, 0).toLocaleString()} units. Observed network flows only, not ledger balances.`;
+    };
+
+    group.addEventListener('click', inspect);
+    group.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        inspect();
+      }
+    });
+
+    g.append(group);
   }
 }
+
 function escapeHtml(s) {
   if (s == null) return '';
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -63,38 +237,39 @@ function escapeHtml(s) {
 function explainStep(data) {
   const box = $('step-explanation');
   if (!box) return;
+
   if (!data.current_transaction || data.step === 0) {
     box.innerHTML = `
       <div class="step-card-idle">
-        <div class="step-idle-icon">⏳</div>
-        <div>
-          <h4 class="step-idle-title">Simulation Initialized &amp; Ready</h4>
-          <p class="step-idle-sub">Advance step or click <strong>▶ Play</strong> to reveal the opening transaction vector.</p>
+        <div class="step-idle-text">
+          <h4 class="step-idle-title">SIMULATION INITIALIZED</h4>
+          <p class="step-idle-sub">Advance the transaction step or click Play to inspect the opening transfer vector.</p>
         </div>
       </div>
     `;
     return;
   }
+
   const tx = data.current_transaction;
   const edges = data.graph.edges;
   const senderOut = edges.filter(t => t.sender_id === tx.sender_id).length;
   const senderIn = edges.filter(t => t.recipient_id === tx.sender_id).length;
   const recipIn = edges.filter(t => t.recipient_id === tx.recipient_id).length;
   const isConduit = senderIn > 0;
-  
+
   const matchingEvidence = data.cases.flatMap(c => c.evidence || []).filter(e => (e.transaction_ids || []).includes(tx.transaction_id));
   const hasAlert = matchingEvidence.length > 0;
 
   let flowBadge = '';
   let flowText = '';
   if (isConduit) {
-    flowBadge = '<span class="flow-pill conduit">🔄 Conduit Relay</span>';
-    flowText = `Account <code class="mono-tag">${escapeHtml(tx.sender_id)}</code> previously received upstream funds and is now actively channeling capital downstream.`;
+    flowBadge = '<span class="flow-pill conduit">CONDUIT PASS-THROUGH</span>';
+    flowText = `Account <code class="mono-tag">${escapeHtml(tx.sender_id)}</code> previously received upstream deposits and is now actively channeling capital downstream.`;
   } else if (senderOut === 1 && recipIn === 1) {
-    flowBadge = '<span class="flow-pill origin">🚀 Outbound Hop</span>';
-    flowText = `Originator <code class="mono-tag">${escapeHtml(tx.sender_id)}</code> opened transfer to counterparty <code class="mono-tag">${escapeHtml(tx.recipient_id)}</code>.`;
+    flowBadge = '<span class="flow-pill origin">PRIMARY OUTBOUND HOP</span>';
+    flowText = `Originator <code class="mono-tag">${escapeHtml(tx.sender_id)}</code> opened a new outbound transfer to counterparty <code class="mono-tag">${escapeHtml(tx.recipient_id)}</code>.`;
   } else {
-    flowBadge = '<span class="flow-pill aggregate">📥 Aggregation Hub</span>';
+    flowBadge = '<span class="flow-pill aggregate">AGGREGATION COUNTERPARTY</span>';
     flowText = `Recipient <code class="mono-tag">${escapeHtml(tx.recipient_id)}</code> has accumulated <strong>${recipIn}</strong> incoming transfer(s) across this sequence.`;
   }
 
@@ -104,17 +279,17 @@ function explainStep(data) {
     alertBlock = `
       <div class="step-alert-card alert-triggered">
         <div class="step-alert-top">
-          <span class="step-alert-badge">⚠️ THRESHOLD ALERT</span>
+          <span class="step-alert-badge">THRESHOLD ALERT</span>
           <span class="alert-rule-tag">${escapeHtml(rules)}</span>
         </div>
-        <p class="step-alert-msg">Behavioral signature triggered risk detection rule <code>${escapeHtml(rules)}</code> on this transfer.</p>
+        <p class="step-alert-msg">Behavioral signature triggered screening rule <code>${escapeHtml(rules)}</code> on this transfer.</p>
       </div>`;
   } else {
     alertBlock = `
       <div class="step-alert-card alert-nominal">
         <div class="step-alert-top">
-          <span class="step-alert-badge">🛡️ NOMINAL BASELINE</span>
-          <span class="nominal-tag">Within Baseline</span>
+          <span class="step-alert-badge">NOMINAL BASELINE</span>
+          <span class="nominal-tag">Baseline Compliant</span>
         </div>
         <p class="step-alert-msg">Transfer velocity and transaction volume remain within expected screening boundaries.</p>
       </div>`;
@@ -126,15 +301,15 @@ function explainStep(data) {
     <div class="step-card-header">
       <div class="step-badge-wrap">
         <span class="step-counter-chip">Step ${data.step} of ${data.total_steps}</span>
-        <span class="tx-id-badge mono" title="Observed Transaction ID">🧾 ${escapeHtml(tx.transaction_id)}</span>
+        <span class="tx-id-badge mono" title="Observed Transaction ID">ID: ${escapeHtml(tx.transaction_id)}</span>
       </div>
-      <span class="step-time-mono" title="Execution timestamp">🕒 ${escapeHtml(formattedTime)}</span>
+      <span class="step-time-mono">${escapeHtml(formattedTime)}</span>
     </div>
 
     <div class="tx-metric-strip">
       <div class="tx-metric-cell">
         <span class="cell-label">TRANSFER AMOUNT</span>
-        <span class="cell-val amount-val">💸 ${money(tx)}</span>
+        <span class="cell-val amount-val">${money(tx)}</span>
       </div>
       <div class="tx-metric-cell">
         <span class="cell-label">ORIGIN (SENDER)</span>
@@ -159,6 +334,7 @@ function explainExecutiveVerdict(data) {
   const box = $('executive-verdict');
   const badge = $('verdict-badge');
   if (!box) return;
+
   if (!data.complete) {
     box.style.display = 'none';
     if (badge) badge.style.display = 'none';
@@ -175,30 +351,46 @@ function explainExecutiveVerdict(data) {
 
   if (badge) {
     badge.style.display = 'inline-block';
-    badge.textContent = highestPriority === 'HIGH' ? '🚨 HIGH RISK CASE' : highestPriority === 'MEDIUM' ? '⚠️ MEDIUM RISK' : highestPriority === 'CLEAN' ? '✅ NO ANOMALIES' : 'ℹ️ ' + highestPriority;
+    badge.textContent = highestPriority === 'HIGH' ? 'HIGH RISK CASE' : highestPriority === 'MEDIUM' ? 'MEDIUM RISK' : highestPriority === 'CLEAN' ? 'NOMINAL' : highestPriority;
     badge.className = `pill verdict-tag-${highestPriority.toLowerCase()}`;
   }
 
-  let typologyTitle = '';
-  let typologyNarrative = '';
+  // Structured Forensic Theory according to financial criminology standards
+  let theoryTitle = '';
+  let theoryMechanism = '';
+  let theoryBehavior = '';
+  let theorySignatures = '';
+
   if (allRules.includes('R1_RAPID_PASS_THROUGH')) {
-    typologyTitle = '⚡ High-Velocity Conduit / Rapid Pass-Through';
-    typologyNarrative = 'The sequence demonstrates a classic high-velocity pass-through conduit typology. Funds received into intermediate nodes were rapidly remitted onward within minutes, maintaining near-zero residual balances and circumventing normal commercial holding intervals.';
+    theoryTitle = 'Conduit Mule Account Layering (Rapid Pass-Through)';
+    theoryMechanism = 'Pass-through laundering relies on velocity to defeat account freezing. Illicit proceeds are funneled through intermediary retail accounts that immediately disburse the capital onward to downstream destinations within minutes.';
+    theoryBehavior = 'By maintaining near-zero residual balance, the mule account evades standing balance thresholds and minimizes exposure to post-transaction clawbacks before inter-bank fraud alerts propagate across the payment clearing network.';
+    theorySignatures = 'Inflow-to-outflow ratio exceeding 75%, transit dwell time under 1 hour, near-zero retained balance, and lack of reciprocal commercial interaction.';
   } else if (allRules.includes('R2A_FAN_IN_CLUSTER') || allRules.includes('R2B_FAN_OUT_DISPERSAL')) {
-    typologyTitle = '🌐 Structured Fan-In / Fan-Out Dispersal Network';
-    typologyNarrative = 'The sequence demonstrates structured fan-in dispersal (mule collection and onward smurfing). Multiple independent counterparty streams converge into central aggregation hubs before dispersing outward to peripheral recipients in tight temporal clustering.';
+    theoryTitle = 'Dispersal & Smurfing Network (Fan-In Aggregation / Fan-Out Smurfing)';
+    theoryMechanism = 'Smurfing networks fragment high-value capital into multiple smaller sub-threshold transfers across independent counterparty nodes to circumvent mandatory currency transaction reporting triggers.';
+    theoryBehavior = 'Disparate mule senders funnel micro-deposits into a central collection node (fan-in), which subsequently splinters the accumulated liquidity across multiple downstream recipients (fan-out) in rapid succession.';
+    theorySignatures = 'High counterparty breadth with multiple independent senders converging on one target within a compressed temporal window, followed by outbound dispersal.';
   } else if (allRules.includes('R3_ROUND_AMOUNT_STRUCTURING')) {
-    typologyTitle = '🎯 Regulatory Structuring / Threshold Evasion';
-    typologyNarrative = 'Transactions exhibit repetitive structuring near standard regulatory compliance reporting thresholds, pointing to deliberate fragmentation to avoid mandatory currency reporting triggers.';
+    theoryTitle = 'Regulatory Structuring & Threshold Evasion';
+    theoryMechanism = 'Financial institutions enforce automated filing ceilings for high-value transactions. Structuring represents the deliberate fragmentation of capital into repetitive round figures just below regulatory reporting boundaries.';
+    theoryBehavior = 'Transactions are paced to mimic ordinary retail transfers while systematically evading anti-money laundering monitoring thresholds.';
+    theorySignatures = 'Clusters of rounded transaction values positioned just below compliance filing limits occurring in close temporal proximity.';
   } else if (allRules.includes('R4_DIRECTED_CYCLE')) {
-    typologyTitle = '🔄 Circular Capital Routing / Round-Trip Loop';
-    typologyNarrative = 'A closed circular directed loop topology was detected. Capital traversed multiple hops across intermediate parties and returned to affiliated originator entities without demonstrable commercial or economic rationale.';
+    theoryTitle = 'Circular Capital Routing (Round-Tripping)';
+    theoryMechanism = 'Round-tripping creates fabricated commercial turnover to legitimize capital or artificially inflate business volume without genuine economic substance.';
+    theoryBehavior = 'Capital traverses multiple hops across affiliated intermediary shell entities and returns to the originating entity, generating fictitious invoices and audit documentation while preserving total originator control.';
+    theorySignatures = 'Closed directed loop where capital leaves entity A, traverses intermediate nodes B and C, and returns to A with minimal capital retention.';
   } else if (data.cases.length === 0) {
-    typologyTitle = '🌿 Nominal Commercial Payment Distribution';
-    typologyNarrative = 'All transactions traversed normal behavioral distributions. Counterparty velocity, transfer amounts, and onward transmission ratios stayed within benign thresholds with zero rule alerts triggered.';
+    theoryTitle = 'Nominal Commercial Transaction Distribution';
+    theoryMechanism = 'Legitimate commercial and peer-to-peer payments display organic dwell times, reciprocal bilateral relationships, and normal variance corresponding to commercial business hours.';
+    theoryBehavior = 'Accounts maintain proportional retained balances reflecting real economic substance rather than serving as pass-through transit conduits.';
+    theorySignatures = 'Transfer velocity, transaction amounts, and counterparty ratios align with standard operational baselines without triggering risk heuristics.';
   } else {
-    typologyTitle = '⚠️ Heuristic Anomaly Pattern';
-    typologyNarrative = 'Recorded flow patterns produced advisory alerts based on heuristic deviations from expected counterparty baseline velocities.';
+    theoryTitle = 'Heuristic Baseline Deviation';
+    theoryMechanism = 'Observed flows deviate from baseline transactional velocities established for the peer group.';
+    theoryBehavior = 'Heuristic indicators suggest irregular transaction timing or unusual counterparty clustering requiring enhanced context verification.';
+    theorySignatures = 'Statistical outliers in transaction frequency or volume relative to observed historical baselines.';
   }
 
   let actionItems = [];
@@ -207,7 +399,7 @@ function explainExecutiveVerdict(data) {
 
   if (highestPriority === 'HIGH') {
     actionClass = 'high';
-    actionHeader = '🚨 Mandatory Compliance Directives (FIU / SAR Protocol)';
+    actionHeader = 'Mandatory Compliance Directives (FIU / SAR Protocol)';
     actionItems = [
       '<strong>Expedited Disposition:</strong> Escalate case file immediately to Senior Compliance Officer for formal sign-off.',
       '<strong>Regulatory Filing:</strong> Prepare and submit Suspicious Transaction Report (STR/SAR) to statutory FIU within 24 hours.',
@@ -216,7 +408,7 @@ function explainExecutiveVerdict(data) {
     ];
   } else if (highestPriority === 'MEDIUM') {
     actionClass = 'medium';
-    actionHeader = '⚠️ Investigative Surveillance Protocol';
+    actionHeader = 'Investigative Surveillance Protocol';
     actionItems = [
       '<strong>Enhanced Due Diligence (EDD):</strong> Route case to Tier-2 investigative queue for corporate registry and KYC verification.',
       '<strong>Transaction Invoicing:</strong> Request commercial contracts and justification for short-interval intermediate remittances.',
@@ -224,26 +416,25 @@ function explainExecutiveVerdict(data) {
     ];
   } else {
     actionClass = 'low';
-    actionHeader = '🛡️ Surveillance &amp; Audit Protocol';
+    actionHeader = 'Surveillance & Audit Protocol';
     actionItems = [
       '<strong>Audit Ledger Logging:</strong> Record simulation execution in the compliance audit register.',
       '<strong>Continuous Baseline Monitoring:</strong> Maintain standard real-time heuristic monitoring; no immediate account intervention required.'
     ];
   }
 
-  const priorityBadgeHtml = highestPriority === 'HIGH' ? '<span class="verdict-tag-high">🔴 HIGH PRIORITY</span>'
-    : highestPriority === 'MEDIUM' ? '<span class="verdict-tag-medium">🟡 MEDIUM PRIORITY</span>'
-    : highestPriority === 'LOW' ? '<span class="verdict-tag-low">🔵 LOW PRIORITY</span>'
-    : highestPriority === 'CLEAN' ? '<span class="verdict-tag-clean">🟢 NOMINAL</span>'
-    : `<span class="verdict-tag-low">ℹ️ ${escapeHtml(highestPriority)}</span>`;
+  const priorityBadgeHtml = highestPriority === 'HIGH' ? '<span class="verdict-tag-high">HIGH PRIORITY</span>'
+    : highestPriority === 'MEDIUM' ? '<span class="verdict-tag-medium">MEDIUM PRIORITY</span>'
+    : highestPriority === 'LOW' ? '<span class="verdict-tag-low">LOW PRIORITY</span>'
+    : highestPriority === 'CLEAN' ? '<span class="verdict-tag-clean">NOMINAL</span>'
+    : `<span class="verdict-tag-low">${escapeHtml(highestPriority)}</span>`;
 
   box.innerHTML = `
     <div class="verdict-top-banner">
       <div class="verdict-title-box">
-        <span class="verdict-icon">⚖️</span>
         <div>
-          <h3 class="verdict-heading">Executive Synthesis &amp; Forensic Verdict</h3>
-          <p class="verdict-sub">Multi-hop network synthesis and regulatory disposition</p>
+          <h3 class="verdict-heading">Executive Forensic Synthesis &amp; Disposition</h3>
+          <p class="verdict-sub">Multi-hop graph network synthesis and regulatory analysis</p>
         </div>
       </div>
       <div>${priorityBadgeHtml}</div>
@@ -252,37 +443,53 @@ function explainExecutiveVerdict(data) {
     <!-- 4-Stat Bento Matrix -->
     <div class="verdict-bento-grid">
       <div class="bento-stat-card">
-        <span class="bento-label">👥 ACCOUNTS</span>
+        <span class="bento-label">ACCOUNTS</span>
         <span class="bento-num">${accountsCount}</span>
         <span class="bento-desc">Inspected nodes</span>
       </div>
       <div class="bento-stat-card">
-        <span class="bento-label">🔄 TRANSFERS</span>
+        <span class="bento-label">TRANSFERS</span>
         <span class="bento-num">${txCount}</span>
         <span class="bento-desc">Observed hops</span>
       </div>
       <div class="bento-stat-card">
-        <span class="bento-label">💰 TOTAL FLOW</span>
-        <span class="bento-num">${money({amount: totalVol})}</span>
+        <span class="bento-label">TOTAL FLOW</span>
+        <span class="bento-num">${money({ amount: totalVol })}</span>
         <span class="bento-desc">Cumulative volume</span>
       </div>
       <div class="bento-stat-card">
-        <span class="bento-label">📁 CASE FILES</span>
+        <span class="bento-label">CASE FILES</span>
         <span class="bento-num">${data.cases.length}</span>
         <span class="bento-desc">Grouped dossiers</span>
       </div>
     </div>
 
-    <!-- Typology Card -->
-    <div class="verdict-section-card">
-      <div class="section-card-header">
-        <span>⚡ <strong>${typologyTitle}</strong></span>
+    <!-- Forensic Mechanism Theory Card -->
+    <div class="verdict-theory-card">
+      <div class="theory-card-header">
+        <span class="theory-tag">FORENSIC MECHANISM THEORY</span>
+        <h4 class="theory-title">${escapeHtml(theoryTitle)}</h4>
       </div>
-      <p class="section-narrative">${typologyNarrative}</p>
+      
+      <div class="theory-body">
+        <div class="theory-block">
+          <span class="theory-label">Mechanism Theory</span>
+          <p class="theory-p">${theoryMechanism}</p>
+        </div>
+        <div class="theory-block">
+          <span class="theory-label">Behavioral Pathology</span>
+          <p class="theory-p">${theoryBehavior}</p>
+        </div>
+        <div class="theory-block">
+          <span class="theory-label">Diagnostic Signatures</span>
+          <p class="theory-p">${theorySignatures}</p>
+        </div>
+      </div>
+
       ${allRules.length ? `
         <div class="rules-chips-row">
           <span class="rules-chips-label">Triggered Rules:</span>
-          ${allRules.map(r => `<span class="rule-chip-pill">🏷️ ${escapeHtml(r)}</span>`).join('')}
+          ${allRules.map(r => `<span class="rule-chip-pill">${escapeHtml(r)}</span>`).join('')}
         </div>` : ''}
     </div>
 
@@ -295,36 +502,52 @@ function explainExecutiveVerdict(data) {
     </div>
 
     <div class="verdict-disclaimer-pill">
-      🔒 <strong>Forensic Decision-Support:</strong> Heuristic groupings establish investigative leads for qualified compliance personnel; they do not constitute autonomous legal determinations.
+      <strong>Decision-Support Disclosure:</strong> Heuristic groupings establish investigative leads for qualified compliance personnel; they do not constitute autonomous legal determinations.
     </div>
   `;
 }
 
 function render(data) {
-  $('position').textContent=`${data.step} / ${data.total_steps}`; $('seek').max=data.total_steps; $('seek').value=data.step;
-  $('counts').textContent=`${data.graph.nodes.length} accounts · ${data.graph.edges.length} transfers`;
-  $('account').textContent='Click an account for its visible totals. Graph layout may change as accounts appear.';
-  $('current').textContent=data.current_transaction ? `${data.current_transaction.timestamp} · ${data.current_transaction.sender_id} → ${data.current_transaction.recipient_id} · ${money(data.current_transaction)}` : 'No transactions revealed yet.';
-  $('notice').textContent=data.notice;
-  $('findings-title').textContent=data.complete?'Final output':'Findings at this step';
-  $('summary').textContent=`${data.cases.length} case group(s) from ${data.step} transactions. ${data.graph_summary.graph_analysis_incomplete?'Graph search is incomplete; some patterns may be missed.':'Bounded graph search completed.'} ${data.cases.length?'Review the evidence below.':'No rules produced a case; this does not establish safety.'}`;
+  $('position').textContent = `${data.step} / ${data.total_steps}`;
+  $('seek').max = data.total_steps;
+  $('seek').value = data.step;
+  $('counts').textContent = `${data.graph.nodes.length} accounts · ${data.graph.edges.length} transfers`;
+  $('account').textContent = 'Click an account node for visible flow totals. Graph layout adapts dynamically as transfers develop.';
+  $('current').textContent = data.current_transaction ? `${data.current_transaction.timestamp} · ${data.current_transaction.sender_id} -> ${data.current_transaction.recipient_id} · ${money(data.current_transaction)}` : 'No transactions revealed yet.';
+  $('notice').textContent = data.notice;
+  $('findings-title').textContent = data.complete ? 'Final Synthesis' : 'Findings at this step';
+  $('summary').textContent = `${data.cases.length} case group(s) from ${data.step} transactions. ${data.graph_summary.graph_analysis_incomplete ? 'Graph search is incomplete; bounded expansion limit reached.' : 'Bounded graph analysis completed.'} ${data.cases.length ? 'Review the structured evidence below.' : 'No rules produced a case; absence of evidence does not establish safety.'}`;
   
   explainStep(data);
   explainExecutiveVerdict(data);
 
   $('findings').replaceChildren();
   for (const c of data.cases) {
-    const card=el('article',undefined,'finding');card.append(el('h3',`${c.priority} · ${(c.rule_codes || []).join(', ')}`),el('p',c.summary));
-    const details=el('details');details.append(el('summary',`${c.evidence.length} evidence item(s)`));
-    for(const e of c.evidence){details.append(el('h3',`${e.rule_id} · ${e.kind}`),el('p',e.description),el('pre',JSON.stringify({observed:e.observed,transaction_ids:e.transaction_ids,caveats:e.caveats},null,2)));}
+    const card = el('article', undefined, 'finding');
+    card.append(el('h3', `${c.priority} · ${(c.rule_codes || []).join(', ')}`), el('p', c.summary));
+    const details = el('details');
+    details.append(el('summary', `${c.evidence.length} evidence item(s)`));
+    for (const e of c.evidence) {
+      details.append(el('h3', `${e.rule_id} · ${e.kind}`), el('p', e.description), el('pre', JSON.stringify({ observed: e.observed, transaction_ids: e.transaction_ids, caveats: e.caveats }, null, 2)));
+    }
     card.append(details);
-    const coverage=el('details');coverage.append(el('summary','Coverage and limitations'));
-    for(const limitation of c.limitations || [])coverage.append(el('p',limitation));
-    coverage.append(el('pre',JSON.stringify({counts:c.counts,truncation:c.truncation},null,2)));
-    if(Object.values(c.truncation || {}).some(Boolean))card.append(el('p','Case evidence is truncated. Inspect coverage counts before interpreting this result.'));
-    card.append(coverage);$('findings').append(card);
+    const coverage = el('details');
+    coverage.append(el('summary', 'Coverage and limitations'));
+    for (const limitation of c.limitations || []) coverage.append(el('p', limitation));
+    coverage.append(el('pre', JSON.stringify({ counts: c.counts, truncation: c.truncation }, null, 2)));
+    if (Object.values(c.truncation || {}).some(Boolean)) card.append(el('p', 'Case evidence is truncated. Inspect coverage counts before interpreting this result.'));
+    card.append(coverage);
+    $('findings').append(card);
   }
-  $('ledger').replaceChildren();data.graph.edges.forEach((t,i)=>{const row=el('tr');for(const value of [i+1,t.timestamp,t.sender_id,t.recipient_id,money(t)])row.append(el('td',value));$('ledger').append(row);});drawGraph(data);
+
+  $('ledger').replaceChildren();
+  data.graph.edges.forEach((t, i) => {
+    const row = el('tr');
+    for (const value of [i + 1, t.timestamp, t.sender_id, t.recipient_id, money(t)]) row.append(el('td', value));
+    $('ledger').append(row);
+  });
+
+  drawGraph(data);
 }
 async function go(step) {
   if (!source) return;

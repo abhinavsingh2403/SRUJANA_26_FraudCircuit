@@ -418,3 +418,54 @@ main{padding:28px 0}h1{font-size:clamp(28px,4vw,46px);letter-spacing:-1.5px;marg
     grid-template-columns: 1fr;
   }
 }
+/* Forensic Mechanism Theory Styles */
+.verdict-theory-card {
+  background: #fdfdfa;
+  border: 1px solid #e2ddd3;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.theory-card-header {
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee7db;
+}
+.theory-tag {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+.theory-title {
+  margin: 3px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+.theory-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.theory-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.theory-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #475569;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.theory-p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #334155;
+}
