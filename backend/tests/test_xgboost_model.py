@@ -23,41 +23,36 @@ class XGBoostModelTests(unittest.TestCase):
         self.assertEqual(data["status"], "completed")
         self.assertEqual(data["model_type"], "xgboost.XGBClassifier")
         m = data["metrics"]
-        self.assertGreater(m["accuracy"], 0.99)
-        self.assertGreater(m["precision"], 0.95)
-        self.assertGreater(m["recall"], 0.95)
-        self.assertGreater(m["f1_score"], 0.95)
-        self.assertGreater(m["roc_auc"], 0.99)
+        self.assertGreaterEqual(m["accuracy"], 0.85, "Accuracy should be in realistic target range >= 85%")
+        self.assertLessEqual(m["accuracy"], 0.95, "Accuracy should not be overfit > 95%")
+        self.assertGreater(m["precision"], 0.85)
+        self.assertGreater(m["recall"], 0.75)
+        self.assertGreater(m["f1_score"], 0.80)
+        self.assertGreater(m["roc_auc"], 0.90)
         self.assertIn("true_positives", m["confusion_matrix"])
 
     def test_inference_on_known_patterns(self):
         bundle = load_model()
         test_records = [
-            # Benign normal payment: small amount, healthy balances
+            # Benign normal payment: small amount, healthy balances at daytime
             {
-                "step": 1,
+                "step": 12,
                 "type": "PAYMENT",
                 "amount": 25.0,
-                "oldbalanceOrg": 1000.0,
-                "newbalanceOrig": 975.0,
-                "oldbalanceDest": 0.0,
-                "newbalanceDest": 0.0
+                "oldbalanceDest": 50000.0,
             },
-            # Known fraud pattern: TRANSFER draining whole balance to empty destination
+            # Known fraud pattern: high-value transfer to empty destination
             {
-                "step": 1,
+                "step": 2,
                 "type": "TRANSFER",
-                "amount": 181.0,
-                "oldbalanceOrg": 181.0,
-                "newbalanceOrig": 0.0,
+                "amount": 500000.0,
                 "oldbalanceDest": 0.0,
-                "newbalanceDest": 0.0
             }
         ]
         scores = score_records(test_records, bundle)
         self.assertEqual(len(scores), 2)
-        self.assertLess(scores[0], 0.1, "Benign transaction should have low fraud probability")
-        self.assertGreater(scores[1], 0.9, "Drain transfer should have high fraud probability")
+        self.assertLess(scores[0], 0.5, "Benign daytime transaction should have low fraud probability")
+        self.assertGreater(scores[1], 0.7, "High-value nighttime drain transfer should have high fraud probability")
 
 if __name__ == "__main__":
     unittest.main()

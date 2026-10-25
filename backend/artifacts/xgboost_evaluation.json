@@ -1,197 +1,83 @@
 {
   "status": "completed",
-  "model_name": "TraceGuard Refined XGBoost Fraud Classifier",
+  "model_name": "TraceGuard Realistic XGBoost Fraud Classifier",
   "model_type": "xgboost.XGBClassifier",
-  "version": "2.0-refined",
+  "version": "3.0-realistic-non-overfit",
   "dataset_path": "D:\\hack\\archive (1)\\PS_20174392719_1491204439457_log.csv",
   "dataset_total_rows": 6362620,
   "dataset_fraud_count": 8213,
   "dataset_fraud_ratio": 0.001290820448180152,
   "hyperparameters": {
-    "n_estimators": 150,
-    "max_depth": 7,
+    "n_estimators": 35,
+    "max_depth": 3,
     "learning_rate": 0.08,
-    "subsample": 0.85,
-    "colsample_bytree": 0.85,
-    "min_child_weight": 2,
-    "gamma": 0.1,
-    "tree_method": "hist",
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
     "eval_metric": "logloss"
   },
   "metrics": {
-    "accuracy": 0.9999960708010223,
-    "accuracy_pct": 99.99961,
-    "balanced_accuracy": 0.9984783931832015,
-    "precision": 1.0,
-    "recall": 0.996956786366403,
-    "f1_score": 0.9984760743675709,
-    "roc_auc": 0.9991859749964556,
-    "pr_auc": 0.9978775843699366,
-    "optimal_threshold": 0.5,
-    "optimal_f1": 0.9984760743675709,
+    "accuracy": 0.8843438032627222,
+    "accuracy_pct": 88.43,
+    "balanced_accuracy": 0.8843270185270469,
+    "precision": 0.9457627118644067,
+    "recall": 0.8153921091086215,
+    "f1_score": 0.8757520272037667,
+    "roc_auc": 0.9317116614202694,
+    "pr_auc": 0.9376551272671119,
     "confusion_matrix": {
-      "true_negatives": 1270881,
-      "false_positives": 0,
-      "false_negatives": 5,
-      "true_positives": 1638,
+      "true_negatives": 1958,
+      "false_positives": 96,
+      "false_negatives": 379,
+      "true_positives": 1674,
       "matrix": [
         [
-          1270881,
-          0
+          1958,
+          96
         ],
         [
-          5,
-          1638
+          379,
+          1674
         ]
       ]
     },
     "rates": {
-      "false_positive_rate": 0.0,
-      "false_negative_rate": 0.0030432136335970784
+      "false_positive_rate": 0.04673807205452775,
+      "false_negative_rate": 0.18460789089137847
     },
     "sample_counts": {
-      "test_total": 1272524,
-      "test_actual_fraud": 1643,
-      "test_actual_benign": 1270881,
-      "predicted_fraud": 1638,
-      "predicted_benign": 1270886
+      "test_total": 4107,
+      "test_actual_fraud": 2053,
+      "test_actual_benign": 2054,
+      "predicted_fraud": 1770,
+      "predicted_benign": 2337
     },
-    "training_time_seconds": 35.07,
-    "inference_time_seconds": 0.62,
+    "training_time_seconds": 1.99,
+    "inference_time_seconds": 0.01,
     "feature_importances": [
       {
-        "feature": "newbalanceOrig",
-        "importance": 0.36529162526130676
+        "feature": "log_balance_dest",
+        "importance": 0.4850289821624756
       },
       {
-        "feature": "newbalanceDest",
-        "importance": 0.2399812489748001
-      },
-      {
-        "feature": "orig_balance_change",
-        "importance": 0.12359898537397385
-      },
-      {
-        "feature": "amount",
-        "importance": 0.1124568060040474
-      },
-      {
-        "feature": "oldbalanceOrg",
-        "importance": 0.06572435796260834
-      },
-      {
-        "feature": "abs_errorBalanceOrig",
-        "importance": 0.02914818562567234
-      },
-      {
-        "feature": "orig_exact_drain",
-        "importance": 0.025509556755423546
-      },
-      {
-        "feature": "errorBalanceDest",
-        "importance": 0.011034638620913029
-      },
-      {
-        "feature": "day",
-        "importance": 0.008169466629624367
-      },
-      {
-        "feature": "errorBalanceOrig",
-        "importance": 0.007976758293807507
+        "feature": "is_transfer",
+        "importance": 0.17403335869312286
       },
       {
         "feature": "hour",
-        "importance": 0.0024017568212002516
-      },
-      {
-        "feature": "orig_cleared",
-        "importance": 0.0016376939602196217
-      },
-      {
-        "feature": "abs_errorBalanceDest",
-        "importance": 0.0012884684838354588
-      },
-      {
-        "feature": "type_TRANSFER",
-        "importance": 0.001018078182823956
-      },
-      {
-        "feature": "amount_to_oldbalanceOrg_ratio",
-        "importance": 0.0008879475062713027
-      },
-      {
-        "feature": "dest_balance_change",
-        "importance": 0.0006343924906104803
-      },
-      {
-        "feature": "oldbalanceDest",
-        "importance": 0.0005851374007761478
-      },
-      {
-        "feature": "step",
-        "importance": 0.0005552407819777727
-      },
-      {
-        "feature": "type_CASH_OUT",
-        "importance": 0.0004704672028310597
-      },
-      {
-        "feature": "type_CASH_IN",
-        "importance": 0.00040314209763891995
+        "importance": 0.17106808722019196
       },
       {
         "feature": "log_amount",
-        "importance": 0.00036271088174544275
-      },
-      {
-        "feature": "dest_zero_start",
-        "importance": 0.000288682320388034
-      },
-      {
-        "feature": "type_PAYMENT",
-        "importance": 0.0002183951437473297
-      },
-      {
-        "feature": "is_merchant_dest",
-        "importance": 0.00020358074107207358
-      },
-      {
-        "feature": "dest_exact_receive",
-        "importance": 0.00015278591308742762
-      },
-      {
-        "feature": "type_DEBIT",
-        "importance": 0.0
+        "importance": 0.16986961662769318
       }
     ]
   },
   "feature_names": [
-    "step",
-    "amount",
     "log_amount",
-    "oldbalanceOrg",
-    "newbalanceOrig",
-    "oldbalanceDest",
-    "newbalanceDest",
-    "orig_balance_change",
-    "dest_balance_change",
-    "errorBalanceOrig",
-    "errorBalanceDest",
-    "abs_errorBalanceOrig",
-    "abs_errorBalanceDest",
-    "amount_to_oldbalanceOrg_ratio",
-    "orig_exact_drain",
-    "dest_exact_receive",
     "hour",
-    "day",
-    "orig_cleared",
-    "dest_zero_start",
-    "is_merchant_dest",
-    "type_CASH_IN",
-    "type_CASH_OUT",
-    "type_DEBIT",
-    "type_PAYMENT",
-    "type_TRANSFER"
+    "is_transfer",
+    "log_balance_dest"
   ],
-  "timestamp": "2026-10-25T05:50:45Z"
+  "note": "Realistic operational model using authorization-time pre-transaction signals without post-transaction synthetic balance leakage.",
+  "timestamp": "2026-10-25T06:27:20Z"
 }
