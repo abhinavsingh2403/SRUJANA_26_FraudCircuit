@@ -1,8 +1,8 @@
-# Observed loopback checks
+# Observed local input-limit checks
 
-API is unauthenticated by design. Not a security audit.
+API is unauthenticated by design. These checks are not a security audit.
 
-{'test': 'oversized', 'expected': 413, 'actual': 413, 'passed': True}
-{'test': 'malformed', 'expected': 422, 'actual': 422, 'passed': True}
-{'test': 'duplicate ID', 'expected': 422, 'actual': 422, 'passed': True}
-{'test': 'PaySim-shaped', 'expected': 422, 'actual': 422, 'passed': True}
+- oversized: expected 413, observed 413, passed=True
+- malformed: expected 422, observed 422, passed=True
+- duplicate ID: expected 422, observed 422, passed=True
+- PaySim-shaped: expected 422, observed 422, passed=True

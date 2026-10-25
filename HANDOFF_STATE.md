@@ -1,3 +1,17 @@
+# Current handoff — 26 October 2026 main branch release
+
+Scope: Full platform consolidation, architecture vector integration, and main branch synchronization.
+Source: `dataset-wali-branch` cleanly fast-forward merged into `main`.
+
+Actual checks verified on `main`:
+1. **Backend Unit Tests:** 135 / 135 passed in 9.42s (`python -m unittest discover -s tests`).
+2. **Frontend Build & Linter:** `npm run build` and `npx eslint app.js research.js simulation.js` passed with 0 errors, 0 warnings.
+3. **Integration Verification:** `python backend/scripts/verify_integration.py` passed 100% (all 8 routes HTTP 200, 14 replay scenarios, atomic transaction rollback, SHA-256 Merkle review audit chain integrity).
+4. **Lab Limit Checks:** `python backend/scripts/verify_lab.py` passed with expected 413 and 422 boundary codes.
+5. **Architecture Assets:** High-resolution enterprise system architecture blueprint vector (`architecture.svg`) and interactive viewer (`architecture_diagram.html` / `architecture.html`) generated with zero visual overlap, generous 48px channel spacing, and signature lemon-ink palette.
+
+---
+
 # Current handoff — 25 October 2026 revision
 
 Scope: non-ML correctness and Evaluation & Auditability. Read `REVISION_NOTES.md` for tested behavior, commands and remaining limitations. Earlier handoff below is historical, not the current verification record.
