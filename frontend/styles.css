@@ -369,16 +369,26 @@ h1 {
 
 .fl {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   align-items: center;
 }
 
+.filter-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.filter-label,
 .fl > span {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--muted);
+  white-space: nowrap;
+  letter-spacing: -0.01em;
 }
 
 .tools {
@@ -486,45 +496,79 @@ h1 {
 
 .tw {
   overflow-x: auto;
+  overflow-y: auto;
   max-width: 100%;
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--card-solid);
   max-height: 560px;
   position: relative;
+  scroll-padding-top: 44px;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(17, 17, 17, 0.22) transparent;
+}
+
+.tw::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.tw::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tw::-webkit-scrollbar-thumb {
+  background: rgba(17, 17, 17, 0.18);
+  border-radius: 999px;
+}
+
+.tw::-webkit-scrollbar-thumb:hover {
+  background: rgba(17, 17, 17, 0.35);
 }
 
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 13px;
-  min-width: 580px;
+  min-width: 100%;
 }
 
 th {
   position: sticky;
   top: 0;
-  z-index: 5;
+  z-index: 10;
   text-align: left;
   color: var(--muted);
-  font-weight: 600;
-  font-size: 12px;
-  padding: 11px 14px;
-  border-bottom: 1px solid var(--line);
-  background: rgba(253, 248, 210, 0.95);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.14);
+  background: #fdf8d2;
+  box-shadow: 0 2px 6px -1px rgba(17, 17, 17, 0.08);
   white-space: nowrap;
 }
 
+.tw > table > thead > tr > th:first-child {
+  border-top-left-radius: 15px;
+}
+
+.tw > table > thead > tr > th:last-child {
+  border-top-right-radius: 15px;
+}
+
 td {
-  padding: 11px 14px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
+  background: var(--card-solid);
 }
 
 tbody tr {
   cursor: pointer;
+  scroll-margin-top: 46px;
   transition: background 0.15s cubic-bezier(0.16, 1, 0.3, 1), transform 0.12s ease;
 }
 
@@ -546,9 +590,69 @@ tbody tr.active td:first-child {
   box-shadow: inset 4px 0 0 var(--dark);
 }
 
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 15px;
+}
+
+tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 15px;
+}
+
 tbody tr:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: -2px;
+}
+
+/* Case Row column proportions to prevent cut-offs */
+.case-row td:first-child {
+  max-width: 190px;
+  min-width: 140px;
+}
+
+.case-row .id {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 12px;
+  display: block;
+}
+
+.case-row .d {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.case-row td:nth-child(2) {
+  min-width: 85px;
+}
+
+.case-row td:nth-child(3) {
+  min-width: 140px;
+  max-width: 220px;
+}
+
+.case-row td:nth-child(4) {
+  min-width: 65px;
+  text-align: center;
+}
+
+.case-row td:nth-child(5) {
+  min-width: 95px;
+}
+
+.case-row td:nth-child(6) {
+  min-width: 80px;
+}
+
+.case-row td:nth-child(7) {
+  min-width: 75px;
 }
 
 .id {
@@ -1004,21 +1108,29 @@ th.amt {
 
 .tx-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 11px;
   min-width: 580px;
 }
 
 .tx-table th {
-  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #fdf8d2;
   padding: 8px 10px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--muted);
+  border-bottom: 1px solid rgba(17, 17, 17, 0.14);
+  box-shadow: 0 2px 5px -1px rgba(17, 17, 17, 0.07);
+  white-space: nowrap;
 }
 
 .tx-table td {
   padding: 8px 10px;
-  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--card-solid);
 }
 
 .evidence-card {

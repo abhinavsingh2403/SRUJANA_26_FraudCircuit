@@ -842,7 +842,9 @@
       // 1. Case ID & Source
       const tdCase = node('td');
       const idDiv = node('div', 'id mono', item.case_id);
+      idDiv.title = item.case_id;
       const subDiv = node('div', 'd', item.source_scenario_id || 'CSV import');
+      subDiv.title = item.source_scenario_id || 'CSV import';
       tdCase.append(idDiv, subDiv);
 
       // 2. Priority
