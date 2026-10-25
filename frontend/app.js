@@ -67,6 +67,36 @@
     return span;
   }
 
+  function animateCount(el, target) {
+    if (!el) return;
+    const targetNum = Number(target);
+    if (!Number.isFinite(targetNum)) {
+      el.textContent = String(target ?? '—');
+      return;
+    }
+    const startNum = Number(el.getAttribute('data-val') || el.textContent) || 0;
+    if (startNum === targetNum) {
+      el.textContent = String(targetNum);
+      return;
+    }
+    el.setAttribute('data-val', targetNum);
+    const duration = 400;
+    const startTime = performance.now();
+    function tick(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(startNum + (targetNum - startNum) * ease);
+      el.textContent = String(current);
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        el.textContent = String(targetNum);
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
   function showToast(message, error = false) {
     const box = $('toast');
     box.textContent = message;
@@ -158,7 +188,7 @@
     );
   }
 
-  /* Dynamic Topological / Flow Layering for Any Case */
+  /* Cycle-Aware Dynamic Topological Layering */
   function buildGraphLayout(caseData) {
     const transactions = allCaseTransactions(caseData);
     const accountIds = [...new Set(transactions.flatMap(tx => [tx.sender_id, tx.recipient_id]).filter(Boolean))];
@@ -167,55 +197,65 @@
     }
 
     const inDegree = {};
-    const outDegree = {};
     const adj = {};
     accountIds.forEach(id => {
       inDegree[id] = 0;
-      outDegree[id] = 0;
-      adj[id] = new Set();
+      adj[id] = [];
     });
 
     const displayTx = transactions.slice(0, 60);
     displayTx.forEach(tx => {
       if (inDegree[tx.recipient_id] !== undefined) inDegree[tx.recipient_id]++;
-      if (outDegree[tx.sender_id] !== undefined) outDegree[tx.sender_id]++;
-      if (adj[tx.sender_id]) adj[tx.sender_id].add(tx.recipient_id);
+      if (adj[tx.sender_id]) adj[tx.sender_id].push(tx.recipient_id);
     });
 
-    const layerMap = {};
-    const visited = new Set();
-    const queue = [];
+    // Detect back-edges (cycles) using DFS so backward transactions don't collapse DAG layers
+    const WHITE = 0, GRAY = 1, BLACK = 2;
+    const color = {};
+    accountIds.forEach(id => { color[id] = WHITE; });
+    const backEdges = new Set();
 
-    const sources = accountIds.filter(id => inDegree[id] === 0);
-    if (sources.length > 0) {
-      sources.forEach(id => {
-        layerMap[id] = 0;
-        queue.push(id);
-        visited.add(id);
-      });
-    } else {
-      layerMap[accountIds[0]] = 0;
-      queue.push(accountIds[0]);
-      visited.add(accountIds[0]);
+    function dfs(u) {
+      color[u] = GRAY;
+      for (const v of adj[u] || []) {
+        if (color[v] === GRAY) {
+          backEdges.add(u + '>' + v);
+        } else if (color[v] === WHITE) {
+          dfs(v);
+        }
+      }
+      color[u] = BLACK;
     }
 
+    const sources = accountIds.filter(id => inDegree[id] === 0);
+    (sources.length ? sources : [accountIds[0]]).forEach(s => {
+      if (color[s] === WHITE) dfs(s);
+    });
+    accountIds.forEach(a => {
+      if (color[a] === WHITE) dfs(a);
+    });
+
+    // Layer assignment following forward DAG flow
+    const layerMap = {};
+    const startNodes = sources.length ? sources : [accountIds[0]];
+    startNodes.forEach(s => { layerMap[s] = 0; });
+
+    const queue = [...startNodes];
     while (queue.length > 0) {
       const curr = queue.shift();
-      const currLayer = layerMap[curr] || 0;
-      for (const nxt of (adj[curr] || [])) {
+      const currLayer = layerMap[curr];
+      for (const nxt of adj[curr] || []) {
+        if (backEdges.has(curr + '>' + nxt)) continue; // skip back-edge in layer advance
         if (layerMap[nxt] === undefined || layerMap[nxt] < currLayer + 1) {
-          layerMap[nxt] = Math.min(currLayer + 1, 4);
-          if (!visited.has(nxt)) {
-            visited.add(nxt);
-            queue.push(nxt);
-          }
+          layerMap[nxt] = currLayer + 1;
+          queue.push(nxt);
         }
       }
     }
 
     accountIds.forEach(id => {
       if (layerMap[id] === undefined) {
-        layerMap[id] = outDegree[id] === 0 ? 2 : 1;
+        layerMap[id] = 1;
       }
     });
 
@@ -245,16 +285,30 @@
       svg.innerHTML = '<text x="500" y="260" text-anchor="middle" font-size="14" fill="#58584d">No connected graph data</text>';
       return;
     }
-    const R = sm ? 22 : 30;
+    const baseR = sm ? 18 : 24;
     const pos = {};
     const nl = g.L.length;
 
     g.L.forEach((col, ci) => {
-      const x = nl === 1 ? 500 : 130 + ci * (740 / (nl - 1));
-      const gap = Math.min(sm ? 70 : 110, (sm ? 280 : 380) / Math.max(1, col.length));
-      col.forEach((n, i) => {
-        pos[n] = { x: x, y: 260 + (i - (col.length - 1) / 2) * gap };
-      });
+      const x = nl === 1 ? 500 : 110 + ci * (780 / (nl - 1));
+      if (col.length > 5) {
+        // Multi-node fanout: stagger across two sub-columns to guarantee ample breathing room
+        const rSub = sm ? 15 : 20;
+        const subColRows = Math.ceil(col.length / 2);
+        const subGap = Math.min(sm ? 44 : 64, (sm ? 340 : 420) / Math.max(1, subColRows));
+        col.forEach((n, i) => {
+          const subColIdx = i % 2;
+          const rowIdx = Math.floor(i / 2);
+          const xOffset = subColIdx === 0 ? -26 : 26;
+          const y = 260 + (rowIdx - (subColRows - 1) / 2) * subGap;
+          pos[n] = { x: x + xOffset, y: y, r: rSub };
+        });
+      } else {
+        const gap = Math.min(sm ? 70 : 110, (sm ? 320 : 400) / Math.max(1, col.length));
+        col.forEach((n, i) => {
+          pos[n] = { x: x, y: 260 + (i - (col.length - 1) / 2) * gap, r: baseR };
+        });
+      }
     });
 
     const max = Math.max(1, ...g.E.map(e => e[2]));
@@ -265,6 +319,8 @@
     });
 
     let base = '', top = '', lab = '';
+    const placedLabels = []; // Proximity collision check for amount labels
+
     Object.keys(grp).forEach(k => {
       const list = grp[k];
       list.forEach((e, i) => {
@@ -274,28 +330,34 @@
         const len = Math.sqrt(dx * dx + dy * dy) || 1;
         const ux = dx / len, uy = dy / len;
         const nx = -uy, ny = ux;
-        const off = (i - (list.length - 1) / 2) * (list.length > 2 ? (sm ? 16 : 24) : (sm ? 20 : 28));
-        const w = Math.max(2, 2.5 + (sm ? 4 : 7) * (e[2] / max));
-        const hl = sm ? 10 + w * 1.5 : 14 + w * 2.2;
-        const hw = sm ? w * 1.2 + 3 : w * 1.5 + 4;
-        const sx = a.x + ux * R + nx * off;
-        const sy = a.y + uy * R + ny * off;
-        const ex = b.x - ux * R + nx * off;
-        const ey = b.y - uy * R + ny * off;
+        const off = (i - (list.length - 1) / 2) * (list.length > 2 ? (sm ? 14 : 20) : (sm ? 18 : 24));
+        const w = Math.max(2, 2.2 + (sm ? 3.5 : 5.5) * (e[2] / max));
+        const hl = sm ? 9 + w * 1.3 : 12 + w * 1.8;
+        const hw = sm ? w * 1.1 + 2.5 : w * 1.3 + 3.5;
+        const ra = a.r || baseR;
+        const rb = b.r || baseR;
+        const sx = a.x + ux * ra + nx * off;
+        const sy = a.y + uy * ra + ny * off;
+        const ex = b.x - ux * rb + nx * off;
+        const ey = b.y - uy * rb + ny * off;
         const bx = ex - ux * hl;
         const by = ey - uy * hl;
         const isTrigger = e[3] === 1;
         const col = isTrigger ? '#111' : '#b8b8b0';
         const titleText = `${e[4] || 'tx'}: ${e[0]} → ${e[1]}, amount ${e[2]}, ${e[5] || ''}`;
 
-        const el = `<line x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${col}" stroke-width="${w.toFixed(1)}"><title>${escapeHtml(titleText)}</title></line><polygon fill="${col}" points="${ex.toFixed(1)},${ey.toFixed(1)} ${(bx + nx * hw).toFixed(1)},${(by + ny * hw).toFixed(1)} ${(bx - nx * hw).toFixed(1)},${(by - ny * hw).toFixed(1)}"/>`;
+        const el = `<line class="graph-tx-line" data-tx-id="${escapeHtml(e[4] || '')}" x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${col}" stroke-width="${w.toFixed(1)}"><title>${escapeHtml(titleText)}</title></line><polygon fill="${col}" points="${ex.toFixed(1)},${ey.toFixed(1)} ${(bx + nx * hw).toFixed(1)},${(by + ny * hw).toFixed(1)} ${(bx - nx * hw).toFixed(1)},${(by - ny * hw).toFixed(1)}"/>`;
         if (isTrigger) top += el; else base += el;
 
         const t = nl > 2 ? 0.5 : 0.55;
         const lx = sx + (bx - sx) * t;
-        const ly = sy + (by - sy) * t - w / 2 - 6;
+        const ly = sy + (by - sy) * t - w / 2 - 5;
         if (!sm || isTrigger) {
-          lab += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 18 : 13}" font-weight="700" fill="#111" stroke="#fffdea" stroke-width="${sm ? 5 : 4}" paint-order="stroke">${inr(e[2])}</text>`;
+          const tooClose = placedLabels.some(p => Math.hypot(p.x - lx, p.y - ly) < (sm ? 28 : 22));
+          if (!tooClose) {
+            placedLabels.push({ x: lx, y: ly });
+            lab += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 11 : 12}" font-weight="700" fill="#111" stroke="#fffdea" stroke-width="${sm ? 4 : 3}" paint-order="stroke">${inr(e[2])}</text>`;
+          }
         }
       });
     });
@@ -303,12 +365,41 @@
     let nodes = '';
     Object.keys(pos).forEach(n => {
       const p = pos[n];
+      const r = p.r || baseR;
       const displayLabel = n.length > 10 ? n.slice(0, 8) + '…' : n;
-      nodes += `<circle cx="${p.x}" cy="${p.y}" r="${R}" fill="#fff" stroke="#111" stroke-width="2.5"><title>${escapeHtml(n)}</title></circle><text x="${p.x}" y="${p.y + (sm ? 4 : 5)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 11 : 13}" font-weight="700" fill="#111">${escapeHtml(displayLabel)}</text>`;
+      nodes += `<circle class="graph-node" data-acct-id="${escapeHtml(n)}" cx="${p.x}" cy="${p.y}" r="${r}" fill="#fff" stroke="#111" stroke-width="2.2"><title>${escapeHtml(n)}</title></circle><text x="${p.x}" y="${p.y + (sm ? 3.5 : 4.5)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 10 : 12}" font-weight="700" fill="#111" pointer-events="none">${escapeHtml(displayLabel)}</text>`;
     });
 
     svg.innerHTML = base + top + nodes + lab;
     svg.setAttribute('aria-label', `Transaction graph with ${g.E.length} transactions between ${Object.keys(pos).length} accounts`);
+
+    // Attach bidirectional hover handlers on SVG elements
+    if (!sm) {
+      svg.querySelectorAll('.graph-tx-line').forEach(line => {
+        const txId = line.getAttribute('data-tx-id');
+        if (!txId) return;
+        line.addEventListener('mouseenter', () => {
+          line.classList.add('graph-edge-hover');
+          const row = document.querySelector(`.tx-table tr[data-tx-id="${txId}"]`);
+          if (row) {
+            row.classList.add('highlight-tx');
+            row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        });
+        line.addEventListener('mouseleave', () => {
+          line.classList.remove('graph-edge-hover');
+          const row = document.querySelector(`.tx-table tr[data-tx-id="${txId}"]`);
+          if (row) row.classList.remove('highlight-tx');
+        });
+      });
+
+      svg.querySelectorAll('.graph-node').forEach(nodeEl => {
+        const acctId = nodeEl.getAttribute('data-acct-id');
+        if (!acctId) return;
+        nodeEl.addEventListener('mouseenter', () => nodeEl.classList.add('graph-node-hover'));
+        nodeEl.addEventListener('mouseleave', () => nodeEl.classList.remove('graph-node-hover'));
+      });
+    }
   }
 
   /* Natural Language Transaction Graph Description */
@@ -495,10 +586,10 @@
 
   function updateMetrics() {
     const all = state.cases;
-    $('metric-all').textContent = state.total;
-    $('metric-high').textContent = all.filter(c => c.priority === 'HIGH').length;
-    $('metric-medium').textContent = all.filter(c => c.priority === 'MEDIUM').length;
-    $('metric-low').textContent = all.filter(c => c.priority === 'LOW' || c.priority === 'INSUFFICIENT_HISTORY').length;
+    animateCount($('metric-all'), state.total);
+    animateCount($('metric-high'), all.filter(c => c.priority === 'HIGH').length);
+    animateCount($('metric-medium'), all.filter(c => c.priority === 'MEDIUM').length);
+    animateCount($('metric-low'), all.filter(c => c.priority === 'LOW' || c.priority === 'INSUFFICIENT_HISTORY').length);
     $('count').textContent = state.total + (state.total === 1 ? ' case' : ' cases');
     $('queue-count').textContent = state.total;
   }
@@ -697,20 +788,53 @@
     container.append(allBtn, runBtn);
   }
 
+  function getFilteredCases() {
+    if (!state.searchQuery) return state.cases;
+    const q = state.searchQuery.toLowerCase();
+    return state.cases.filter(c => {
+      if (c.case_id && c.case_id.toLowerCase().includes(q)) return true;
+      if (c.source_scenario_id && c.source_scenario_id.toLowerCase().includes(q)) return true;
+      if (c.priority && c.priority.toLowerCase().includes(q)) return true;
+      if (c.status && c.status.toLowerCase().includes(q)) return true;
+      if (c.account_ids && c.account_ids.some(a => a.toLowerCase().includes(q))) return true;
+      const rules = c.rule_codes || (c.evidence || []).map(e => e.rule_id);
+      if (rules.some(r => r && r.toLowerCase().includes(q))) return true;
+      return false;
+    });
+  }
+
   function renderQueue() {
     const rows = $('queue-list');
     rows.replaceChildren();
 
-    if (!state.cases.length) {
+    const searchCountEl = $('search-count');
+    const visibleCases = getFilteredCases();
+
+    if (searchCountEl) {
+      if (state.searchQuery) {
+        searchCountEl.textContent = `${visibleCases.length} match${visibleCases.length === 1 ? '' : 'es'}`;
+        searchCountEl.hidden = false;
+      } else {
+        searchCountEl.hidden = true;
+      }
+    }
+
+    if (!visibleCases.length) {
       const tr = node('tr');
-      const td = node('td', 'd', 'No cases match these filters. Replay a scenario or import a CSV to begin.');
+      const msg = state.searchQuery 
+        ? `No cases match "${state.searchQuery}". Press Esc or clear search to reset.`
+        : 'No cases match these filters. Replay a scenario or import a CSV to begin.';
+      const td = node('td', 'd', msg);
       td.colSpan = 7;
       tr.appendChild(td);
       rows.appendChild(tr);
       return;
     }
 
-    state.cases.forEach((item, index) => {
+    visibleCases.forEach((item, index) => {
+      const isSelected = item.case_id === state.selectedId;
+      const tr = node('tr', `case-row${isSelected ? ' sel active' : ''}`);
+      tr.setAttribute('data-case-id', item.case_id);
       const isSelected = item.case_id === state.selectedId;
       const tr = node('tr', `case-row${isSelected ? ' sel active' : ''}`);
       tr.tabIndex = 0;
@@ -979,6 +1103,15 @@
     const triggerSet = new Set(caseData.transaction_ids || []);
     for (const tx of transactions) {
       const row = node('tr');
+      row.setAttribute('data-tx-id', tx.transaction_id);
+      row.addEventListener('mouseenter', () => {
+        const line = document.querySelector(`.graph-tx-line[data-tx-id="${tx.transaction_id}"]`);
+        if (line) line.classList.add('graph-edge-hover');
+      });
+      row.addEventListener('mouseleave', () => {
+        const line = document.querySelector(`.graph-tx-line[data-tx-id="${tx.transaction_id}"]`);
+        if (line) line.classList.remove('graph-edge-hover');
+      });
       const typeLabel = tx.transaction_type ? `\n${tx.transaction_type}` : '';
       row.append(
         node('td', 'mono', `${tx.transaction_id}${typeLabel}`),
@@ -1189,8 +1322,23 @@
       // Top title
       const top = node('div', 'case-title-row');
       const titleWrap = node('div');
+      const eyebrowP = node('p', 'eyebrow mono', `CASE ${caseData.case_id}`);
+      const copyBtn = node('button', 'btn-copy-id', 'Copy ID');
+      copyBtn.type = 'button';
+      copyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(caseData.case_id).then(() => {
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => { copyBtn.textContent = 'Copy ID'; }, 1500);
+        }).catch(() => {
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => { copyBtn.textContent = 'Copy ID'; }, 1500);
+        });
+      });
+      eyebrowP.append(copyBtn);
+
       titleWrap.append(
-        node('p', 'eyebrow mono', `CASE ${caseData.case_id}`),
+        eyebrowP,
         node('h2', '', caseData.source_scenario_id || 'CSV import'),
         node('p', '', caseData.summary || 'Review supporting evidence and context.')
       );
@@ -1759,6 +1907,79 @@
     refreshCases(false);
   });
   $('csv-file').addEventListener('change', event => importCsv(event.target.files?.[0]));
+
+  // Live search bar wireup
+  const searchInput = $('queue-search');
+  const searchClear = $('search-clear-btn');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      state.searchQuery = searchInput.value.trim().toLowerCase();
+      if (searchClear) searchClear.hidden = !state.searchQuery;
+      renderQueue();
+    });
+    if (searchClear) {
+      searchClear.addEventListener('click', () => {
+        searchInput.value = '';
+        state.searchQuery = '';
+        searchClear.hidden = true;
+        searchInput.focus();
+        renderQueue();
+      });
+    }
+  }
+
+  // Keyboard Navigation: J/K to navigate, / to search, G for graph modal, Esc to close
+  window.addEventListener('keydown', (e) => {
+    const isEditing = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT';
+    if (e.key === 'Escape') {
+      if ($('ov') && !$('ov').hidden) {
+        closeModal();
+      } else if (searchInput && document.activeElement === searchInput) {
+        searchInput.value = '';
+        state.searchQuery = '';
+        if (searchClear) searchClear.hidden = true;
+        searchInput.blur();
+        renderQueue();
+      }
+      return;
+    }
+
+    if (isEditing) return;
+
+    if (e.key === '/') {
+      e.preventDefault();
+      if (searchInput) searchInput.focus();
+      return;
+    }
+
+    if (e.key === 'j' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      stepCaseSelection(1);
+    } else if (e.key === 'k' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      stepCaseSelection(-1);
+    } else if (e.key === 'g' || e.key === 'G') {
+      if (state.selectedCaseData) {
+        e.preventDefault();
+        openModal(state.selectedCaseData);
+      }
+    }
+  });
+
+  function stepCaseSelection(delta) {
+    const visibleCases = getFilteredCases();
+    if (!visibleCases.length) return;
+    const currentIdx = visibleCases.findIndex(c => c.case_id === state.selectedId);
+    let nextIdx = currentIdx + delta;
+    if (nextIdx < 0) nextIdx = 0;
+    if (nextIdx >= visibleCases.length) nextIdx = visibleCases.length - 1;
+    const targetCase = visibleCases[nextIdx];
+    if (targetCase && targetCase.case_id !== state.selectedId) {
+      loadCase(targetCase.case_id);
+      const row = document.querySelector(`.case-row[data-case-id="${targetCase.case_id}"]`);
+      if (row) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
 
   // Initialize
   renderFilterButtons();

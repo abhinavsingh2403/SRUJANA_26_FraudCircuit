@@ -6,6 +6,9 @@
   <meta name="color-scheme" content="light">
   <meta name="description" content="TraceGuard is an analyst workbench for explaining potentially suspicious transaction patterns.">
   <title>TraceGuard – Case Queue &amp; Investigation Workbench</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
   <script src="/static/app.js" defer></script>
 </head>
@@ -27,6 +30,9 @@
     <div class="pill status-pill">
       <span class="status-dot"></span>
       <span id="connection-status">Connecting to API…</span>
+    </div>
+    <div class="pill hotkey-pill" title="Shortcuts: J/K navigate cases, / search, G open graph, Esc close">
+      <span class="kbd">J</span><span class="kbd">K</span> Nav <span class="sep">·</span> <span class="kbd">/</span> Search
     </div>
     <div class="pill">F01 · Fraud &amp; Transaction Risk</div>
     <div class="pill">Local decision support</div>
@@ -84,6 +90,15 @@
           </div>
 
           <div id="view-toggle" class="view-toggle" hidden></div>
+
+          <div class="queue-search-row">
+            <div class="search-input-box">
+              <span class="search-icon" aria-hidden="true">⌕</span>
+              <input type="text" id="queue-search" placeholder="Instant search by Case ID, Account (e.g. CMP-A), Scenario, or Rule code..." aria-label="Search cases" autocomplete="off" spellcheck="false">
+              <button id="search-clear-btn" class="search-clear-btn" type="button" aria-label="Clear search" title="Clear filter (Esc)" hidden>×</button>
+            </div>
+            <span id="search-count" class="search-count" hidden>0 matches</span>
+          </div>
 
           <div class="fl">
             <span>Priority</span>
