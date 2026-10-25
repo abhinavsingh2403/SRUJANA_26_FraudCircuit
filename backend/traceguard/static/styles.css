@@ -503,7 +503,8 @@ h1 {
   background: var(--card-solid);
   max-height: 560px;
   position: relative;
-  scroll-padding-top: 44px;
+  scroll-padding-top: 40px;
+  scroll-padding-bottom: 24px;
   overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: rgba(17, 17, 17, 0.22) transparent;
@@ -531,7 +532,7 @@ table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 13px;
+  font-size: 12.5px;
   min-width: 100%;
 }
 
@@ -542,17 +543,32 @@ th {
   text-align: left;
   color: var(--muted);
   font-weight: 700;
-  font-size: 11.5px;
+  font-size: 11px;
   letter-spacing: 0.02em;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-bottom: 1px solid rgba(17, 17, 17, 0.14);
   background: #fdf8d2;
   box-shadow: 0 2px 6px -1px rgba(17, 17, 17, 0.08);
   white-space: nowrap;
 }
 
+/* Frozen Case Column on Horizontal Scroll */
 .tw > table > thead > tr > th:first-child {
+  position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 25;
+  background: #fdf8d2;
+  box-shadow: 2px 2px 6px -1px rgba(17, 17, 17, 0.09);
   border-top-left-radius: 15px;
+}
+
+.tw > table > tbody > tr > td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 8;
+  background: var(--card-solid);
+  box-shadow: 2px 0 6px -1px rgba(17, 17, 17, 0.06);
 }
 
 .tw > table > thead > tr > th:last-child {
@@ -560,7 +576,7 @@ th {
 }
 
 td {
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--line);
   vertical-align: middle;
   background: var(--card-solid);
@@ -568,7 +584,7 @@ td {
 
 tbody tr {
   cursor: pointer;
-  scroll-margin-top: 46px;
+  scroll-margin-top: 44px;
   transition: background 0.15s cubic-bezier(0.16, 1, 0.3, 1), transform 0.12s ease;
 }
 
@@ -577,7 +593,8 @@ tbody tr:hover td {
 }
 
 tbody tr:hover td:first-child {
-  box-shadow: inset 3px 0 0 var(--dark);
+  background: #faf4b8;
+  box-shadow: inset 3px 0 0 var(--dark), 2px 0 6px -1px rgba(17, 17, 17, 0.08);
 }
 
 tbody tr.sel td,
@@ -587,7 +604,8 @@ tbody tr.active td {
 
 tbody tr.sel td:first-child,
 tbody tr.active td:first-child {
-  box-shadow: inset 4px 0 0 var(--dark);
+  background: #f6e96b;
+  box-shadow: inset 4px 0 0 var(--dark), 2px 0 6px -1px rgba(17, 17, 17, 0.1);
 }
 
 tbody tr:last-child td {
@@ -609,8 +627,8 @@ tbody tr:focus-visible {
 
 /* Case Row column proportions to prevent cut-offs */
 .case-row td:first-child {
-  max-width: 190px;
-  min-width: 140px;
+  max-width: 170px;
+  min-width: 130px;
 }
 
 .case-row .id {
@@ -618,7 +636,7 @@ tbody tr:focus-visible {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 11.5px;
   display: block;
 }
 
@@ -627,32 +645,33 @@ tbody tr:focus-visible {
   text-overflow: ellipsis;
   white-space: nowrap;
   display: block;
+  font-size: 10.5px;
 }
 
 .case-row td:nth-child(2) {
-  min-width: 85px;
+  min-width: 80px;
 }
 
 .case-row td:nth-child(3) {
-  min-width: 140px;
-  max-width: 220px;
+  min-width: 120px;
+  max-width: 190px;
 }
 
 .case-row td:nth-child(4) {
-  min-width: 65px;
+  min-width: 60px;
   text-align: center;
 }
 
 .case-row td:nth-child(5) {
-  min-width: 95px;
+  min-width: 85px;
 }
 
 .case-row td:nth-child(6) {
-  min-width: 80px;
+  min-width: 75px;
 }
 
 .case-row td:nth-child(7) {
-  min-width: 75px;
+  min-width: 70px;
 }
 
 .id {

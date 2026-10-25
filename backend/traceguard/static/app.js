@@ -290,18 +290,20 @@
     const nl = g.L.length;
 
     g.L.forEach((col, ci) => {
-      const x = nl === 1 ? 500 : 110 + ci * (780 / (nl - 1));
-      if (col.length > 5) {
-        // Multi-node fanout: stagger across two sub-columns to guarantee ample breathing room
-        const rSub = sm ? 15 : 20;
+      const x = nl === 1 ? 500 : 100 + ci * (780 / Math.max(1, nl - 1));
+      if (col.length > 4) {
+        // Multi-node fanout: stagger across two sub-columns with generous horizontal and vertical separation
+        const rSub = sm ? 14 : 17;
         const subColRows = Math.ceil(col.length / 2);
-        const subGap = Math.min(sm ? 44 : 64, (sm ? 340 : 420) / Math.max(1, subColRows));
+        const subGap = Math.max(48, Math.min(76, 440 / Math.max(1, subColRows)));
+        const xSeparation = sm ? 38 : 55;
         col.forEach((n, i) => {
           const subColIdx = i % 2;
           const rowIdx = Math.floor(i / 2);
-          const xOffset = subColIdx === 0 ? -26 : 26;
+          const xOffset = subColIdx === 0 ? -xSeparation : xSeparation;
           const y = 260 + (rowIdx - (subColRows - 1) / 2) * subGap;
-          pos[n] = { x: x + xOffset, y: y, r: rSub };
+          const clampedX = Math.max(70, Math.min(935, x + xOffset));
+          pos[n] = { x: clampedX, y: y, r: rSub };
         });
       } else {
         const gap = Math.min(sm ? 70 : 110, (sm ? 320 : 400) / Math.max(1, col.length));
@@ -312,17 +314,29 @@
     });
 
     const max = Math.max(1, ...g.E.map(e => e[2]));
-    const grp = {};
+
+    // Group edges by canonical pair key to decouple bidirectional and parallel paths
+    const pairGroups = {};
     g.E.forEach(e => {
-      const k = e[0] + '>' + e[1];
-      (grp[k] = grp[k] || []).push(e);
+      const pairKey = [e[0], e[1]].sort().join('<->');
+      (pairGroups[pairKey] = pairGroups[pairKey] || []).push(e);
     });
+
+    // Count identical amounts per sender to prevent blob collisions in fanouts
+    const senderAmountCounts = {};
+    g.E.forEach(e => {
+      const key = `${e[0]}_${e[2]}`;
+      senderAmountCounts[key] = (senderAmountCounts[key] || 0) + 1;
+    });
+    const senderAmountPlaced = {};
 
     let base = '', top = '', lab = '';
     const placedLabels = []; // Proximity collision check for amount labels
 
-    Object.keys(grp).forEach(k => {
-      const list = grp[k];
+    Object.keys(pairGroups).forEach(k => {
+      const list = pairGroups[k];
+      const hasReciprocal = list.some(e1 => list.some(e2 => e1[0] === e2[1] && e1[1] === e2[0]));
+
       list.forEach((e, i) => {
         const a = pos[e[0]], b = pos[e[1]];
         if (!a || !b) return;
@@ -330,7 +344,16 @@
         const len = Math.sqrt(dx * dx + dy * dy) || 1;
         const ux = dx / len, uy = dy / len;
         const nx = -uy, ny = ux;
-        const off = (i - (list.length - 1) / 2) * (list.length > 2 ? (sm ? 14 : 20) : (sm ? 18 : 24));
+
+        // Clean parallel offset: if reciprocal traffic exists, push forward and reverse to opposite sides
+        let off = 0;
+        if (hasReciprocal) {
+          const isForward = e[0] < e[1];
+          off = (isForward ? 1 : -1) * (sm ? 10 : 14);
+        } else if (list.length > 1) {
+          off = (i - (list.length - 1) / 2) * (sm ? 16 : 22);
+        }
+
         const w = Math.max(2, 2.2 + (sm ? 3.5 : 5.5) * (e[2] / max));
         const hl = sm ? 9 + w * 1.3 : 12 + w * 1.8;
         const hw = sm ? w * 1.1 + 2.5 : w * 1.3 + 3.5;
@@ -349,25 +372,76 @@
         const el = `<line class="graph-tx-line" data-tx-id="${escapeHtml(e[4] || '')}" x1="${sx.toFixed(1)}" y1="${sy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${col}" stroke-width="${w.toFixed(1)}"><title>${escapeHtml(titleText)}</title></line><polygon fill="${col}" points="${ex.toFixed(1)},${ey.toFixed(1)} ${(bx + nx * hw).toFixed(1)},${(by + ny * hw).toFixed(1)} ${(bx - nx * hw).toFixed(1)},${(by - ny * hw).toFixed(1)}"/>`;
         if (isTrigger) top += el; else base += el;
 
-        const t = nl > 2 ? 0.5 : 0.55;
-        const lx = sx + (bx - sx) * t;
-        const ly = sy + (by - sy) * t - w / 2 - 5;
-        if (!sm || isTrigger) {
-          const tooClose = placedLabels.some(p => Math.hypot(p.x - lx, p.y - ly) < (sm ? 28 : 22));
-          if (!tooClose) {
-            placedLabels.push({ x: lx, y: ly });
-            lab += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 11 : 12}" font-weight="700" fill="#111" stroke="#fffdea" stroke-width="${sm ? 4 : 3}" paint-order="stroke">${inr(e[2])}</text>`;
+        // Smart amount placement with collision avoidance and fanout deduplication
+        const amountKey = `${e[0]}_${e[2]}`;
+        const totalWithThisAmount = senderAmountCounts[amountKey] || 1;
+        const countPlacedSoFar = senderAmountPlaced[amountKey] || 0;
+
+        let shouldPlaceAmount = true;
+        if (totalWithThisAmount > 3) {
+          // On high fan-out trees with identical amounts, place labels on outer edges to avoid black blobs
+          if (countPlacedSoFar >= 2 && i < list.length - 1) {
+            shouldPlaceAmount = false;
+          }
+        }
+
+        if (shouldPlaceAmount && (!sm || isTrigger)) {
+          let bestLx = sx + (bx - sx) * 0.5;
+          let bestLy = sy + (by - sy) * 0.5 - w / 2 - 5;
+
+          // Check if best position hits any node circle or an existing label
+          let collidesWithNodes = Object.values(pos).some(p => Math.hypot(p.x - bestLx, p.y - bestLy) < p.r + 14);
+          let collidesWithLabels = placedLabels.some(p => Math.abs(p.x - bestLx) < 48 && Math.abs(p.y - bestLy) < 18);
+
+          if (collidesWithNodes || collidesWithLabels) {
+            for (const testT of [0.35, 0.65, 0.25, 0.75]) {
+              const testX = sx + (bx - sx) * testT;
+              const testY = sy + (by - sy) * testT - w / 2 - 5;
+              const nodeHit = Object.values(pos).some(p => Math.hypot(p.x - testX, p.y - testY) < p.r + 14);
+              const labelHit = placedLabels.some(p => Math.abs(p.x - testX) < 48 && Math.abs(p.y - testY) < 18);
+              if (!nodeHit && !labelHit) {
+                bestLx = testX;
+                bestLy = testY;
+                collidesWithNodes = false;
+                collidesWithLabels = false;
+                break;
+              }
+            }
+          }
+
+          if (!collidesWithNodes && !collidesWithLabels) {
+            placedLabels.push({ x: bestLx, y: bestLy });
+            senderAmountPlaced[amountKey] = countPlacedSoFar + 1;
+            lab += `<text x="${bestLx.toFixed(1)}" y="${bestLy.toFixed(1)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 10.5 : 11.5}" font-weight="700" fill="#111" stroke="#fffdea" stroke-width="${sm ? 4 : 3.5}" paint-order="stroke">${inr(e[2])}</text>`;
           }
         }
       });
     });
 
+    function formatNodeLabel(id, r) {
+      if (!id) return '';
+      if (r <= 18) {
+        const destMatch = id.match(/DEST[-_]?(\d+)/i);
+        if (destMatch) return 'D-' + destMatch[1];
+        const numMatch = id.match(/[-_](\d{1,3})$/);
+        if (numMatch) return '#' + numMatch[1];
+        if (id.length > 5) return id.slice(0, 4) + '…';
+        return id;
+      }
+      if (id.length > 8) {
+        const destMatch = id.match(/DEST[-_]?(\d+)/i);
+        if (destMatch) return 'DST-' + destMatch[1];
+        return id.slice(0, 6) + '…';
+      }
+      return id;
+    }
+
     let nodes = '';
     Object.keys(pos).forEach(n => {
       const p = pos[n];
       const r = p.r || baseR;
-      const displayLabel = n.length > 10 ? n.slice(0, 8) + '…' : n;
-      nodes += `<circle class="graph-node" data-acct-id="${escapeHtml(n)}" cx="${p.x}" cy="${p.y}" r="${r}" fill="#fff" stroke="#111" stroke-width="2.2"><title>${escapeHtml(n)}</title></circle><text x="${p.x}" y="${p.y + (sm ? 3.5 : 4.5)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 10 : 12}" font-weight="700" fill="#111" pointer-events="none">${escapeHtml(displayLabel)}</text>`;
+      const displayLabel = formatNodeLabel(n, r);
+      nodes += `<circle class="graph-node" data-acct-id="${escapeHtml(n)}" cx="${p.x}" cy="${p.y}" r="${r}" fill="#fff" stroke="#111" stroke-width="2.2"><title>${escapeHtml(n)}</title></circle><text x="${p.x}" y="${p.y + (r <= 18 ? 3.5 : 4.5)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${r <= 18 ? 10 : 12}" font-weight="700" fill="#111" pointer-events="none">${escapeHtml(displayLabel)}</text>`;
     });
 
     svg.innerHTML = base + top + nodes + lab;
@@ -859,9 +933,9 @@
       if (!uniqueRules.length) {
         rulesWrap.append(node('span', 'd', '—'));
       } else {
-        uniqueRules.slice(0, 3).forEach(r => rulesWrap.append(node('span', 'rl', r)));
-        if (uniqueRules.length > 3) {
-          rulesWrap.append(node('span', 'rl', `+${uniqueRules.length - 3}`));
+        uniqueRules.slice(0, 2).forEach(r => rulesWrap.append(node('span', 'rl', r)));
+        if (uniqueRules.length > 2) {
+          rulesWrap.append(node('span', 'rl', `+${uniqueRules.length - 2}`));
         }
       }
       tdRules.append(rulesWrap);
