@@ -63,7 +63,9 @@
 
   function badge(text, extra = '') {
     const safe = String(text || 'UNKNOWN');
-    const span = node('span', `b ${safe}${extra ? ` ${extra}` : ''}`, lab(safe));
+    const labelText = safe === 'INSUFFICIENT_HISTORY' ? 'INSUFFICIENT' : lab(safe);
+    const span = node('span', `b ${safe}${extra ? ` ${extra}` : ''}`, labelText);
+    if (safe === 'INSUFFICIENT_HISTORY') span.title = 'INSUFFICIENT HISTORY';
     return span;
   }
 
@@ -148,19 +150,32 @@
     return params.toString();
   }
 
+  function formatExactTimestamp(dateStr) {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return String(dateStr);
+      return `${d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'medium' })} (${dateStr})`;
+    } catch {
+      return String(dateStr);
+    }
+  }
+
   function formatTimeAgo(dateStr) {
     if (!dateStr) return '—';
     try {
       const time = new Date(dateStr).getTime();
       if (Number.isNaN(time)) return String(dateStr);
       const diffMs = Date.now() - time;
+      if (diffMs < 0) return 'just now';
       const mins = Math.floor(diffMs / 60000);
       if (mins < 1) return 'just now';
-      if (mins < 60) return `${mins} min ago`;
+      if (mins < 60) return `${mins}m ago`;
       const hours = Math.floor(mins / 60);
-      if (hours < 24) return `${hours} h ago`;
+      if (hours < 24) return `${hours}h ago`;
       const days = Math.floor(hours / 24);
-      return `${days} d ago`;
+      if (days < 30) return `${days}d ago`;
+      return new Date(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     } catch {
       return String(dateStr);
     }
@@ -769,7 +784,9 @@
     const amtSpan = calculateAmountSpan(caseData);
     const source = caseData.source_scenario_id || 'CSV import';
     const status = caseData.status || 'OPEN';
-    const opened = formatTimeAgo(caseData.created_at || caseData.updated_at);
+    const rawOpened = caseData.created_at || caseData.updated_at;
+    const opened = formatTimeAgo(rawOpened);
+    const openedExact = formatExactTimestamp(rawOpened);
 
     const dl = $('dl');
     dl.replaceChildren();
@@ -778,10 +795,13 @@
       ['Txn / Acct', `${txCount} / ${acctCount}`],
       ['Amount span', amtSpan],
       ['Status', status],
-      ['Opened', opened],
+      ['Opened', opened, openedExact],
     ];
-    rows.forEach(([term, val]) => {
-      dl.append(node('dt', '', term), node('dd', '', val));
+    rows.forEach(([term, val, titleVal]) => {
+      const dt = node('dt', '', term);
+      const dd = node('dd', '', val);
+      if (titleVal) dd.title = titleVal;
+      dl.append(dt, dd);
     });
 
     const dr = $('dr');
@@ -953,7 +973,9 @@
       tdStatus.append(badge(item.status || 'OPEN'));
 
       // 7. Opened / Timestamp
-      const tdOpened = node('td', 'd', formatTimeAgo(item.created_at || item.updated_at));
+      const rawOpened = item.created_at || item.updated_at;
+      const tdOpened = node('td', 'd opened-col', formatTimeAgo(rawOpened));
+      tdOpened.title = formatExactTimestamp(rawOpened);
 
       tr.append(tdCase, tdPri, tdRules, tdCounts, tdAmt, tdStatus, tdOpened);
 
