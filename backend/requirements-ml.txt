@@ -1,3 +1,4 @@
 # Optional; core analysis runs without these. Versions used for bundled text artifact.
 scikit-learn==1.8.0
 joblib==1.5.3
+xgboost>=2.0.0

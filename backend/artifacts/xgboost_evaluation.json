@@ -1,0 +1,147 @@
+{
+  "status": "completed",
+  "model_name": "TraceGuard XGBoost Fraud Classifier",
+  "model_type": "xgboost.XGBClassifier",
+  "dataset_path": "D:\\hack\\archive (1)\\PS_20174392719_1491204439457_log.csv",
+  "dataset_total_rows": 6362620,
+  "dataset_fraud_count": 8213,
+  "dataset_fraud_ratio": 0.001290820448180152,
+  "hyperparameters": {
+    "n_estimators": 100,
+    "max_depth": 6,
+    "learning_rate": 0.1,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "tree_method": "hist",
+    "eval_metric": "logloss"
+  },
+  "metrics": {
+    "accuracy": 0.9999937132816356,
+    "accuracy_pct": 99.9994,
+    "balanced_accuracy": 0.9987811408350964,
+    "precision": 0.9975654290931223,
+    "recall": 0.9975654290931223,
+    "f1_score": 0.9975654290931223,
+    "roc_auc": 0.9998158259515695,
+    "pr_auc": 0.99827062531664,
+    "confusion_matrix": {
+      "true_negatives": 1270877,
+      "false_positives": 4,
+      "false_negatives": 4,
+      "true_positives": 1639,
+      "matrix": [
+        [
+          1270877,
+          4
+        ],
+        [
+          4,
+          1639
+        ]
+      ]
+    },
+    "rates": {
+      "false_positive_rate": 3.1474229294481543e-06,
+      "false_negative_rate": 0.002434570906877663
+    },
+    "sample_counts": {
+      "test_total": 1272524,
+      "test_actual_fraud": 1643,
+      "test_actual_benign": 1270881,
+      "predicted_fraud": 1643,
+      "predicted_benign": 1270881
+    },
+    "training_time_seconds": 22.2,
+    "inference_time_seconds": 0.42,
+    "feature_importances": [
+      {
+        "feature": "orig_cleared",
+        "importance": 0.9566806554794312
+      },
+      {
+        "feature": "oldbalanceOrg",
+        "importance": 0.028452672064304352
+      },
+      {
+        "feature": "errorBalanceOrig",
+        "importance": 0.007724099792540073
+      },
+      {
+        "feature": "amount",
+        "importance": 0.003872430883347988
+      },
+      {
+        "feature": "hour",
+        "importance": 0.0014254424022510648
+      },
+      {
+        "feature": "newbalanceOrig",
+        "importance": 0.0009986170334741473
+      },
+      {
+        "feature": "type_TRANSFER",
+        "importance": 0.00026137629174627364
+      },
+      {
+        "feature": "type_CASH_IN",
+        "importance": 0.0001664616574998945
+      },
+      {
+        "feature": "newbalanceDest",
+        "importance": 8.567779150325805e-05
+      },
+      {
+        "feature": "step",
+        "importance": 6.815288361394778e-05
+      },
+      {
+        "feature": "day",
+        "importance": 6.535922148032114e-05
+      },
+      {
+        "feature": "type_CASH_OUT",
+        "importance": 5.77625360165257e-05
+      },
+      {
+        "feature": "type_PAYMENT",
+        "importance": 4.4526048441184685e-05
+      },
+      {
+        "feature": "oldbalanceDest",
+        "importance": 3.4618176869116724e-05
+      },
+      {
+        "feature": "dest_zero_start",
+        "importance": 3.309403109597042e-05
+      },
+      {
+        "feature": "errorBalanceDest",
+        "importance": 2.9028971766820177e-05
+      },
+      {
+        "feature": "type_DEBIT",
+        "importance": 0.0
+      }
+    ]
+  },
+  "feature_names": [
+    "step",
+    "amount",
+    "oldbalanceOrg",
+    "newbalanceOrig",
+    "oldbalanceDest",
+    "newbalanceDest",
+    "errorBalanceOrig",
+    "errorBalanceDest",
+    "hour",
+    "day",
+    "orig_cleared",
+    "dest_zero_start",
+    "type_CASH_IN",
+    "type_CASH_OUT",
+    "type_DEBIT",
+    "type_PAYMENT",
+    "type_TRANSFER"
+  ],
+  "timestamp": "2026-10-25T05:23:07Z"
+}

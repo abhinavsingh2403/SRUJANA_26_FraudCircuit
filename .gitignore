@@ -36,3 +36,5 @@ Thumbs.db
 *.parquet
 *.csv
 !backend/examples/*.csv
+!backend/artifacts/xgboost_pipeline.joblib
+!backend/artifacts/xgboost_*.json

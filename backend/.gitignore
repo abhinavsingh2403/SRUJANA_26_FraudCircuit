@@ -10,5 +10,7 @@ traceguard.db-wal
 *.joblib
 *.pkl
 *.parquet
+!artifacts/xgboost_pipeline.joblib
+!artifacts/xgboost_*.json
 .env
 .DS_Store
