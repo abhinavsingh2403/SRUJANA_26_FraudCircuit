@@ -311,6 +311,188 @@
     svg.setAttribute('aria-label', `Transaction graph with ${g.E.length} transactions between ${Object.keys(pos).length} accounts`);
   }
 
+  /* Natural Language Transaction Graph Description */
+  function generateGraphNarrative(caseData) {
+    if (!caseData) return null;
+
+    const triggerTxs = caseData.trigger_transactions || [];
+    const contextTxs = caseData.context_transactions || [];
+    const allTxs = allCaseTransactions(caseData);
+
+    const accounts = caseData.account_ids || [...new Set(allTxs.flatMap(tx => [tx.sender_id, tx.recipient_id]).filter(Boolean))];
+    const acctCount = accounts.length || 0;
+
+    const inDegree = {};
+    const outDegree = {};
+    const inVolume = {};
+    const outVolume = {};
+    let totalVolume = 0;
+    const timestamps = [];
+
+    for (const tx of allTxs) {
+      const amt = Number(tx.amount) || 0;
+      totalVolume += amt;
+      if (tx.sender_id) {
+        outDegree[tx.sender_id] = (outDegree[tx.sender_id] || 0) + 1;
+        outVolume[tx.sender_id] = (outVolume[tx.sender_id] || 0) + amt;
+      }
+      if (tx.recipient_id) {
+        inDegree[tx.recipient_id] = (inDegree[tx.recipient_id] || 0) + 1;
+        inVolume[tx.recipient_id] = (inVolume[tx.recipient_id] || 0) + amt;
+      }
+      if (tx.timestamp) {
+        const t = new Date(tx.timestamp).getTime();
+        if (!isNaN(t)) timestamps.push(t);
+      }
+    }
+
+    const sources = accounts.filter(a => (outDegree[a] || 0) > 0 && !(inDegree[a] || 0));
+    const sinks = accounts.filter(a => (inDegree[a] || 0) > 0 && !(outDegree[a] || 0));
+    const relays = accounts.filter(a => (inDegree[a] || 0) > 0 && (outDegree[a] || 0) > 0);
+
+    const fmtAcctList = (list, max = 3) => {
+      if (!list || !list.length) return 'None';
+      if (list.length <= max) return list.join(', ');
+      return `${list.slice(0, max).join(', ')} (+${list.length - max} more)`;
+    };
+
+    let timeSpanDesc = '';
+    if (timestamps.length >= 2) {
+      timestamps.sort((a, b) => a - b);
+      const spanSec = Math.round((timestamps[timestamps.length - 1] - timestamps[0]) / 1000);
+      if (spanSec < 60) timeSpanDesc = `${spanSec} seconds`;
+      else if (spanSec < 3600) timeSpanDesc = `${Math.round(spanSec / 60)} minutes`;
+      else if (spanSec < 86400) timeSpanDesc = `${(spanSec / 3600).toFixed(1)} hours`;
+      else timeSpanDesc = `${(spanSec / 86400).toFixed(1)} days`;
+    }
+
+    const rules = caseData.rule_codes || (caseData.evidence || []).map(e => e.rule_id);
+    const uniqueRules = [...new Set(rules)].filter(Boolean);
+    const evidenceList = caseData.evidence || [];
+
+    let typology = 'Direct Transaction Network';
+    let patternTag = 'Standard Flow';
+    let narrative = '';
+
+    const hasChain = uniqueRules.includes('R5_LAYERED_CHAIN');
+    const hasCycle = uniqueRules.includes('R4_DIRECTED_CYCLE');
+    const hasFanOut = uniqueRules.includes('R2B_FAN_OUT_BURST');
+    const hasFanIn = uniqueRules.includes('R2A_FAN_IN_BURST');
+    const hasRapidPass = uniqueRules.includes('R1_RAPID_PASS_THROUGH');
+    const hasSpike = uniqueRules.includes('R3_AMOUNT_DEVIATION');
+    const hasRepeat = uniqueRules.includes('R6_REPEATED_VALUE_BURST');
+
+    if (hasChain) {
+      typology = 'Multi-Hop Layered Chain';
+      patternTag = 'Layering / Mule Relay';
+      const chainEv = evidenceList.find(e => e.rule_id === 'R5_LAYERED_CHAIN');
+      const hops = chainEv?.observed?.chain_hops || allTxs.length || 0;
+      const srcStr = fmtAcctList(sources, 2);
+      const relayStr = fmtAcctList(relays, 3);
+      const sinkStr = fmtAcctList(sinks, 2);
+      narrative = `This graph illustrates a linear ${hops}-hop layering chain across ${acctCount} accounts. Funds originated from ${srcStr} and were routed sequentially through ${relayStr} before reaching terminal destination ${sinkStr}. The total flow transacted was ${fmtAmount(totalVolume)}${timeSpanDesc ? ` within ${timeSpanDesc}` : ''}. Rapid sequential relaying with high capital retention is a primary indicator of money laundering layering designed to break audit trails.`;
+    } else if (hasCycle) {
+      typology = 'Directed Cycle (Wash Trading)';
+      patternTag = 'Circular Flow / Round-Tripping';
+      const cycleEv = evidenceList.find(e => e.rule_id === 'R4_DIRECTED_CYCLE');
+      const cLen = cycleEv?.observed?.cycle_length || acctCount;
+      narrative = `A closed circular transaction cycle was detected connecting ${cLen} accounts (${accounts.slice(0, 4).join(' → ')} → back to start). Total flow volume reached ${fmtAmount(totalVolume)}${timeSpanDesc ? ` over ${timeSpanDesc}` : ''}. Circular fund flows with minimal net dissipation are characteristic of wash trading, round-trip invoicing, or artificial volume inflation.`;
+    } else if (hasFanOut) {
+      typology = 'Fan-Out Rapid Disbursement';
+      patternTag = 'Dispersal / Smurfing';
+      const fanEv = evidenceList.find(e => e.rule_id === 'R2B_FAN_OUT_BURST');
+      const recCount = fanEv?.observed?.distinct_recipients_including_current || sinks.length;
+      const hub = sources.length ? sources[0] : (allTxs[0]?.sender_id || 'Primary Account');
+      narrative = `A fan-out burst pattern originating from central hub ${hub}, which dispersed funds rapidly across ${recCount} separate recipient accounts (${fmtAcctList(sinks, 3)}). Total transacted amount is ${fmtAmount(totalVolume)}${timeSpanDesc ? ` in ${timeSpanDesc}` : ''}. This structured disbursement behavior suggests smurfing or distribution across a money mule network.`;
+    } else if (hasFanIn) {
+      typology = 'Fan-In Fund Aggregation';
+      patternTag = 'Aggregation / Funneling';
+      const collector = sinks.length ? sinks[0] : (allTxs[allTxs.length - 1]?.recipient_id || 'Primary Collector');
+      narrative = `A fan-in aggregation pattern funneling incoming capital from ${sources.length} feeder accounts into central collector ${collector}. Total transacted amount is ${fmtAmount(totalVolume)}${timeSpanDesc ? ` over ${timeSpanDesc}` : ''}. Concentrating funds from disparate sources into a central point often signals mule collection prior to large-scale withdrawal.`;
+    } else if (hasRapidPass) {
+      typology = 'Rapid Pass-Through Velocity';
+      patternTag = 'Immediate Turnaround';
+      const rpEv = evidenceList.find(e => e.rule_id === 'R1_RAPID_PASS_THROUGH');
+      const wDetail = rpEv?.observed?.window_details;
+      const ratio = wDetail ? Object.values(wDetail)[0]?.amount_to_inflow_ratio : null;
+      const ratioPct = ratio ? `${Math.round(ratio * 100)}%` : 'nearly 100%';
+      narrative = `Funds transferred into an intermediary account were immediately drained (${ratioPct} pass-through ratio) shortly after arrival. The graph shows ${acctCount} connected accounts moving ${fmtAmount(totalVolume)}${timeSpanDesc ? ` within ${timeSpanDesc}` : ''}. Transit accounts exhibiting near-zero balance holding time are strong indicators of unauthorized account takeover or mule transit.`;
+    } else if (hasSpike) {
+      typology = 'Anomalous Transaction Volume Spike';
+      patternTag = 'Baseline Deviation';
+      const spikeEv = evidenceList.find(e => e.rule_id === 'R3_AMOUNT_DEVIATION');
+      const currAmt = spikeEv?.observed?.current_amount || totalVolume;
+      const histMed = spikeEv?.observed?.historical_median;
+      const mult = histMed ? `${(currAmt / histMed).toFixed(1)}x higher than baseline` : 'anomalous deviation';
+      narrative = `An anomalous transaction volume deviation was observed involving accounts ${accounts.slice(0, 3).join(', ')}. The transacted amount of ${fmtAmount(currAmt)} represents a sudden spike (${mult}). This abrupt departure from established operational baseline indicates potential account takeover, payroll diversion, or urgent fraudulent extraction.`;
+    } else if (hasRepeat) {
+      typology = 'Repeated Fixed-Value Bursts';
+      patternTag = 'Structuring / Micro-Bursts';
+      narrative = `Repeated transactions of identical or near-identical denominations were executed in close sequence across ${acctCount} accounts, totaling ${fmtAmount(totalVolume)}${timeSpanDesc ? ` over ${timeSpanDesc}` : ''}. Rapid consecutive transfers with invariant amounts indicate automated scripting or deliberate threshold evasion.`;
+    } else {
+      typology = 'Connected Account Transaction Network';
+      patternTag = 'Direct Activity';
+      narrative = `The transaction graph covers ${allTxs.length} transaction(s) connecting ${acctCount} account(s) (${fmtAcctList(accounts, 4)}) with a total transaction volume of ${fmtAmount(totalVolume)}${timeSpanDesc ? ` over ${timeSpanDesc}` : ''}. ${triggerTxs.length} transaction(s) triggered compliance monitoring rules.`;
+    }
+
+    return {
+      typology,
+      patternTag,
+      narrative,
+      stats: {
+        accountCount: acctCount,
+        txCount: allTxs.length,
+        triggerCount: triggerTxs.length,
+        totalVolume: fmtAmount(totalVolume),
+        timeSpan: timeSpanDesc || 'Single timestamp',
+        sources: fmtAcctList(sources, 2),
+        relays: fmtAcctList(relays, 2),
+        sinks: fmtAcctList(sinks, 2)
+      }
+    };
+  }
+
+  function createNarrativeElement(caseData) {
+    const data = generateGraphNarrative(caseData);
+    if (!data) return null;
+
+    const card = node('div', 'graph-narrative-card');
+
+    const header = node('div', 'graph-narrative-header');
+    const titleWrap = node('div', 'graph-narrative-title-wrap');
+    titleWrap.append(
+      node('span', 'graph-narrative-title', `Graph Narrative · ${data.typology}`)
+    );
+    const badgeEl = node('span', 'graph-narrative-badge', data.patternTag);
+    header.append(titleWrap, badgeEl);
+
+    const desc = node('p', 'graph-narrative-main', data.narrative);
+
+    const meta = node('div', 'graph-narrative-meta');
+    const items = [
+      ['Total Flow', data.stats.totalVolume],
+      ['Timespan', data.stats.timeSpan],
+      ['Transactions', `${data.stats.txCount} (${data.stats.triggerCount} trigger)`],
+      ['Sources', data.stats.sources],
+      ['Relays', data.stats.relays],
+      ['Sinks', data.stats.sinks]
+    ];
+
+    for (const [lbl, val] of items) {
+      if (val && val !== 'None') {
+        const item = node('div', 'graph-narrative-meta-item');
+        item.append(
+          node('span', 'graph-narrative-meta-label', lbl),
+          node('span', 'graph-narrative-meta-value', val)
+        );
+        meta.append(item);
+      }
+    }
+
+    card.append(header, desc, meta);
+    return card;
+  }
+
   function updateMetrics() {
     const all = state.cases;
     $('metric-all').textContent = state.total;
@@ -676,6 +858,13 @@
 
     const layout = buildGraphLayout(caseData);
     drawGraph(layout, $('gs'), false);
+
+    const narrativeContainer = $('modal-graph-narrative');
+    if (narrativeContainer) {
+      narrativeContainer.replaceChildren();
+      const narrativeCard = createNarrativeElement(caseData);
+      if (narrativeCard) narrativeContainer.append(narrativeCard);
+    }
 
     const txCount = caseData.counts?.trigger_transactions_total ?? caseData.transaction_ids?.length ?? (caseData.trigger_transactions || []).length;
     const acctCount = caseData.counts?.account_ids_total ?? caseData.account_ids?.length ?? 0;
@@ -1052,6 +1241,8 @@
       item2.append(dot2, document.createTextNode(' Context transaction'));
       legend.append(item1, item2);
       graphBox.append(legend);
+      const narrativeBox = createNarrativeElement(caseData);
+      if (narrativeBox) graphBox.append(narrativeBox);
       detail.append(graphBox);
 
       // Transactions Timeline

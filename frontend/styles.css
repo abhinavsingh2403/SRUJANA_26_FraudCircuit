@@ -1506,3 +1506,85 @@ th.amt {
 #page-evaluation details { margin:12px 0; } #page-evaluation summary { cursor:pointer; font-weight:600; }
 #evaluation-limitations li { margin:10px 0; } #audit-inspector-result { overflow-wrap:anywhere; }
 @media(max-width:760px) { .eval-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .eval-section { padding:16px; } .audit-inspector-bar { flex-wrap:wrap; } }
+
+/* Graph Natural Language Narrative Card */
+.graph-narrative-card {
+  margin-top: 14px;
+  padding: 16px 18px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(17, 17, 17, 0.04);
+}
+
+.graph-narrative-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.graph-narrative-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.graph-narrative-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+}
+
+.graph-narrative-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--lemon-mid);
+  color: var(--ink);
+  border: 1px solid rgba(17, 17, 17, 0.15);
+  letter-spacing: 0.02em;
+}
+
+.graph-narrative-main {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #1e1e1e;
+  margin: 0 0 12px 0;
+}
+
+.graph-narrative-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(17, 17, 17, 0.14);
+  font-size: 11.5px;
+}
+
+.graph-narrative-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.graph-narrative-meta-label {
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.graph-narrative-meta-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--ink);
+  font-weight: 500;
+}
+
