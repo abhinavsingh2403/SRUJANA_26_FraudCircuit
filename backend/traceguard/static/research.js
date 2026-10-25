@@ -28,7 +28,15 @@
  $('append-to-queue').onclick=()=>task($('append-to-queue'),$('queue-state'),async()=>{
   if(!Object.keys(spec).length){const r=await api('/api/simulate/parse',{text:$('scenario-text').value});form(r.spec);}
   const r=await api('/api/simulate/save-to-queue',{spec:current(),overrides:{gap_scale:Number($('gap').value),amount_scale:Number($('amount').value)}});
-  $('queue-state').innerHTML=`${r.message} <a href="/#/queue" style="font-weight:700;margin-left:8px;text-decoration:underline;">View in Case Queue →</a>`;
+  const caseId = (r.cases && r.cases.length) ? r.cases[0].case_id : '';
+  if (caseId) {
+    try {
+      sessionStorage.setItem('traceguard_target_case', caseId);
+      sessionStorage.setItem('traceguard_target_run', r.run_id || '');
+    } catch (_) {}
+  }
+  const queueUrl = caseId ? `/#/queue?case_id=${encodeURIComponent(caseId)}` : `/#/queue`;
+  $('queue-state').innerHTML=`${r.message} <a href="${queueUrl}" class="pill btn" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;margin-left:8px;background:var(--dark);color:#fff;text-decoration:none;padding:4px 12px;font-size:12px;">Inspect Appended Case in Queue (${caseId || 'All'}) →</a>`;
   $('queue-state').className='success';
  });
  $('sweep').onclick=()=>task($('sweep'),$('simulation-state'),async()=>{

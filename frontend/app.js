@@ -1646,9 +1646,52 @@
     }
   }
 
-  async function refreshCases(keepSelection = true) {
+  function getRequestedTargetCase() {
+    const hash = window.location.hash || '';
+    const hashCaseMatch = hash.match(/[?&](?:case_id|case)=([^&]+)/i) || hash.match(/^#\/?case\/([^?&]+)/i) || hash.match(/^#case=([^&]+)/i);
+    if (hashCaseMatch) return decodeURIComponent(hashCaseMatch[1]);
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const searchCase = searchParams.get('case_id') || searchParams.get('case');
+    if (searchCase) return searchCase;
+
+    try {
+      const stored = sessionStorage.getItem('traceguard_target_case');
+      if (stored) {
+        sessionStorage.removeItem('traceguard_target_case');
+        return stored;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  async function jumpToCase(caseId) {
+    if (!caseId) return;
+    showPage('queue');
+    state.filterPriority = 'All';
+    state.filterStatus = 'All';
+    state.viewMode = 'all';
+    $('priority-filter').value = '';
+    $('status-filter').value = '';
+
+    await refreshCases(false, caseId);
+
+    setTimeout(() => {
+      const row = document.querySelector(`.case-row[data-case-id="${caseId}"]`);
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        row.classList.add('highlight-target-case');
+        setTimeout(() => row.classList.remove('highlight-target-case'), 3500);
+      }
+    }, 150);
+
+    showToast(`Loaded appended case: ${caseId}`);
+  }
+
+  async function refreshCases(keepSelection = true, explicitTargetId = null) {
     const request = ++state.queueRequest;
-    const previousId = keepSelection ? state.selectedId : null;
+    const targetCaseId = explicitTargetId || getRequestedTargetCase();
+    const previousId = targetCaseId || (keepSelection ? state.selectedId : null);
     clearDetail('Loading cases…');
 
     try {
@@ -1670,6 +1713,20 @@
 
       if (previousId && state.cases.some(c => c.case_id === previousId)) {
         await loadCase(previousId);
+        setTimeout(() => {
+          const row = document.querySelector(`.case-row[data-case-id="${previousId}"]`);
+          if (row) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            row.classList.add('highlight-target-case');
+            setTimeout(() => row.classList.remove('highlight-target-case'), 3500);
+          }
+        }, 100);
+      } else if (previousId) {
+        try {
+          await loadCase(previousId);
+        } catch (_) {
+          if (state.cases.length) await loadCase(state.cases[0].case_id);
+        }
       } else if (state.cases.length) {
         await loadCase(state.cases[0].case_id);
       } else {
@@ -1991,9 +2048,14 @@
   }
 
   function handleRoute() {
-    const raw = window.location.hash.replace(/^#\/?/, '').toLowerCase();
-    const page = PAGES.includes(raw) ? raw : 'queue';
+    const hashClean = (window.location.hash || '').replace(/^#\/?/, '').split('?')[0].toLowerCase();
+    const page = PAGES.includes(hashClean) ? hashClean : 'queue';
     showPage(page);
+
+    const targetCaseId = getRequestedTargetCase();
+    if (targetCaseId && state.selectedId !== targetCaseId) {
+      jumpToCase(targetCaseId);
+    }
   }
 
   window.addEventListener('hashchange', handleRoute);

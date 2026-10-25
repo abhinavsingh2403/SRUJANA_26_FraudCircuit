@@ -636,6 +636,18 @@ tbody tr:focus-visible {
   outline-offset: -2px;
 }
 
+.case-row.highlight-target-case {
+  background: var(--lemon) !important;
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+  animation: target-pulse 1.8s ease-in-out 3;
+}
+@keyframes target-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(246, 233, 107, 0.7); }
+  50% { box-shadow: 0 0 0 6px rgba(246, 233, 107, 0.25); }
+  100% { box-shadow: 0 0 0 0 rgba(246, 233, 107, 0); }
+}
+
 /* Case Row column proportions: perfectly budgeted to fit in 100% width without horizontal scroll */
 .case-row td:first-child {
   max-width: 140px;
