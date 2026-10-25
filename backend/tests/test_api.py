@@ -11,7 +11,9 @@ class APITests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.old_db = os.environ.get("TRACEGUARD_DB")
+        self.old_artifacts = os.environ.get("TRACEGUARD_ARTIFACTS")
         os.environ["TRACEGUARD_DB"] = os.path.join(self.temp.name, "test.db")
+        os.environ["TRACEGUARD_ARTIFACTS"] = self.temp.name
         self.client_context = TestClient(app)
         self.client = self.client_context.__enter__()
 
@@ -21,6 +23,10 @@ class APITests(unittest.TestCase):
             os.environ.pop("TRACEGUARD_DB", None)
         else:
             os.environ["TRACEGUARD_DB"] = self.old_db
+        if self.old_artifacts is None:
+            os.environ.pop("TRACEGUARD_ARTIFACTS", None)
+        else:
+            os.environ["TRACEGUARD_ARTIFACTS"] = self.old_artifacts
         self.temp.cleanup()
 
     def test_health(self):

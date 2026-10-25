@@ -15,6 +15,8 @@ def invalid(fn,*args):
 def parse(body:TextRequest):return simulator.parse(body.text)
 @router.post('/api/simulate/run')
 def run(body:simulator.RunRequest):return invalid(simulator.run,body.spec,body.overrides)
+@router.post('/api/simulate/save-to-queue')
+def save_simulation_to_queue(body:simulator.RunRequest):return invalid(simulator.save_to_queue,body.spec,body.overrides)
 @router.post('/api/simulate/sweep')
 def sweep(body:simulator.SweepRequest):return invalid(simulator.sweep,body)
 @router.get('/api/simulate/patterns')
@@ -37,3 +39,7 @@ def events(body:security.Event|Annotated[list[security.Event],Body(min_length=1,
 def list_events(event_type:str|None=Query(None,pattern='^(AUTH_FAILURE_BURST|REQUEST_RATE_SPIKE|UNMATCHED_REFERENCE_PAYOUT|OTHER)$'),account_id:str|None=Query(None,max_length=128),since:datetime|None=None,limit:int=Query(100,ge=1,le=200),offset:int=Query(0,ge=0,le=100000)):
     if since is not None and since.tzinfo is None:raise HTTPException(422,detail='since requires timezone')
     return security.listing(event_type,account_id,since,limit,offset)
+
+@router.post('/api/simulate/step')
+def simulation_step(body:simulator.StepRequest):
+    return invalid(simulator.step, body)

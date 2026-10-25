@@ -7,9 +7,13 @@
   "scripts": {
     "dev": "vite",
     "build": "node build.cjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint app.js research.js simulation.js",
+    "test": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "eslint": "^9.39.5",
     "vite": "^6.0.0"
   }
 }

@@ -67,6 +67,8 @@ def analyse_transactions_detailed(
     from .model_hook import advisory_scores
     scores = advisory_scores(txs, settings)
     for case in payloads:
+        if case["priority"] == "INSUFFICIENT_HISTORY":
+            continue
         values = [scores[t] for t in case["transaction_ids"] if t in scores]
         if values:
             case["score_components"].update(model_score=max(values), model_status="configured", model_notice="model rank score, not a probability")

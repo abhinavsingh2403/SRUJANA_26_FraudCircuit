@@ -52,3 +52,15 @@ Changed code: `backend/traceguard/{extension_common,explain,simulator,paysim_ada
 ## One next task
 
 Implement exact transaction-level PaySim alert accounting independent of bounded case payloads, with a truncation-sized labelled toy regression, before reporting large-window evaluation metrics. Then evaluate only on a provenance/licence-reviewed local dataset with fixed chronological splits.
+
+# 2026-10-25 simulation and hardening update (supersedes older build status)
+
+Source: dataset-wali-branch at 69b211c167f75c3477ce158de749217873155749.
+
+Changed backend simulator/default normalization, extensions API, sample-import reporting, new HTTP request guards, optional model-test loading and playback regression tests. Changed main/research navigation, sample action notifications and graph narrative; added Simulation HTML/CSS/JS. Added ESLint/Playwright configuration and tests, updated build asset filtering and packaged static copies. Updated API contracts, security notes, decisions and RUN_UPDATED_BUILD.md.
+
+Commands actually executed: backend unittest discovery (135 tests passed), compileall, scripts/replay_all.py; frontend npm run lint, npm run build; npm test with Chromium executable override (five tests passed). Inspected desktop/mobile screenshots. Browser install via Playwright CDN failed in this environment; validation used the Chromium binary from @sparticuz/chromium instead. No claim of testing Firefox/WebKit or Windows. Optional XGBoost dependencies were present during the full test run; model training was not run.
+
+Remaining boundaries: localhost only; no authentication, tenancy or rate limiting; origin checks are not authorization. No live banking feed, externally anchored audit, real-world performance claim, arbitrary CSV playback or guarantee of universal defect/security coverage. Full report and user startup instructions are in RUN_UPDATED_BUILD.md.
+
+Next exact task if extending scope: persist the full source transaction stream per import with explicit retention/access rules, then implement replay of imported runs against that complete history; do not treat a truncated case payload as the original input.

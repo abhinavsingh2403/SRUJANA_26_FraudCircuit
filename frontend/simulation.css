@@ -1,0 +1,27 @@
+main{padding:28px 0}h1{font-size:clamp(28px,4vw,46px);letter-spacing:-1.5px;margin:10px 0}.setup{display:flex;align-items:end;gap:18px;flex-wrap:wrap;padding:22px;margin-top:25px}.setup label{flex:1;min-width:150px}label{display:flex;flex-direction:column;gap:8px;font-size:13px;font-weight:600}select,input,textarea{font:inherit;border:1px solid #cbd5d1;background:#fff;border-radius:8px;padding:10px;color:#172d28}textarea{width:100%;font-family:monospace}.setup details{flex-basis:100%}summary{cursor:pointer}button:disabled{opacity:.4;cursor:not-allowed}.controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:18px}.seek{flex:1;min-width:160px}.seek input{width:100%;padding:0;accent-color:#087f72}.sim-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr);gap:18px;margin:18px 0}.graph-panel,.findings-panel,.ledger{padding:22px;min-width:0}.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}h2{font-size:19px;margin:0 0 12px}.graph-panel p,.notice{font-size:12px;color:#52655f;line-height:1.6}#graph{display:block;width:100%;min-height:300px;background:#f7faf8;border:1px solid #e2e9e5;border-radius:12px}#graph text{font-family:monospace;font-size:12px;fill:#172d28}#graph .edge-label{font-size:11px;paint-order:stroke;stroke:#f7faf8;stroke-width:4px;stroke-linejoin:round}#graph g[tabindex]{cursor:pointer}#graph g:focus circle{stroke-width:5px}.current{background:#edf5f1;padding:14px;border-radius:8px}.finding{border-top:1px solid #dce5df;padding:15px 0}.finding h3{font-size:14px}.finding p,.finding li{font-size:13px;line-height:1.6}.finding pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px}.table-scroll{overflow:auto;max-height:350px}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px;border-bottom:1px solid #e0e8e2;font-size:12px}tbody tr:last-child{background:#fff6e5}#status{min-height:24px}#status.error{color:#a12d19}.notice{padding:10px}#download{margin-top:15px}.findings-panel{max-height:700px;overflow:auto}@media(max-width:900px){.sim-grid{grid-template-columns:1fr}.nav{flex-wrap:wrap}.top{flex-wrap:wrap}.setup label{flex-basis:100%}.panel-heading{flex-wrap:wrap}}
+/* Avoid promoting every panel to a GPU layer on tall mobile pages. */
+.card{will-change:auto}.finding h3,.current{overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){.card,.btn{transition:none}}
+
+/* Step explanation and executive synthesis styles */
+.step-explanation-box{background:#f4f9f7;border:1px solid #cce5dd;border-radius:10px;padding:14px;margin-bottom:14px}
+.step-explanation-box h4{margin:0 0 6px;font-size:13px;color:#087f72;font-weight:700;display:flex;align-items:center;gap:6px}
+.step-explanation-box p{margin:4px 0;font-size:12px;line-height:1.5;color:#243e37}
+.step-highlight-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;margin-top:6px}
+.step-highlight-tag.alert{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+.step-highlight-tag.info{background:#e0f2fe;color:#075985;border:1px solid #bae6fd}
+.step-highlight-tag.neutral{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
+
+.executive-verdict-box{background:#fdfcf9;border:1.5px solid #dfd7ca;border-radius:12px;padding:18px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,0.04)}
+.executive-verdict-box h3{font-size:16px;font-weight:700;margin:0 0 10px;display:flex;align-items:center;justify-content:space-between}
+.verdict-tag-high{background:#fee2e2;color:#b91c1c;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.verdict-tag-medium{background:#fef3c7;color:#b45309;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.verdict-tag-low{background:#e0f2fe;color:#0369a1;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.verdict-tag-clean{background:#dcfce7;color:#15803d;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.verdict-section{margin-top:12px;padding-top:10px;border-top:1px solid #eee7dd}
+.verdict-section h5{margin:0 0 4px;font-size:12px;color:#57534e;text-transform:uppercase;letter-spacing:0.5px}
+.verdict-section p,.verdict-section ul{margin:4px 0;font-size:12px;line-height:1.55;color:#292524}
+.verdict-section ul{padding-left:18px}
+.verdict-action-box{background:#f0fdf4;border-left:4px solid #16a34a;padding:10px 12px;border-radius:4px;margin-top:10px}
+.verdict-action-box.high{background:#fef2f2;border-left-color:#dc2626}
+.verdict-action-box h6{margin:0 0 4px;font-size:12px;font-weight:700}

@@ -129,3 +129,7 @@ Replay/import responses include `graph_summary` and `analysis_warnings`. `graph_
 `LOW` cases remain investigation leads. The exact existing priority/grouping policy is documented in `backend/docs/rule_policy.md` (or `rule_policy.md` from backend/docs). Context does not remove risk evidence but affects the routine-rule LOW branch. Case detail truncation and per-evidence observed truncation flags must both be inspected. Queue count is returned-row count, never total database count.
 
 Additive research endpoints are documented in the canonical root `API_CONTRACT.md` and generated `/docs`; avoid maintaining a second copy of those schemas here.
+
+## Simulation playback update
+
+See the root `API_CONTRACT.md` for `POST /api/simulate/step`: exactly one scenario ID or spec, bounded integer step, optional overrides, prefix-only analysis and no persistence. Response fields include current transaction, visible graph, actual cases, graph diagnostics and completion state. Invalid source/step is 422; oversized JSON is 413; disallowed browser mutation origin is 403. Sample seeding now reports partial/error status and does not claim live data.

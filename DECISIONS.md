@@ -81,3 +81,11 @@ Preserve original rule defaults and golden outputs. New explanations call the sa
 - Record zero-case runs and persist cases/traces/run metadata atomically. Compute diagnostic traces before acquiring the write lock. Bound evaluation run payloads to the latest 25, with explicit omission counts. Use SQL aggregation instead of loading all case evidence.
 - Only migrate review hashes when the old schema lacks hashes. Never rehash a partially damaged modern log at startup. Verify transitions and current state as well as hashes; reject new reviews on damaged chains.
 - ML dataset files, training scripts, artifacts and optional model logic are outside this revision. No claims of measured production accuracy, exhaustive security review, authenticated identities or externally anchored logs.
+
+## 2026-10-25 — prefix replay and truthful sample/graph reporting
+
+Added a separate Simulation tab while retaining the existing Research workspace. Its endpoint calls the existing pipeline on the visible prefix, rather than hiding edges of a final analysis: future evidence must not influence earlier findings. Playback is bounded to 200 transactions and does not persist. Equal-timestamp order is explicitly disclosed. Synthetic fixtures and custom generation are supported; arbitrary imported CSV replay is outside this update.
+
+Observed `showNotice` calls had no definition; replaced them with the existing toast helper. Existing sample seeding asserted success even when files failed; now exposes partial/error outcomes. Graph narratives inferred intent, substituted an unmeasured ratio and described arbitrary account ordering as a path; replaced those claims with measured retained-graph facts. Simulator default floats were serialized as integers until validated, changing seed/IDs after JSON round-trip; enabled default validation on Spec.
+
+Added JSON body bounds and a browser-origin mutation guard. These are not authentication. Optional XGBoost test imports now occur only when its dependencies are installed; no dataset/model changes were made. Authoritative instructions and validation for this update are in RUN_UPDATED_BUILD.md; older handoff reports describe prior builds.

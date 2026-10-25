@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 import json
 
-from scripts.evaluate_xgboost import load_model, score_records
+from importlib.util import find_spec
 
 class XGBoostModelTests(unittest.TestCase):
     def test_artifacts_exist(self):
@@ -31,7 +31,9 @@ class XGBoostModelTests(unittest.TestCase):
         self.assertGreater(m["roc_auc"], 0.90)
         self.assertIn("true_positives", m["confusion_matrix"])
 
+    @unittest.skipUnless(all(find_spec(m) for m in ['numpy', 'joblib', 'sklearn', 'xgboost']), 'Optional ML dependencies not installed')
     def test_inference_on_known_patterns(self):
+        from scripts.evaluate_xgboost import load_model, score_records
         bundle = load_model()
         test_records = [
             # Benign normal payment: small amount, healthy balances at daytime

@@ -3,7 +3,7 @@ from datetime import datetime,timedelta,timezone
 from dataclasses import replace
 import csv,hashlib,io,json,time
 from typing import Literal
-from pydantic import Field,model_validator
+from pydantic import ConfigDict,Field,model_validator
 from .extension_common import StrictModel,extract,NOTICE
 from .domain import Transaction
 from .ingestion import parse_csv_bytes
@@ -13,6 +13,7 @@ from .config import DEFAULT_SETTINGS
 
 PATTERNS=['PASS_THROUGH_CHAIN','FAN_IN_DISPERSAL','SINGLE_LARGE_TRANSFER','LEGIT_BURST','NEW_ACCOUNT_HIGH_VALUE']
 class Spec(StrictModel):
+    model_config = ConfigDict(validate_default=True)
     pattern: Literal['PASS_THROUGH_CHAIN','FAN_IN_DISPERSAL','SINGLE_LARGE_TRANSFER','LEGIT_BURST','NEW_ACCOUNT_HIGH_VALUE']='PASS_THROUGH_CHAIN'
     n_senders:int=Field(default=3,ge=1,le=8)
     n_intermediaries:int=Field(default=2,ge=1,le=5)
@@ -36,9 +37,16 @@ class RunRequest(StrictModel):
     spec:Spec
     overrides:Overrides=Field(default_factory=Overrides)
 class SweepRequest(StrictModel):
-    spec:Spec
-    parameter:Literal['gap_scale','amount_scale','n_senders','onward_share']
-    values:list[float]=Field(min_length=1,max_length=10)
+    scenario_id: str | None = Field(default=None, max_length=100)
+    spec: Spec | None = None
+    parameter: Literal['gap_scale','amount_scale','n_senders','onward_share'] = 'gap_scale'
+    values: list[float] = Field(min_length=1, max_length=10)
+
+    @model_validator(mode='after')
+    def validate_target(self):
+        if self.scenario_id is None and self.spec is None:
+            raise ValueError('Must provide either scenario_id or spec')
+        return self
 
 def parse(text):
     facts=extract(text);values={};warnings=[]
@@ -118,13 +126,106 @@ def run(spec,overrides=None):
     return {'run_id':run_id,'transactions':[dict(t.public_dict(),synthetic=True) for t in txs],'trace':stages,'graph':graph,'timeline':graph['edges'],'cases':cases,'graph_summary':stats,'context_items':[e for c in cases for e in c['evidence'] if e['kind']=='CONTEXT_SIGNAL'],'notice':'HYPOTHETICAL: generated from your description. No case means rules did not fire, not that activity is safe. '+NOTICE}
 
 def sweep(req):
-    out=[];previous=None
+    out = []; previous = None
+    if req.scenario_id is not None:
+        from .fixtures import SCENARIOS, scenario_transactions, apply_scenario_params
+        if req.scenario_id not in SCENARIOS:
+            raise ValueError(f"Unknown scenario '{req.scenario_id}'")
+        base_txs = scenario_transactions(req.scenario_id)
+        for value in req.values:
+            params = {}
+            if req.parameter in {'gap_scale', 'amount_scale'}:
+                params[req.parameter] = value
+            scaled_txs = apply_scenario_params(base_txs, params)
+            run_id, cases, stats = analyse_transactions_detailed(scaled_txs, req.scenario_id)
+            priorities = [c['priority'] for c in cases]
+            priority = max(priorities, key=lambda p: {'HIGH':4, 'MEDIUM':3, 'LOW':2, 'INSUFFICIENT_HISTORY':1}.get(p, 0)) if priorities else 'no case'
+            codes = sorted({code for c in cases for code in c['rule_codes']})
+            key = (priority, tuple(codes), len(cases))
+            out.append({
+                'value': value,
+                'priority': priority,
+                'rule_codes': codes,
+                'case_count': len(cases),
+                'changed': previous is not None and key != previous,
+                'scenario': SCENARIOS[req.scenario_id]['title']
+            })
+            previous = key
+        return {'results': out, 'notice': f'Rule sensitivity analysis for scenario "{SCENARIOS[req.scenario_id]["title"]}" across varying {req.parameter}.'}
+
     for value in req.values:
-        data=req.spec.model_dump();o={}
-        if req.parameter in {'gap_scale','amount_scale'}:o[req.parameter]=value
-        else:data[req.parameter]=value
-        result=run(Spec.model_validate(data),Overrides(**o));priorities=[c['priority'] for c in result['cases']]
-        priority=max(priorities,key=lambda p:{'HIGH':4,'MEDIUM':3,'LOW':2,'INSUFFICIENT_HISTORY':1}[p]) if priorities else 'no case'
-        codes=sorted({code for c in result['cases'] for code in c['rule_codes']});key=(priority,tuple(codes),len(result['cases']))
-        out.append({'value':value,'priority':priority,'rule_codes':codes,'case_count':len(result['cases']),'changed':previous is not None and key!=previous});previous=key
-    return {'results':out,'notice':'Rule sensitivity / blind-spot analysis of our own rules on synthetic inputs, not detection accuracy.'}
+        data = req.spec.model_dump(); o = {}
+        if req.parameter in {'gap_scale', 'amount_scale'}:
+            o[req.parameter] = value
+        else:
+            data[req.parameter] = value
+        result = run(Spec.model_validate(data), Overrides(**o))
+        priorities = [c['priority'] for c in result['cases']]
+        priority = max(priorities, key=lambda p: {'HIGH':4, 'MEDIUM':3, 'LOW':2, 'INSUFFICIENT_HISTORY':1}.get(p, 0)) if priorities else 'no case'
+        codes = sorted({code for c in result['cases'] for code in c['rule_codes']})
+        key = (priority, tuple(codes), len(result['cases']))
+        out.append({'value': value, 'priority': priority, 'rule_codes': codes, 'case_count': len(result['cases']), 'changed': previous is not None and key != previous})
+        previous = key
+    return {'results': out, 'notice': 'Rule sensitivity / blind-spot analysis of our own rules on synthetic inputs, not detection accuracy.'}
+
+
+def save_to_queue(spec, overrides=None):
+    from .service import _persist
+    from .config import DEFAULT_SETTINGS
+    started = time.perf_counter()
+    spec = Spec.model_validate(spec)
+    o = overrides or Overrides()
+    txs, seed = generate(spec, o)
+    source_name = f"research-{spec.pattern.lower()}-{seed[:6]}"
+    run_id, cases, stats = analyse_transactions_detailed(txs, source_name, DEFAULT_SETTINGS)
+    _persist(run_id, source_name, txs, cases, stats, DEFAULT_SETTINGS, started)
+    return {
+        'status': 'success',
+        'run_id': run_id,
+        'source': source_name,
+        'case_count': len(cases),
+        'cases': cases,
+        'transaction_count': len(txs),
+        'message': f'Generated and appended {len(cases)} case(s) ({len(txs)} transactions) to the live Case Queue.'
+    }
+
+
+class StepRequest(StrictModel):
+    """Replay one prefix; future transactions never enter analysis."""
+    scenario_id: str | None = Field(default=None, max_length=100)
+    spec: Spec | None = None
+    overrides: Overrides = Field(default_factory=Overrides)
+    step: int = Field(default=0, ge=0, le=200, strict=True)
+
+    @model_validator(mode='after')
+    def one_source(self):
+        if (self.scenario_id is None) == (self.spec is None):
+            raise ValueError('Provide exactly one of scenario_id or spec')
+        return self
+
+
+def step(req):
+    from .fixtures import SCENARIOS, scenario_transactions, apply_scenario_params
+    if req.scenario_id is not None:
+        if req.scenario_id not in SCENARIOS:
+            raise ValueError('Unknown scenario')
+        txs = apply_scenario_params(scenario_transactions(req.scenario_id), req.overrides.model_dump())
+        source = req.scenario_id
+    else:
+        txs, _ = generate(req.spec, req.overrides)
+        source = 'hypothetical'
+    txs = sorted(txs, key=lambda t: (t.timestamp_us, t.transaction_id))
+    if len(txs) > 200 or req.step > len(txs):
+        raise ValueError('Step outside available transactions (maximum 200)')
+    visible = txs[:req.step]
+    run_id, cases, stats = analyse_transactions_detailed(visible, source)
+    graph = graph_view(visible, cases)
+    for edge in graph['edges']:
+        edge['synthetic'] = True
+    return {
+        'step': req.step, 'total_steps': len(txs), 'complete': req.step == len(txs),
+        'run_id': run_id, 'graph': graph, 'cases': cases,
+        'graph_summary': stats,
+        'current_transaction': visible[-1].public_dict() if visible else None,
+        'notice': 'Synthetic replay. Only the visible transaction prefix is analyzed. Equal timestamps use transaction ID order, not an inferred causal order. Findings may regroup as evidence arrives. Nothing is saved to the case queue. No alert is not proof of safety.',
+    }

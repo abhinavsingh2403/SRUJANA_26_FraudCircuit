@@ -9,3 +9,5 @@ Not implemented: authentication, authorization/object-level access controls, rat
 The hash-chained review log detects some stored event edits/reordering but is not cryptographically protected against a database owner rewriting the entire chain or deleting its tail. Keep a copy of any important final evaluation artefacts outside the database if they must be preserved.
 
 See `docs/known_limitations.md` and the [OWASP API Security Top 10](https://devguide.owasp.org/en/07-training-education/07-api-top-ten/).
+
+Update 2026-10-25: JSON mutation requests now have a 256 KiB streaming byte bound. Requests with a browser Origin other than the request origin or explicitly configured CORS origins are rejected before mutation; cross-site Fetch Metadata without Origin is also rejected. This narrows browser-based attacks but does not authenticate clients, prevent DNS rebinding, or replace the production controls listed above.

@@ -85,6 +85,9 @@ app = FastAPI(
 _allowed_origins = [item.strip() for item in os.environ.get(
     "TRACEGUARD_CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
 ).split(",") if item.strip()]
+from .http_guards import LocalRequestGuards
+app.add_middleware(LocalRequestGuards, allowed_origins=_allowed_origins)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
@@ -240,24 +243,27 @@ def evaluation_summary(source_kind: str | None = Query(default=None, pattern="^(
 
 @app.post("/api/realtime/seed", tags=["realtime"])
 def seed_realtime_data() -> dict[str, Any]:
-    """Seed the database with complex multi-hop network topologies and authentic PaySim fraud episodes."""
+    """Import bundled sample files. These are not a live transaction feed."""
     results = []
     examples_dir = Path(__file__).resolve().parents[1] / "examples"
     for filename in ("complex_graph_topology.csv", "paysim_real_fraud_cases.csv"):
         path = examples_dir / filename
-        if path.is_file():
+        if not path.is_file():
+            results.append({"file": filename, "error": "Sample file unavailable"})
+            continue
+        try:
             raw = path.read_bytes()
-            try:
-                res = import_csv(raw, DEFAULT_SETTINGS)
-                results.append({"file": filename, "cases": res.get("case_count", 0), "transactions": res.get("transaction_count", 0)})
-            except Exception as e:
-                results.append({"file": filename, "error": str(e)})
+            res = import_csv(raw, DEFAULT_SETTINGS)
+            results.append({"file": filename, "cases": res.get("case_count", 0), "transactions": res.get("transaction_count", 0)})
+        except (OSError, ValueError) as exc:
+            results.append({"file": filename, "error": str(exc)})
     total_cases = db.count_cases()
+    failures = sum("error" in result for result in results)
     return {
-        "status": "ok",
+        "status": "error" if failures == len(results) else "partial" if failures else "ok",
         "total_active_cases": total_cases,
         "seeded_batches": results,
-        "message": f"Successfully loaded real-time testing and complex network graph data into active queue ({total_cases} total cases)."
+        "message": f"Loaded {len(results) - failures}/{len(results)} sample files; {failures} failed. Queue contains {total_cases} cases. This is not live data."
     }
 
 
