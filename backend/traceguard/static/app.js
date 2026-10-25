@@ -673,7 +673,8 @@
     $('case-detail').replaceChildren();
     $('case-detail').hidden = true;
     $('detail-empty').hidden = false;
-    $('detail-empty').querySelector('h2').textContent = message;
+    const emptyH2 = $('detail-empty')?.querySelector('h2');
+    if (emptyH2) emptyH2.textContent = message;
 
     // Reset Side Panel
     $('dt').textContent = '—';
@@ -835,8 +836,6 @@
       const isSelected = item.case_id === state.selectedId;
       const tr = node('tr', `case-row${isSelected ? ' sel active' : ''}`);
       tr.setAttribute('data-case-id', item.case_id);
-      const isSelected = item.case_id === state.selectedId;
-      const tr = node('tr', `case-row${isSelected ? ' sel active' : ''}`);
       tr.tabIndex = 0;
       tr.setAttribute('aria-pressed', String(isSelected));
 
@@ -913,7 +912,7 @@
   /* Hover Preview Floating Card Functions */
   const pv = $('pv');
   const ov = $('ov');
-  const canHover = window.matchMedia('(hover:hover)').matches;
+  const canHover = typeof window.matchMedia === 'function' ? window.matchMedia('(hover:hover)').matches : true;
 
   function showPv(index, x, y) {
     if (!ov.hidden) return;
