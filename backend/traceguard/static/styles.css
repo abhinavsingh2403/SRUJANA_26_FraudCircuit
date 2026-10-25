@@ -1633,12 +1633,40 @@ th.amt {
   display: flex;
   gap: 16px;
   align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
   margin-bottom: 20px;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 16px 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.scenario-bar-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.scenario-bar-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.scenario-bar-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.scenario-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .param-group {

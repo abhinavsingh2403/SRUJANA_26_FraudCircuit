@@ -300,7 +300,7 @@
       svg.innerHTML = '<text x="500" y="260" text-anchor="middle" font-size="14" fill="#58584d">No connected graph data</text>';
       return;
     }
-    const baseR = sm ? 18 : 24;
+    const baseR = sm ? 20 : 25;
     const pos = {};
     const nl = g.L.length;
 
@@ -308,10 +308,10 @@
       const x = nl === 1 ? 500 : 100 + ci * (780 / Math.max(1, nl - 1));
       if (col.length > 4) {
         // Multi-node fanout: stagger across two sub-columns with generous horizontal and vertical separation
-        const rSub = sm ? 14 : 17;
+        const rSub = sm ? 16 : 19;
         const subColRows = Math.ceil(col.length / 2);
         const subGap = Math.max(48, Math.min(76, 440 / Math.max(1, subColRows)));
-        const xSeparation = sm ? 38 : 55;
+        const xSeparation = sm ? 42 : 60;
         col.forEach((n, i) => {
           const subColIdx = i % 2;
           const rowIdx = Math.floor(i / 2);
@@ -369,9 +369,10 @@
           off = (i - (list.length - 1) / 2) * (sm ? 16 : 22);
         }
 
-        const w = Math.max(2, 2.2 + (sm ? 3.5 : 5.5) * (e[2] / max));
-        const hl = sm ? 9 + w * 1.3 : 12 + w * 1.8;
-        const hw = sm ? w * 1.1 + 2.5 : w * 1.3 + 3.5;
+        const isTrigger = e[3] === 1;
+        const w = isTrigger ? Math.max(1.8, Math.min(3.2, 1.8 + 1.2 * (e[2] / max))) : 1.4;
+        const hl = sm ? 7.5 : 9;
+        const hw = sm ? 3.5 : 4.5;
         const ra = a.r || baseR;
         const rb = b.r || baseR;
         const sx = a.x + ux * ra + nx * off;
@@ -380,7 +381,6 @@
         const ey = b.y - uy * rb + ny * off;
         const bx = ex - ux * hl;
         const by = ey - uy * hl;
-        const isTrigger = e[3] === 1;
         const col = isTrigger ? '#111' : '#b8b8b0';
         const titleText = `${e[4] || 'tx'}: ${e[0]} → ${e[1]}, amount ${e[2]}, ${e[5] || ''}`;
 
@@ -394,15 +394,17 @@
 
         let shouldPlaceAmount = true;
         if (totalWithThisAmount > 3) {
-          // On high fan-out trees with identical amounts, place labels on outer edges to avoid black blobs
-          if (countPlacedSoFar >= 2 && i < list.length - 1) {
+          // On high fan-out trees with identical amounts, avoid repeated stacked text blobs
+          if (countPlacedSoFar >= 2) {
             shouldPlaceAmount = false;
           }
         }
 
         if (shouldPlaceAmount && (!sm || isTrigger)) {
-          let bestLx = sx + (bx - sx) * 0.5;
-          let bestLy = sy + (by - sy) * 0.5 - w / 2 - 5;
+          // In fanouts, place amount towards the 68% spread-out zone
+          const tRatio = totalWithThisAmount > 2 ? 0.68 : 0.5;
+          let bestLx = sx + (bx - sx) * tRatio;
+          let bestLy = sy + (by - sy) * tRatio - w / 2 - 4;
 
           // Check if best position hits any node circle or an existing label
           let collidesWithNodes = Object.values(pos).some(p => Math.hypot(p.x - bestLx, p.y - bestLy) < p.r + 14);
@@ -411,7 +413,7 @@
           if (collidesWithNodes || collidesWithLabels) {
             for (const testT of [0.35, 0.65, 0.25, 0.75]) {
               const testX = sx + (bx - sx) * testT;
-              const testY = sy + (by - sy) * testT - w / 2 - 5;
+              const testY = sy + (by - sy) * testT - w / 2 - 4;
               const nodeHit = Object.values(pos).some(p => Math.hypot(p.x - testX, p.y - testY) < p.r + 14);
               const labelHit = placedLabels.some(p => Math.abs(p.x - testX) < 48 && Math.abs(p.y - testY) < 18);
               if (!nodeHit && !labelHit) {
@@ -427,7 +429,7 @@
           if (!collidesWithNodes && !collidesWithLabels) {
             placedLabels.push({ x: bestLx, y: bestLy });
             senderAmountPlaced[amountKey] = countPlacedSoFar + 1;
-            lab += `<text x="${bestLx.toFixed(1)}" y="${bestLy.toFixed(1)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 10.5 : 11.5}" font-weight="700" fill="#111" stroke="#fffdea" stroke-width="${sm ? 4 : 3.5}" paint-order="stroke">${inr(e[2])}</text>`;
+            lab += `<text x="${bestLx.toFixed(1)}" y="${bestLy.toFixed(1)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 10 : 11}" font-weight="700" fill="#111" stroke="#fffdea" stroke-width="${sm ? 4 : 3.5}" paint-order="stroke">${inr(e[2])}</text>`;
           }
         }
       });
@@ -435,19 +437,13 @@
 
     function formatNodeLabel(id, r) {
       if (!id) return '';
-      if (r <= 18) {
-        const destMatch = id.match(/DEST[-_]?(\d+)/i);
-        if (destMatch) return 'D-' + destMatch[1];
-        const numMatch = id.match(/[-_](\d{1,3})$/);
-        if (numMatch) return '#' + numMatch[1];
-        if (id.length > 5) return id.slice(0, 4) + '…';
-        return id;
-      }
-      if (id.length > 8) {
-        const destMatch = id.match(/DEST[-_]?(\d+)/i);
-        if (destMatch) return 'DST-' + destMatch[1];
-        return id.slice(0, 6) + '…';
-      }
+      const destMatch = id.match(/DEST[-_]?(\d+)/i);
+      if (destMatch) return 'D-' + destMatch[1];
+      const cmpMatch = id.match(/CMP[-_]([A-Z0-9]+)/i);
+      if (cmpMatch) return 'CMP-' + cmpMatch[1];
+      const numMatch = id.match(/[-_](\d{1,3})$/);
+      if (numMatch) return '#' + numMatch[1];
+      if (id.length > 6) return id.slice(0, 5) + '…';
       return id;
     }
 
@@ -456,8 +452,13 @@
       const p = pos[n];
       const r = p.r || baseR;
       const displayLabel = formatNodeLabel(n, r);
-      const labelY = p.y > 450 ? p.y - r - 6 : p.y + r + 13;
-      nodes += `<circle class="graph-node" data-acct-id="${escapeHtml(n)}" cx="${p.x}" cy="${p.y}" r="${r}" fill="#fff" stroke="#111" stroke-width="2.2"><title>${escapeHtml(n)}</title></circle><circle cx="${p.x}" cy="${p.y}" r="${Math.max(3.5, r * 0.28)}" fill="#111" pointer-events="none"></circle><text x="${p.x}" y="${labelY}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 10 : 11}" font-weight="700" fill="#111" stroke="#fffdea" stroke-width="3.5" paint-order="stroke" pointer-events="none">${escapeHtml(displayLabel)}</text>`;
+      const fontSize = r <= 17 ? 9 : r <= 21 ? 10 : 11.5;
+      nodes += `<g class="graph-node-group" data-acct-id="${escapeHtml(n)}" tabindex="0" role="button" aria-label="Account ${escapeHtml(n)}">
+        <circle class="graph-node" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r}" fill="#fff" stroke="#111" stroke-width="2">
+          <title>${escapeHtml(n)}</title>
+        </circle>
+        <text x="${p.x.toFixed(1)}" y="${(p.y + 3.8).toFixed(1)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${fontSize}" font-weight="700" fill="#111" pointer-events="none">${escapeHtml(displayLabel)}</text>
+      </g>`;
     });
 
     svg.innerHTML = base + top + nodes + lab;
