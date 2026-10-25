@@ -12,5 +12,5 @@
   },
   "malformed_csv_atomic": true,
   "review_and_audit": true,
-  "model_not_configured": true
+  "model_status": "configured"
 }

@@ -129,9 +129,9 @@
 
   function setConnection(ok, message) {
     const statusText = $('connection-status');
-    statusText.textContent = message;
-    const dot = statusText.previousElementSibling;
-    if (dot) dot.classList.toggle('ok', ok);
+    if (statusText) statusText.textContent = message;
+    const dot = statusText?.previousElementSibling || document.querySelector('.status-dot');
+    if (dot) dot.classList.toggle('ok', !!ok);
   }
 
   function selectedQuery() {

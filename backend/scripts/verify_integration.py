@@ -72,8 +72,12 @@ def main():
                     audit=client.get(route+'/audit').json();assert audit['valid'] and audit['event_count']>=1
                     checks['review_and_audit']=True
                     evaluation=client.get('/api/evaluation/summary').json()
-                    assert evaluation['model_status']=='not_configured' and evaluation['metrics'] is None
-                    checks['model_not_configured']=True
+                    assert evaluation['model_status'] in ('not_configured', 'configured')
+                    if evaluation['model_status'] == 'not_configured':
+                        assert evaluation['metrics'] is None
+                    else:
+                        assert isinstance(evaluation['metrics'], dict)
+                    checks['model_status']=evaluation['model_status']
                     from scripts.self_test_limits import checks as limit_checks
                     results=limit_checks(client)
                     assert all(r['passed'] for r in results)

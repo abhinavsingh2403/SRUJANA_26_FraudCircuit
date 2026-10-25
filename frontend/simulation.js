@@ -272,6 +272,10 @@ try {
       }
     }
     status(`Loaded scenario '${$('scenario').value}' directly from provenance audit.`);
-    $('setup').dispatchEvent(new Event('submit'));
+    if (typeof $('setup').requestSubmit === 'function') {
+      $('setup').requestSubmit();
+    } else {
+      $('setup').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    }
   }
 }catch(e){status(`Could not load scenarios: ${e.message}. Reload this page to retry.`,true);$('load').disabled=true;}
