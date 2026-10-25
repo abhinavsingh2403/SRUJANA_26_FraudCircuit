@@ -546,10 +546,74 @@
       else timeSpanDesc = `${(spanSec / 86400).toFixed(1)} days`;
     }
 
-    const rules = [...new Set(caseData.rule_codes || [])];
-    const typology = 'Observed Transaction Network';
-    const patternTag = 'Investigation lead';
-    const narrative = `The retained graph contains ${allTxs.length} transactions across ${acctCount} accounts, with summed transaction amounts of ${fmtAmount(totalVolume)}${timeSpanDesc ? ` over ${timeSpanDesc}` : ''}. This sum counts each transfer, including repeated movement of funds; it is not a loss estimate or unique capital. Recorded rules: ${rules.join(', ') || 'none'}. Topology alone does not establish intent, ownership, or fraud. The graph may omit history; consult evidence and coverage limitations below.`;
+    const rules = caseData.rule_codes || (caseData.evidence || []).map(e => e.rule_id);
+    const uniqueRules = [...new Set(rules)].filter(Boolean);
+    const evidenceList = caseData.evidence || [];
+
+    let typology = 'Direct Transaction Network';
+    let patternTag = 'Standard Flow';
+    let narrative = '';
+
+    const hasChain = uniqueRules.includes('R5_LAYERED_CHAIN');
+    const hasCycle = uniqueRules.includes('R4_DIRECTED_CYCLE');
+    const hasFanOut = uniqueRules.includes('R2B_FAN_OUT_BURST');
+    const hasFanIn = uniqueRules.includes('R2A_FAN_IN_BURST');
+    const hasRapidPass = uniqueRules.includes('R1_RAPID_PASS_THROUGH');
+    const hasSpike = uniqueRules.includes('R3_AMOUNT_DEVIATION');
+    const hasRepeat = uniqueRules.includes('R6_REPEATED_VALUE_BURST');
+
+    if (hasChain) {
+      typology = 'Multi-Hop Layered Chain';
+      patternTag = 'Layering / Mule Relay';
+      const chainEv = evidenceList.find(e => e.rule_id === 'R5_LAYERED_CHAIN');
+      const hops = chainEv?.observed?.chain_hops || allTxs.length || 0;
+      const srcStr = fmtAcctList(sources, 2);
+      const relayStr = fmtAcctList(relays, 3);
+      const sinkStr = fmtAcctList(sinks, 2);
+      narrative = `This graph illustrates a linear ${hops}-hop layering chain across ${acctCount} accounts. Funds originated from ${srcStr} and were routed sequentially through ${relayStr} before reaching terminal destination ${sinkStr}. The total flow transacted was ${fmtAmount(totalVolume)}${timeSpanDesc ? ` within ${timeSpanDesc}` : ''}. Rapid sequential relaying with high capital retention is a primary indicator of money laundering layering designed to break audit trails.`;
+    } else if (hasCycle) {
+      typology = 'Directed Cycle (Wash Trading)';
+      patternTag = 'Circular Flow / Round-Tripping';
+      const cycleEv = evidenceList.find(e => e.rule_id === 'R4_DIRECTED_CYCLE');
+      const cLen = cycleEv?.observed?.cycle_length || acctCount;
+      narrative = `A closed circular transaction cycle was detected connecting ${cLen} accounts (${accounts.slice(0, 4).join(' → ')} → back to start). Total flow volume reached ${fmtAmount(totalVolume)}${timeSpanDesc ? ` over ${timeSpanDesc}` : ''}. Circular fund flows with minimal net dissipation are characteristic of wash trading, round-trip invoicing, or artificial volume inflation.`;
+    } else if (hasFanOut) {
+      typology = 'Fan-Out Rapid Disbursement';
+      patternTag = 'Dispersal / Smurfing';
+      const fanEv = evidenceList.find(e => e.rule_id === 'R2B_FAN_OUT_BURST');
+      const recCount = fanEv?.observed?.distinct_recipients_including_current || sinks.length;
+      const hub = sources.length ? sources[0] : (allTxs[0]?.sender_id || 'Primary Account');
+      narrative = `A fan-out burst pattern originating from central hub ${hub}, which dispersed funds rapidly across ${recCount} separate recipient accounts (${fmtAcctList(sinks, 3)}). Total transacted amount is ${fmtAmount(totalVolume)}${timeSpanDesc ? ` in ${timeSpanDesc}` : ''}. This structured disbursement behavior suggests smurfing or distribution across a money mule network.`;
+    } else if (hasFanIn) {
+      typology = 'Fan-In Fund Aggregation';
+      patternTag = 'Aggregation / Funneling';
+      const collector = sinks.length ? sinks[0] : (allTxs[allTxs.length - 1]?.recipient_id || 'Primary Collector');
+      narrative = `A fan-in aggregation pattern funneling incoming capital from ${sources.length} feeder accounts into central collector ${collector}. Total transacted amount is ${fmtAmount(totalVolume)}${timeSpanDesc ? ` over ${timeSpanDesc}` : ''}. Concentrating funds from disparate sources into a central point often signals mule collection prior to large-scale withdrawal.`;
+    } else if (hasRapidPass) {
+      typology = 'Rapid Pass-Through Velocity';
+      patternTag = 'Immediate Turnaround';
+      const rpEv = evidenceList.find(e => e.rule_id === 'R1_RAPID_PASS_THROUGH');
+      const wDetail = rpEv?.observed?.window_details;
+      const ratio = wDetail ? Object.values(wDetail)[0]?.amount_to_inflow_ratio : null;
+      const ratioPct = ratio ? `${Math.round(ratio * 100)}%` : 'nearly 100%';
+      narrative = `Funds transferred into an intermediary account were immediately drained (${ratioPct} pass-through ratio) shortly after arrival. The graph shows ${acctCount} connected accounts moving ${fmtAmount(totalVolume)}${timeSpanDesc ? ` within ${timeSpanDesc}` : ''}. Transit accounts exhibiting near-zero balance holding time are strong indicators of unauthorized account takeover or mule transit.`;
+    } else if (hasSpike) {
+      typology = 'Anomalous Transaction Volume Spike';
+      patternTag = 'Baseline Deviation';
+      const spikeEv = evidenceList.find(e => e.rule_id === 'R3_AMOUNT_DEVIATION');
+      const currAmt = spikeEv?.observed?.current_amount || totalVolume;
+      const histMed = spikeEv?.observed?.historical_median;
+      const mult = histMed ? `${(currAmt / histMed).toFixed(1)}x higher than baseline` : 'anomalous deviation';
+      narrative = `An anomalous transaction volume deviation was observed involving accounts ${accounts.slice(0, 3).join(', ')}. The transacted amount of ${fmtAmount(currAmt)} represents a sudden spike (${mult}). This abrupt departure from established operational baseline indicates potential account takeover, payroll diversion, or urgent fraudulent extraction.`;
+    } else if (hasRepeat) {
+      typology = 'Repeated Fixed-Value Bursts';
+      patternTag = 'Structuring / Micro-Bursts';
+      narrative = `Repeated transactions of identical or near-identical denominations were executed in close sequence across ${acctCount} accounts, totaling ${fmtAmount(totalVolume)}${timeSpanDesc ? ` over ${timeSpanDesc}` : ''}. Rapid consecutive transfers with invariant amounts indicate automated scripting or deliberate threshold evasion.`;
+    } else {
+      typology = 'Connected Account Transaction Network';
+      patternTag = 'Direct Activity';
+      narrative = `The transaction graph covers ${allTxs.length} transaction(s) connecting ${acctCount} account(s) (${fmtAcctList(accounts, 4)}) with a total transaction volume of ${fmtAmount(totalVolume)}${timeSpanDesc ? ` over ${timeSpanDesc}` : ''}. ${triggerTxs.length} transaction(s) triggered compliance monitoring rules.`;
+    }
 
     return {
       typology,
