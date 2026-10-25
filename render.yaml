@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: traceguard-fraud-circuit
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: "./build.sh"
+    startCommand: "python app.py"
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0

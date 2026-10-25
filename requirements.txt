@@ -1,0 +1,8 @@
+# TraceGuard Production Dependencies for Render Deployment
+fastapi==0.128.2
+uvicorn[standard]==0.48.0
+pydantic==2.13.5
+httpx==0.28.1
+scikit-learn>=1.4.0
+joblib>=1.3.0
+xgboost>=2.0.0
