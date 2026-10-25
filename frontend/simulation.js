@@ -55,11 +55,24 @@ function drawGraph(data) {
     group.addEventListener('click',inspect);group.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();inspect();}});g.append(group);
   }
 }
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 function explainStep(data) {
   const box = $('step-explanation');
   if (!box) return;
   if (!data.current_transaction || data.step === 0) {
-    box.innerHTML = '<h4><span>ℹ️</span> Step Initialization</h4><p>Simulation ready. Advance step or press Play to reveal the opening transaction.</p>';
+    box.innerHTML = `
+      <div class="step-card-idle">
+        <div class="step-idle-icon">⏳</div>
+        <div>
+          <h4 class="step-idle-title">Simulation Initialized &amp; Ready</h4>
+          <p class="step-idle-sub">Advance step or click <strong>▶ Play</strong> to reveal the opening transaction vector.</p>
+        </div>
+      </div>
+    `;
     return;
   }
   const tx = data.current_transaction;
@@ -72,28 +85,73 @@ function explainStep(data) {
   const matchingEvidence = data.cases.flatMap(c => c.evidence || []).filter(e => (e.transaction_ids || []).includes(tx.transaction_id));
   const hasAlert = matchingEvidence.length > 0;
 
-  let flowNote = '';
+  let flowBadge = '';
+  let flowText = '';
   if (isConduit) {
-    flowNote = `<strong>Conduit behavior:</strong> Account <code>${tx.sender_id}</code> previously received funds and is now forwarding money downstream.`;
+    flowBadge = '<span class="flow-pill conduit">🔄 Conduit Relay</span>';
+    flowText = `Account <code class="mono-tag">${escapeHtml(tx.sender_id)}</code> previously received upstream funds and is now actively channeling capital downstream.`;
   } else if (senderOut === 1 && recipIn === 1) {
-    flowNote = `<strong>New flow opened:</strong> Originator <code>${tx.sender_id}</code> initiated transfer to <code>${tx.recipient_id}</code>.`;
+    flowBadge = '<span class="flow-pill origin">🚀 Outbound Hop</span>';
+    flowText = `Originator <code class="mono-tag">${escapeHtml(tx.sender_id)}</code> opened transfer to counterparty <code class="mono-tag">${escapeHtml(tx.recipient_id)}</code>.`;
   } else {
-    flowNote = `<strong>Aggregated activity:</strong> Account <code>${tx.recipient_id}</code> has received ${recipIn} transfer(s) across the sequence.`;
+    flowBadge = '<span class="flow-pill aggregate">📥 Aggregation Hub</span>';
+    flowText = `Recipient <code class="mono-tag">${escapeHtml(tx.recipient_id)}</code> has accumulated <strong>${recipIn}</strong> incoming transfer(s) across this sequence.`;
   }
 
-  let alertNote = '';
+  let alertBlock = '';
   if (hasAlert) {
     const rules = [...new Set(matchingEvidence.map(e => e.rule_id))].join(', ');
-    alertNote = `<div class="step-highlight-tag alert">Threshold Alert: Rule ${rules} triggered on this step</div>`;
+    alertBlock = `
+      <div class="step-alert-card alert-triggered">
+        <div class="step-alert-top">
+          <span class="step-alert-badge">⚠️ THRESHOLD ALERT</span>
+          <span class="alert-rule-tag">${escapeHtml(rules)}</span>
+        </div>
+        <p class="step-alert-msg">Behavioral signature triggered risk detection rule <code>${escapeHtml(rules)}</code> on this transfer.</p>
+      </div>`;
   } else {
-    alertNote = `<div class="step-highlight-tag neutral">Within nominal baseline thresholds</div>`;
+    alertBlock = `
+      <div class="step-alert-card alert-nominal">
+        <div class="step-alert-top">
+          <span class="step-alert-badge">🛡️ NOMINAL BASELINE</span>
+          <span class="nominal-tag">Within Baseline</span>
+        </div>
+        <p class="step-alert-msg">Transfer velocity and transaction volume remain within expected screening boundaries.</p>
+      </div>`;
   }
 
+  const formattedTime = tx.timestamp ? tx.timestamp.replace('T', ' ').replace('Z', ' UTC') : '—';
+
   box.innerHTML = `
-    <h4>Step ${data.step} of ${data.total_steps} · ${tx.transaction_id}</h4>
-    <p><strong>${tx.sender_id}</strong> transferred <strong>${money(tx)}</strong> to <strong>${tx.recipient_id}</strong> at ${tx.timestamp.replace('T', ' ').replace('Z', ' UTC')}.</p>
-    <p>${flowNote}</p>
-    ${alertNote}
+    <div class="step-card-header">
+      <div class="step-badge-wrap">
+        <span class="step-counter-chip">Step ${data.step} of ${data.total_steps}</span>
+        <span class="tx-id-badge mono" title="Observed Transaction ID">🧾 ${escapeHtml(tx.transaction_id)}</span>
+      </div>
+      <span class="step-time-mono" title="Execution timestamp">🕒 ${escapeHtml(formattedTime)}</span>
+    </div>
+
+    <div class="tx-metric-strip">
+      <div class="tx-metric-cell">
+        <span class="cell-label">TRANSFER AMOUNT</span>
+        <span class="cell-val amount-val">💸 ${money(tx)}</span>
+      </div>
+      <div class="tx-metric-cell">
+        <span class="cell-label">ORIGIN (SENDER)</span>
+        <span class="cell-val mono">${escapeHtml(tx.sender_id)}</span>
+      </div>
+      <div class="tx-metric-cell">
+        <span class="cell-label">TARGET (RECIPIENT)</span>
+        <span class="cell-val mono">${escapeHtml(tx.recipient_id)}</span>
+      </div>
+    </div>
+
+    <div class="step-behavior-card">
+      <div class="behavior-header">${flowBadge}</div>
+      <p class="behavior-desc">${flowText}</p>
+    </div>
+
+    ${alertBlock}
   `;
 }
 
@@ -117,68 +175,127 @@ function explainExecutiveVerdict(data) {
 
   if (badge) {
     badge.style.display = 'inline-block';
-    badge.textContent = highestPriority === 'HIGH' ? 'HIGH RISK CASE' : highestPriority === 'MEDIUM' ? '⚠️ MEDIUM RISK' : highestPriority === 'CLEAN' ? '✅ NO ANOMALIES' : 'ℹ️ ' + highestPriority;
+    badge.textContent = highestPriority === 'HIGH' ? '🚨 HIGH RISK CASE' : highestPriority === 'MEDIUM' ? '⚠️ MEDIUM RISK' : highestPriority === 'CLEAN' ? '✅ NO ANOMALIES' : 'ℹ️ ' + highestPriority;
     badge.className = `pill verdict-tag-${highestPriority.toLowerCase()}`;
   }
 
+  let typologyTitle = '';
   let typologyNarrative = '';
   if (allRules.includes('R1_RAPID_PASS_THROUGH')) {
-    typologyNarrative = 'The sequence demonstrates a classic high-velocity pass-through / conduit typology. Funds received into intermediate accounts were rapidly remitted onward within minutes, leaving nominal account balance and avoiding normal commercial holding delays.';
+    typologyTitle = '⚡ High-Velocity Conduit / Rapid Pass-Through';
+    typologyNarrative = 'The sequence demonstrates a classic high-velocity pass-through conduit typology. Funds received into intermediate nodes were rapidly remitted onward within minutes, maintaining near-zero residual balances and circumventing normal commercial holding intervals.';
   } else if (allRules.includes('R2A_FAN_IN_CLUSTER') || allRules.includes('R2B_FAN_OUT_DISPERSAL')) {
-    typologyNarrative = 'The sequence demonstrates structured fan-in dispersal (mule collection and onward smurfing). Multiple independent counterparty streams converge into central nodes before dispersing to downstream recipients in tight temporal proximity.';
+    typologyTitle = '🌐 Structured Fan-In / Fan-Out Dispersal Network';
+    typologyNarrative = 'The sequence demonstrates structured fan-in dispersal (mule collection and onward smurfing). Multiple independent counterparty streams converge into central aggregation hubs before dispersing outward to peripheral recipients in tight temporal clustering.';
   } else if (allRules.includes('R3_ROUND_AMOUNT_STRUCTURING')) {
-    typologyNarrative = 'Transactions exhibit repetitive structuring near regulatory reporting ceilings, suggesting deliberate evasion of single-transaction compliance thresholds.';
+    typologyTitle = '🎯 Regulatory Structuring / Threshold Evasion';
+    typologyNarrative = 'Transactions exhibit repetitive structuring near standard regulatory compliance reporting thresholds, pointing to deliberate fragmentation to avoid mandatory currency reporting triggers.';
   } else if (allRules.includes('R4_DIRECTED_CYCLE')) {
-    typologyNarrative = 'A closed circular loop topology was detected. Capital traversed multiple hops and returned to affiliated source entities without demonstrable underlying commercial utility.';
+    typologyTitle = '🔄 Circular Capital Routing / Round-Trip Loop';
+    typologyNarrative = 'A closed circular directed loop topology was detected. Capital traversed multiple hops across intermediate parties and returned to affiliated originator entities without demonstrable commercial or economic rationale.';
   } else if (data.cases.length === 0) {
-    typologyNarrative = 'All transactions traversed normal behavioral distributions. Counterparty velocity, amounts, and onward transmission ratios stayed within benign thresholds with zero rule alerts triggered.';
+    typologyTitle = '🌿 Nominal Commercial Payment Distribution';
+    typologyNarrative = 'All transactions traversed normal behavioral distributions. Counterparty velocity, transfer amounts, and onward transmission ratios stayed within benign thresholds with zero rule alerts triggered.';
   } else {
-    typologyNarrative = 'Recorded flow patterns produced advisory alerts based on heuristic deviations from expected counterparty baselines.';
+    typologyTitle = '⚠️ Heuristic Anomaly Pattern';
+    typologyNarrative = 'Recorded flow patterns produced advisory alerts based on heuristic deviations from expected counterparty baseline velocities.';
   }
 
-  let actionNarrative = '';
+  let actionItems = [];
+  let actionHeader = '';
   let actionClass = '';
+
   if (highestPriority === 'HIGH') {
     actionClass = 'high';
-    actionNarrative = `
-      <h6>Mandatory AML Compliance Directives:</h6>
-      <ul>
-        <li>Escalate file for immediate Senior Compliance Officer review.</li>
-        <li>Draft and file Suspicious Transaction Report (STR/SAR) with FIU authorities within 24 hours.</li>
-        <li>Place temporary precautionary hold on primary intermediary accounts pending source-of-wealth documentation.</li>
-      </ul>`;
+    actionHeader = '🚨 Mandatory Compliance Directives (FIU / SAR Protocol)';
+    actionItems = [
+      '<strong>Expedited Disposition:</strong> Escalate case file immediately to Senior Compliance Officer for formal sign-off.',
+      '<strong>Regulatory Filing:</strong> Prepare and submit Suspicious Transaction Report (STR/SAR) to statutory FIU within 24 hours.',
+      '<strong>Risk Containment:</strong> Institute immediate provisional debit freeze on primary intermediary account nodes.',
+      '<strong>Source of Funds Validation:</strong> Demand documentary verification of underlying contracts, invoices, and commercial purpose.'
+    ];
   } else if (highestPriority === 'MEDIUM') {
-    actionNarrative = `
-      <h6>Recommended Investigative Actions:</h6>
-      <ul>
-        <li>Route case to Tier-2 investigative queue for enhanced counterparty due diligence.</li>
-        <li>Request commercial invoicing and business purpose rationale for intermediate transfers.</li>
-      </ul>`;
+    actionClass = 'medium';
+    actionHeader = '⚠️ Investigative Surveillance Protocol';
+    actionItems = [
+      '<strong>Enhanced Due Diligence (EDD):</strong> Route case to Tier-2 investigative queue for corporate registry and KYC verification.',
+      '<strong>Transaction Invoicing:</strong> Request commercial contracts and justification for short-interval intermediate remittances.',
+      '<strong>Watchlist Surveillance:</strong> Add participating counterparty entities to 30-day accelerated velocity monitoring.'
+    ];
   } else {
-    actionNarrative = `
-      <h6>Surveillance Status:</h6>
-      <p>Log run in surveillance audit register. Maintain routine continuous monitoring; no immediate account intervention required.</p>`;
+    actionClass = 'low';
+    actionHeader = '🛡️ Surveillance &amp; Audit Protocol';
+    actionItems = [
+      '<strong>Audit Ledger Logging:</strong> Record simulation execution in the compliance audit register.',
+      '<strong>Continuous Baseline Monitoring:</strong> Maintain standard real-time heuristic monitoring; no immediate account intervention required.'
+    ];
   }
 
+  const priorityBadgeHtml = highestPriority === 'HIGH' ? '<span class="verdict-tag-high">🔴 HIGH PRIORITY</span>'
+    : highestPriority === 'MEDIUM' ? '<span class="verdict-tag-medium">🟡 MEDIUM PRIORITY</span>'
+    : highestPriority === 'LOW' ? '<span class="verdict-tag-low">🔵 LOW PRIORITY</span>'
+    : highestPriority === 'CLEAN' ? '<span class="verdict-tag-clean">🟢 NOMINAL</span>'
+    : `<span class="verdict-tag-low">ℹ️ ${escapeHtml(highestPriority)}</span>`;
+
   box.innerHTML = `
-    <h3>
-      <span>Executive Synthesis &amp; Natural Language Verdict</span>
-      <span class="verdict-tag-${highestPriority.toLowerCase()}">${highestPriority}</span>
-    </h3>
-    <div class="verdict-section">
-      <h5>Network Flow Summary</h5>
-      <p>Across the complete simulation sequence, <strong>${accountsCount} accounts</strong> executed <strong>${txCount} transfers</strong> representing a cumulative money flow of <strong>${money({amount: totalVol})}</strong>. The engine grouped these events into <strong>${data.cases.length} authoritative case file(s)</strong>.</p>
-    </div>
-    <div class="verdict-section">
-      <h5>Typology &amp; Behavioral Assessment</h5>
-      <p>${typologyNarrative}</p>
-      ${allRules.length ? `<p style="margin-top:6px;font-size:11px;color:#52655f;"><strong>Triggered Engine Rules:</strong> ${allRules.join(' · ')}</p>` : ''}
-    </div>
-    <div class="verdict-section">
-      <h5>Compliance Recommendation</h5>
-      <div class="verdict-action-box ${actionClass}">
-        ${actionNarrative}
+    <div class="verdict-top-banner">
+      <div class="verdict-title-box">
+        <span class="verdict-icon">⚖️</span>
+        <div>
+          <h3 class="verdict-heading">Executive Synthesis &amp; Forensic Verdict</h3>
+          <p class="verdict-sub">Multi-hop network synthesis and regulatory disposition</p>
+        </div>
       </div>
+      <div>${priorityBadgeHtml}</div>
+    </div>
+
+    <!-- 4-Stat Bento Matrix -->
+    <div class="verdict-bento-grid">
+      <div class="bento-stat-card">
+        <span class="bento-label">👥 ACCOUNTS</span>
+        <span class="bento-num">${accountsCount}</span>
+        <span class="bento-desc">Inspected nodes</span>
+      </div>
+      <div class="bento-stat-card">
+        <span class="bento-label">🔄 TRANSFERS</span>
+        <span class="bento-num">${txCount}</span>
+        <span class="bento-desc">Observed hops</span>
+      </div>
+      <div class="bento-stat-card">
+        <span class="bento-label">💰 TOTAL FLOW</span>
+        <span class="bento-num">${money({amount: totalVol})}</span>
+        <span class="bento-desc">Cumulative volume</span>
+      </div>
+      <div class="bento-stat-card">
+        <span class="bento-label">📁 CASE FILES</span>
+        <span class="bento-num">${data.cases.length}</span>
+        <span class="bento-desc">Grouped dossiers</span>
+      </div>
+    </div>
+
+    <!-- Typology Card -->
+    <div class="verdict-section-card">
+      <div class="section-card-header">
+        <span>⚡ <strong>${typologyTitle}</strong></span>
+      </div>
+      <p class="section-narrative">${typologyNarrative}</p>
+      ${allRules.length ? `
+        <div class="rules-chips-row">
+          <span class="rules-chips-label">Triggered Rules:</span>
+          ${allRules.map(r => `<span class="rule-chip-pill">🏷️ ${escapeHtml(r)}</span>`).join('')}
+        </div>` : ''}
+    </div>
+
+    <!-- Compliance Directives Card -->
+    <div class="verdict-action-card ${actionClass}">
+      <div class="action-card-header">${actionHeader}</div>
+      <ul class="action-card-list">
+        ${actionItems.map(item => `<li>${item}</li>`).join('')}
+      </ul>
+    </div>
+
+    <div class="verdict-disclaimer-pill">
+      🔒 <strong>Forensic Decision-Support:</strong> Heuristic groupings establish investigative leads for qualified compliance personnel; they do not constitute autonomous legal determinations.
     </div>
   `;
 }

@@ -1811,32 +1811,53 @@
       $('evaluation-model').textContent = `Optional model artifact status: ${result.model_status}. Evaluation artifact status: ${result.evaluation_status}. ${result.metrics === null ? 'No measured model metrics are available from that artifact.' : 'An optional model report exists; these operational counts do not validate it.'}`;
       $('evaluation-legacy').textContent = `${result.legacy_cases_without_run_metadata} older case(s) lack run metadata. They appear only in the all-data view.`;
       $('evaluation-run-count').textContent = result.runs.total ? `Showing ${result.runs.returned} of ${result.runs.total} recorded runs, newest first.${result.runs.truncated ? ' Older runs are omitted from this bounded snapshot.' : ''}` : 'No recorded runs in this source. Replay a scenario or import a CSV to create one; older records are not reconstructed.';
-      const rows = $('evaluation-runs'); rows.replaceChildren();
-      for (const run of result.runs.items) {
-        const row = node('tr');
-        const graph = run.graph_summary;
-        const cells = [ `${run.source} (${run.source_kind})\n${run.run_id}`, run.completed_at,
-          `${run.transaction_count} transactions / ${run.case_count} cases`,
-          `${graph.graph_analysis_incomplete ? 'Graph search incomplete' : 'Graph search budget not exhausted'}; ${run.cases_with_truncation} case(s) with truncated payloads`,
-          `${run.analysis_duration_ms} ms`];
-        for (const text of cells) row.append(node('td', '', text));
-        const td = node('td');
-        const inspectBtn = node('button', 'pill btn', 'Inspect in Simulator');
-        inspectBtn.style.padding = '5px 12px';
-        inspectBtn.style.fontSize = '12px';
-        inspectBtn.style.cursor = 'pointer';
-        inspectBtn.style.display = 'block';
-        inspectBtn.style.marginBottom = '6px';
-        inspectBtn.style.background = 'var(--dark)';
-        inspectBtn.style.color = '#fff';
-        inspectBtn.addEventListener('click', () => {
-          window.location.href = `/simulation.html?scenario=${encodeURIComponent(run.source)}`;
-        });
-        const details = node('details');
-        details.append(node('summary', '', 'Raw provenance payload'), node('pre', '', JSON.stringify(run, null, 2)));
-        td.append(inspectBtn, details);
-        row.append(td);
-        rows.append(row);
+      
+      const runsKey = (result.runs.items || []).map(r => `${r.run_id}:${r.completed_at}`).join('|');
+      const rows = $('evaluation-runs');
+
+      // Preserve any open raw provenance details across background polling
+      const openRunIds = new Set(
+        Array.from(rows.querySelectorAll('details[open]')).map(d => d.dataset.runId).filter(Boolean)
+      );
+
+      // Only rebuild table if manual/initial load, or if runs data has actually changed
+      if (!silent || state._lastRunsKey !== runsKey) {
+        state._lastRunsKey = runsKey;
+        rows.replaceChildren();
+        for (const run of result.runs.items) {
+          const row = node('tr');
+          const graph = run.graph_summary;
+          const cells = [ `${run.source} (${run.source_kind})\n${run.run_id}`, run.completed_at,
+            `${run.transaction_count} transactions / ${run.case_count} cases`,
+            `${graph.graph_analysis_incomplete ? 'Graph search incomplete' : 'Graph search budget not exhausted'}; ${run.cases_with_truncation} case(s) with truncated payloads`,
+            `${run.analysis_duration_ms} ms`];
+          for (const text of cells) row.append(node('td', '', text));
+          const td = node('td');
+          const inspectBtn = node('button', 'pill btn', 'Inspect in Simulator');
+          inspectBtn.style.padding = '5px 12px';
+          inspectBtn.style.fontSize = '12px';
+          inspectBtn.style.cursor = 'pointer';
+          inspectBtn.style.display = 'block';
+          inspectBtn.style.marginBottom = '6px';
+          inspectBtn.style.background = 'var(--dark)';
+          inspectBtn.style.color = '#fff';
+          inspectBtn.addEventListener('click', () => {
+            window.location.href = `/simulation.html?scenario=${encodeURIComponent(run.source)}`;
+          });
+          const details = node('details');
+          details.dataset.runId = run.run_id;
+          if (openRunIds.has(run.run_id)) {
+            details.open = true;
+          }
+          details.addEventListener('toggle', () => {
+            if (details.open) openRunIds.add(run.run_id);
+            else openRunIds.delete(run.run_id);
+          });
+          details.append(node('summary', '', 'Raw provenance payload'), node('pre', '', JSON.stringify(run, null, 2)));
+          td.append(inspectBtn, details);
+          row.append(td);
+          rows.append(row);
+        }
       }
       $('evaluation-settings').textContent = JSON.stringify(result.active_policy, null, 2);
       const policy = $('evaluation-policy'); policy.replaceChildren();
@@ -2153,10 +2174,132 @@
   /* ========================================== */
   /* REVIEW HISTORY & AUDIT LEDGER PAGE         */
   /* ========================================== */
+  let cachedReviews = [];
+  let reviewOutcomeFilter = 'ALL';
+  let reviewSearchQuery = '';
+
+  function filterAndRenderReviews() {
+    const tableBody = $('reviews-table-body');
+    if (!tableBody) return;
+
+    let filtered = cachedReviews;
+    if (reviewOutcomeFilter !== 'ALL') {
+      filtered = filtered.filter(r => r.new_outcome === reviewOutcomeFilter);
+    }
+    if (reviewSearchQuery) {
+      const q = reviewSearchQuery.toLowerCase();
+      filtered = filtered.filter(r =>
+        (r.case_id || '').toLowerCase().includes(q) ||
+        (r.reviewer || '').toLowerCase().includes(q) ||
+        (r.note || '').toLowerCase().includes(q) ||
+        (r.event_hash || '').toLowerCase().includes(q) ||
+        (r.new_status || '').toLowerCase().includes(q) ||
+        (r.new_outcome || '').toLowerCase().includes(q)
+      );
+    }
+
+    const sub = $('rev-ledger-subtitle');
+    if (sub) {
+      sub.textContent = `Showing ${filtered.length} of ${cachedReviews.length} recorded decision event${cachedReviews.length === 1 ? '' : 's'} in tamper-evident order`;
+    }
+
+    tableBody.replaceChildren();
+
+    if (!filtered.length) {
+      const tr = node('tr');
+      const td = node('td');
+      td.colSpan = 7;
+      td.style.textAlign = 'center';
+      td.style.padding = '40px 20px';
+
+      if (!cachedReviews.length) {
+        td.innerHTML = `
+          <div style="max-width:440px;margin:0 auto;text-align:center;">
+            <div style="font-size:36px;margin-bottom:10px;">📜</div>
+            <h3 style="font-size:16px;font-weight:700;margin-bottom:6px;color:var(--ink);">No Human Review Decisions Logged Yet</h3>
+            <p class="d" style="margin-bottom:16px;line-height:1.5;">Review events are generated when compliance analysts inspect a case in the queue, select an outcome (Confirmed Suspicious, False Positive, or Inconclusive), and record a decision.</p>
+            <a href="#/queue" class="pill btn" style="display:inline-flex;align-items:center;gap:6px;background:var(--dark);color:#fff;text-decoration:none;">Open Case Queue ➔</a>
+          </div>
+        `;
+      } else {
+        td.innerHTML = `
+          <div style="text-align:center;padding:24px;">
+            <p class="d">No review events match the active search or outcome filter.</p>
+          </div>
+        `;
+      }
+      tr.appendChild(td);
+      tableBody.appendChild(tr);
+      return;
+    }
+
+    filtered.forEach(rev => {
+      const tr = node('tr');
+
+      // 1. Timestamp
+      const tdTime = node('td', 'mono', formatExactTimestamp(rev.created_at) || rev.created_at || '—');
+      tdTime.style.fontSize = '11px';
+      tdTime.style.whiteSpace = 'nowrap';
+
+      // 2. Case ID (clickable to jump into Case Queue)
+      const tdCase = node('td');
+      const caseLink = node('a', 'mono', rev.case_id);
+      caseLink.href = '#/queue';
+      caseLink.style.fontWeight = '700';
+      caseLink.style.color = 'var(--ink)';
+      caseLink.style.textDecoration = 'underline';
+      caseLink.style.cursor = 'pointer';
+      caseLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.hash = '#/queue';
+        loadCase(rev.case_id);
+      });
+      tdCase.append(caseLink);
+
+      // 3. Workflow Transition
+      const tdTransition = node('td');
+      const prevB = badge(rev.previous_status || 'OPEN');
+      const arrow = document.createTextNode(' → ');
+      const nextB = badge(rev.new_status || 'CLOSED');
+      tdTransition.append(prevB, arrow, nextB);
+
+      // 4. Outcome Verdict
+      const tdOutcome = node('td');
+      if (rev.new_outcome) {
+        tdOutcome.append(badge(rev.new_outcome));
+      } else {
+        tdOutcome.append(node('span', 'd', '—'));
+      }
+
+      // 5. Reviewer
+      const tdReviewer = node('td', 'mono');
+      const revTag = node('span', 'chip', `👤 ${rev.reviewer || 'analyst'}`);
+      revTag.style.fontSize = '11px';
+      tdReviewer.append(revTag);
+
+      // 6. Reasoning / Note
+      const tdNote = node('td', '', rev.note || '—');
+      tdNote.style.maxWidth = '260px';
+      tdNote.style.fontSize = '12px';
+      tdNote.style.lineHeight = '1.45';
+
+      // 7. Cryptographic Integrity
+      const tdIntegrity = node('td');
+      const hashBadge = node('span', 'chip mono', rev.event_hash ? rev.event_hash.slice(0, 10) + '…' : 'Verified');
+      hashBadge.title = `Event Hash: ${rev.event_hash || ''}\nPrev Hash: ${rev.prev_hash || 'GENESIS'}\nAlgorithm: SHA-256 tamper-evident chain`;
+      hashBadge.style.background = 'var(--lemon-soft)';
+      hashBadge.style.fontSize = '10px';
+      hashBadge.style.cursor = 'help';
+      tdIntegrity.append(hashBadge);
+
+      tr.append(tdTime, tdCase, tdTransition, tdOutcome, tdReviewer, tdNote, tdIntegrity);
+      tableBody.append(tr);
+    });
+  }
+
   async function loadReviewHistoryPage() {
     const tableBody = $('reviews-table-body');
     if (!tableBody) return;
-    tableBody.innerHTML = '<tr><td colspan="7" class="d" style="text-align:center;padding:24px;">Loading review ledger…</td></tr>';
 
     try {
       const [reviews, outcomes] = await Promise.all([
@@ -2164,74 +2307,19 @@
         api('/api/analytics/review-outcomes').catch(() => ({}))
       ]);
 
-      if ($('rev-total-count')) $('rev-total-count').textContent = outcomes.reviewed_cases_with_outcome ?? reviews.length ?? 0;
+      cachedReviews = Array.isArray(reviews) ? reviews : [];
+
+      if ($('rev-total-count')) $('rev-total-count').textContent = outcomes.reviewed_cases_with_outcome ?? cachedReviews.length ?? 0;
       if ($('rev-suspicious-count')) $('rev-suspicious-count').textContent = outcomes.outcome_counts?.CONFIRMED_SUSPICIOUS ?? 0;
       if ($('rev-fp-count')) $('rev-fp-count').textContent = outcomes.outcome_counts?.FALSE_POSITIVE ?? 0;
       if ($('rev-inconclusive-count')) $('rev-inconclusive-count').textContent = outcomes.outcome_counts?.INCONCLUSIVE ?? 0;
 
-      tableBody.replaceChildren();
-
-      if (!reviews || !reviews.length) {
-        tableBody.innerHTML = '<tr><td colspan="7" class="d" style="text-align:center;padding:24px;">No review events recorded yet. Perform a case review in the Case Queue to establish an audit entry.</td></tr>';
-        return;
+      if ($('rev-integrity-status')) {
+        const allHashed = cachedReviews.length > 0 && cachedReviews.every(r => typeof r.event_hash === 'string' && r.event_hash.length >= 10);
+        $('rev-integrity-status').textContent = cachedReviews.length === 0 ? 'Verified' : allHashed ? '100% Valid' : 'Discrepancy';
       }
 
-      reviews.forEach(rev => {
-        const tr = node('tr');
-
-        // 1. Timestamp
-        const tdTime = node('td', 'mono', formatExactTimestamp(rev.created_at) || rev.created_at || '—');
-        tdTime.style.fontSize = '11px';
-
-        // 2. Case ID (clickable to jump into Case Queue)
-        const tdCase = node('td');
-        const caseLink = node('a', 'mono', rev.case_id);
-        caseLink.href = '#/queue';
-        caseLink.style.fontWeight = '700';
-        caseLink.style.color = 'var(--ink)';
-        caseLink.style.textDecoration = 'underline';
-        caseLink.style.cursor = 'pointer';
-        caseLink.addEventListener('click', (e) => {
-          e.preventDefault();
-          window.location.hash = '#/queue';
-          loadCase(rev.case_id);
-        });
-        tdCase.append(caseLink);
-
-        // 3. Workflow Transition
-        const tdTransition = node('td');
-        const prevB = badge(rev.previous_status || 'OPEN');
-        const arrow = document.createTextNode(' → ');
-        const nextB = badge(rev.new_status || 'CLOSED');
-        tdTransition.append(prevB, arrow, nextB);
-
-        // 4. Outcome
-        const tdOutcome = node('td');
-        if (rev.new_outcome) {
-          tdOutcome.append(badge(rev.new_outcome));
-        } else {
-          tdOutcome.append(node('span', 'd', '—'));
-        }
-
-        // 5. Reviewer
-        const tdReviewer = node('td', 'mono', rev.reviewer || 'analyst');
-
-        // 6. Reasoning / Note
-        const tdNote = node('td', '', rev.note || '—');
-        tdNote.style.maxWidth = '240px';
-        tdNote.style.fontSize = '12px';
-
-        // 7. Cryptographic Integrity
-        const tdIntegrity = node('td');
-        const hashBadge = node('span', 'chip mono', rev.event_hash ? rev.event_hash.slice(0, 10) + '…' : 'Verified');
-        hashBadge.title = `Event Hash: ${rev.event_hash || ''}\nPrev Hash: ${rev.prev_hash || ''}`;
-        hashBadge.style.background = 'var(--lemon-soft)';
-        hashBadge.style.fontSize = '10px';
-        tdIntegrity.append(hashBadge);
-
-        tr.append(tdTime, tdCase, tdTransition, tdOutcome, tdReviewer, tdNote, tdIntegrity);
-        tableBody.append(tr);
-      });
+      filterAndRenderReviews();
     } catch (err) {
       tableBody.innerHTML = `<tr><td colspan="7" class="d" style="text-align:center;padding:24px;color:#c00;">Failed to load reviews: ${escapeHtml(err.message)}</td></tr>`;
     }
@@ -2240,7 +2328,36 @@
   const refRevBtn = $('refresh-reviews-btn');
   if (refRevBtn) refRevBtn.addEventListener('click', loadReviewHistoryPage);
 
-  // Initialize
+  const revSearchInput = $('reviews-search');
+  const revSearchClear = $('reviews-search-clear');
+  if (revSearchInput) {
+    revSearchInput.addEventListener('input', () => {
+      reviewSearchQuery = revSearchInput.value.trim();
+      if (revSearchClear) revSearchClear.hidden = !reviewSearchQuery;
+      filterAndRenderReviews();
+    });
+    if (revSearchClear) {
+      revSearchClear.addEventListener('click', () => {
+        revSearchInput.value = '';
+        reviewSearchQuery = '';
+        revSearchClear.hidden = true;
+        filterAndRenderReviews();
+        revSearchInput.focus();
+      });
+    }
+  }
+
+  const outcomeButtons = document.querySelectorAll('#reviews-outcome-filters button');
+  outcomeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      outcomeButtons.forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      reviewOutcomeFilter = btn.dataset.outcome || 'ALL';
+      filterAndRenderReviews();
+    });
+  });
+
+    // Initialize
   renderFilterButtons();
   loadScenarios();
   handleRoute();

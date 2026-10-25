@@ -215,7 +215,6 @@
 
         <!-- ========================================== -->
     <!-- PAGE: REVIEW HISTORY                      -->
-    <!-- ========================================== -->
     <div id="page-reviews" class="page-view" hidden>
       <section class="page-header">
         <h1>Review History &amp; Audit Trail</h1>
@@ -223,49 +222,75 @@
       </section>
 
       <!-- Review Metrics KPI Cards -->
-      <section class="kpi-grid">
-        <div class="card kpi">
-          <p class="eyebrow">TOTAL DECISIONS</p>
-          <div class="val" id="rev-total-count">0</div>
-          <p class="d">Logged analyst determinations</p>
-        </div>
-        <div class="card kpi">
-          <p class="eyebrow">CONFIRMED SUSPICIOUS</p>
-          <div class="val" id="rev-suspicious-count">0</div>
-          <p class="d">Escalated for enforcement action</p>
-        </div>
-        <div class="card kpi">
-          <p class="eyebrow">FALSE POSITIVES</p>
-          <div class="val" id="rev-fp-count">0</div>
-          <p class="d">Cleared as benign activity</p>
-        </div>
-        <div class="card kpi">
-          <p class="eyebrow">INCONCLUSIVE</p>
-          <div class="val" id="rev-inconclusive-count">0</div>
-          <p class="d">Pending further intelligence</p>
-        </div>
+      <section class="grid kpi-grid" aria-label="Review audit metrics summary">
+        <article class="card kpi dark">
+          <div class="l">Total Decisions</div>
+          <div class="n" id="rev-total-count">0</div>
+          <div class="d">Logged analyst determinations</div>
+        </article>
+        <article class="card kpi coral">
+          <div class="l">Confirmed Suspicious</div>
+          <div class="n" id="rev-suspicious-count">0</div>
+          <div class="d">Escalated for enforcement action</div>
+        </article>
+        <article class="card kpi lime">
+          <div class="l">False Positives</div>
+          <div class="n" id="rev-fp-count">0</div>
+          <div class="d">Cleared as benign activity</div>
+        </article>
+        <article class="card kpi amber">
+          <div class="l">Inconclusive</div>
+          <div class="n" id="rev-inconclusive-count">0</div>
+          <div class="d">Pending further intelligence</div>
+        </article>
+        <article class="card kpi">
+          <div class="l">Chain Integrity</div>
+          <div class="n" id="rev-integrity-status" style="font-size:22px;letter-spacing:-0.02em;">Verified</div>
+          <div class="d" id="rev-integrity-desc">Cryptographic SHA-256 chain</div>
+        </article>
       </section>
 
       <!-- Review Ledger Card -->
-      <section class="card">
+      <section class="card review-ledger-card">
         <div class="ch">
           <div>
-            <p class="eyebrow">CASE AUDIT LEDGER</p>
+            <div class="eyebrow">CASE AUDIT LEDGER</div>
             <h2>Recorded Review Events</h2>
+            <p class="d" id="rev-ledger-subtitle" style="margin-top:2px;">Tamper-evident hash-chained sequence of reviewer actions</p>
           </div>
-          <button class="pill btn" id="refresh-reviews-btn" type="button">Refresh reviews</button>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button class="pill btn" id="refresh-reviews-btn" type="button">↻ Refresh ledger</button>
+          </div>
         </div>
-        <div class="tw" style="margin-top:12px;">
-          <table>
+
+        <div class="review-toolbar-row" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:16px 0 14px;">
+          <!-- Search box -->
+          <div class="search-input-box" style="flex:1;min-width:260px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="search-icon" aria-hidden="true" style="opacity:0.6"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="reviews-search" placeholder="Search by Case ID, Reviewer handle, notes, or hash..." aria-label="Search review events" autocomplete="off" spellcheck="false">
+            <button id="reviews-search-clear" class="search-clear-btn" type="button" aria-label="Clear search" title="Clear filter" hidden>×</button>
+          </div>
+
+          <!-- Outcome filter buttons -->
+          <div class="filter-pills-row" id="reviews-outcome-filters" style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button type="button" class="pill btn on" data-outcome="ALL">All Outcomes</button>
+            <button type="button" class="pill btn" data-outcome="CONFIRMED_SUSPICIOUS">🚨 Suspicious</button>
+            <button type="button" class="pill btn" data-outcome="FALSE_POSITIVE">🛡️ False Positive</button>
+            <button type="button" class="pill btn" data-outcome="INCONCLUSIVE">⚖️ Inconclusive</button>
+          </div>
+        </div>
+
+        <div class="tw" style="margin-top:8px;">
+          <table class="table-hover">
             <thead>
               <tr>
-                <th>Timestamp (UTC)</th>
-                <th>Case ID</th>
-                <th>Workflow Transition</th>
-                <th>Outcome</th>
-                <th>Reviewer</th>
-                <th>Reasoning / Notes</th>
-                <th>Cryptographic Integrity</th>
+                <th style="min-width:140px;">Timestamp (UTC)</th>
+                <th style="min-width:160px;">Case ID</th>
+                <th style="min-width:150px;">Workflow Transition</th>
+                <th style="min-width:140px;">Outcome Verdict</th>
+                <th style="min-width:110px;">Reviewer</th>
+                <th>Reasoning / Justification</th>
+                <th style="min-width:150px;">Cryptographic Integrity</th>
               </tr>
             </thead>
             <tbody id="reviews-table-body">

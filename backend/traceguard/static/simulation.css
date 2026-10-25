@@ -2,26 +2,419 @@ main{padding:28px 0}h1{font-size:clamp(28px,4vw,46px);letter-spacing:-1.5px;marg
 /* Avoid promoting every panel to a GPU layer on tall mobile pages. */
 .card{will-change:auto}.finding h3,.current{overflow-wrap:anywhere}
 @media(prefers-reduced-motion:reduce){.card,.btn{transition:none}}
+/* Step explanation, executive verdict, and forensic synthesis styles */
+.step-explanation-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
 
-/* Step explanation and executive synthesis styles */
-.step-explanation-box{background:#f4f9f7;border:1px solid #cce5dd;border-radius:10px;padding:14px;margin-bottom:14px}
-.step-explanation-box h4{margin:0 0 6px;font-size:13px;color:#111111;font-weight:700;display:flex;align-items:center;gap:6px}
-.step-explanation-box p{margin:4px 0;font-size:12px;line-height:1.5;color:#243e37}
-.step-highlight-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;margin-top:6px}
-.step-highlight-tag.alert{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
-.step-highlight-tag.info{background:#e0f2fe;color:#075985;border:1px solid #bae6fd}
-.step-highlight-tag.neutral{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
+.step-card-idle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 4px;
+}
+.step-idle-icon {
+  font-size: 24px;
+}
+.step-idle-title {
+  margin: 0 0 4px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.step-idle-sub {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
 
-.executive-verdict-box{background:#fdfcf9;border:1.5px solid #dfd7ca;border-radius:12px;padding:18px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,0.04)}
-.executive-verdict-box h3{font-size:16px;font-weight:700;margin:0 0 10px;display:flex;align-items:center;justify-content:space-between}
-.verdict-tag-high{background:#fee2e2;color:#b91c1c;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
-.verdict-tag-medium{background:#fef3c7;color:#b45309;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
-.verdict-tag-low{background:#e0f2fe;color:#0369a1;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
-.verdict-tag-clean{background:#dcfce7;color:#15803d;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
-.verdict-section{margin-top:12px;padding-top:10px;border-top:1px solid #eee7dd}
-.verdict-section h5{margin:0 0 4px;font-size:12px;color:#57534e;text-transform:uppercase;letter-spacing:0.5px}
-.verdict-section p,.verdict-section ul{margin:4px 0;font-size:12px;line-height:1.55;color:#292524}
-.verdict-section ul{padding-left:18px}
-.verdict-action-box{background:#f0fdf4;border-left:4px solid #16a34a;padding:10px 12px;border-radius:4px;margin-top:10px}
-.verdict-action-box.high{background:#fef2f2;border-left-color:#dc2626}
-.verdict-action-box h6{margin:0 0 4px;font-size:12px;font-weight:700}
+.step-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.step-badge-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.step-counter-chip {
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+.tx-id-badge {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+.step-time-mono {
+  font-size: 11px;
+  color: #64748b;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+}
+
+.tx-metric-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.tx-metric-cell {
+  display: flex;
+  flex-direction: column;
+}
+.cell-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.05em;
+}
+.cell-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 2px;
+  word-break: break-all;
+}
+.amount-val {
+  color: #087f72;
+  font-weight: 800;
+}
+
+.step-behavior-card {
+  background: #fdfdf9;
+  border: 1px solid #e8e3d5;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.behavior-header {
+  margin-bottom: 4px;
+}
+.flow-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.flow-pill.conduit {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+.flow-pill.origin {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+.flow-pill.aggregate {
+  background: #f3e8ff;
+  color: #6b21a8;
+  border: 1px solid #e9d5ff;
+}
+.behavior-desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #334155;
+}
+.mono-tag {
+  background: #f1f5f9;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #0f172a;
+}
+
+.step-alert-card {
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.step-alert-card.alert-triggered {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+.step-alert-card.alert-nominal {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+.step-alert-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.step-alert-badge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+.alert-triggered .step-alert-badge {
+  color: #b91c1c;
+}
+.alert-nominal .step-alert-badge {
+  color: #15803d;
+}
+.alert-rule-tag {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.nominal-tag {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.step-alert-msg {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.alert-triggered .step-alert-msg {
+  color: #7f1d1d;
+}
+.alert-nominal .step-alert-msg {
+  color: #14532d;
+}
+
+/* Executive Synthesis Verdict Box */
+.executive-verdict-box {
+  background: #ffffff;
+  border: 1.5px solid #dfd7ca;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+.verdict-top-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1ece4;
+}
+.verdict-title-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.verdict-icon {
+  font-size: 26px;
+}
+.verdict-heading {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.verdict-sub {
+  font-size: 11px;
+  color: #64748b;
+  margin: 2px 0 0;
+}
+
+.verdict-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 14px 0;
+}
+.bento-stat-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 9px 10px;
+  display: flex;
+  flex-direction: column;
+}
+.bento-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.05em;
+}
+.bento-num {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin: 2px 0;
+}
+.bento-desc {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.verdict-section-card {
+  background: #fdfdf9;
+  border: 1px solid #e8e3d5;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.section-card-header {
+  font-size: 12.5px;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+.section-narrative {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #334155;
+  margin: 0;
+}
+.rules-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
+}
+.rules-chips-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #64748b;
+}
+.rule-chip-pill {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #1e293b;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.verdict-action-card {
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.verdict-action-card.high {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #dc2626;
+}
+.verdict-action-card.medium {
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-left: 4px solid #d97706;
+}
+.verdict-action-card.low {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-left: 4px solid #16a34a;
+}
+.action-card-header {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #0f172a;
+}
+.action-card-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #334155;
+}
+.action-card-list li {
+  margin-bottom: 4px;
+}
+
+.verdict-disclaimer-pill {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.verdict-tag-high {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.verdict-tag-medium {
+  background: #fef3c7;
+  color: #b45309;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.verdict-tag-low {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.verdict-tag-clean {
+  background: #dcfce7;
+  color: #15803d;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 640px) {
+  .verdict-bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .tx-metric-strip {
+    grid-template-columns: 1fr;
+  }
+}
