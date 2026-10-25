@@ -11,7 +11,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import numpy as np
-import pandas as pd
+try:
+    import pandas as pd
+except (ImportError, Exception):
+    pd = None
 import joblib
 
 REALISTIC_FEATURE_COLUMNS = [
@@ -57,7 +60,7 @@ def score_records(records, bundle=None):
         }
         rows.append([row.get(col, 0.0) for col in feature_cols])
 
-    X = pd.DataFrame(rows, columns=feature_cols)
+    X = pd.DataFrame(rows, columns=feature_cols) if pd is not None else np.array(rows, dtype=float)
     probs = model.predict_proba(X)[:, 1]
     return [float(p) for p in probs]
 
