@@ -305,23 +305,32 @@
     const nl = g.L.length;
 
     g.L.forEach((col, ci) => {
-      const x = nl === 1 ? 500 : 100 + ci * (780 / Math.max(1, nl - 1));
+      // Calculate balanced base X position for each layer
+      let x = 500;
+      if (nl === 2) {
+        x = ci === 0 ? 180 : 740;
+      } else if (nl > 2) {
+        x = 120 + ci * (760 / Math.max(1, nl - 1));
+      }
+
       if (col.length > 4) {
-        // Multi-node fanout: stagger across two sub-columns with generous horizontal and vertical separation
-        const rSub = sm ? 16 : 19;
-        const subColRows = Math.ceil(col.length / 2);
-        const subGap = Math.max(48, Math.min(76, 440 / Math.max(1, subColRows)));
-        const xSeparation = sm ? 42 : 60;
+        // Multi-node fanout: intelligently stagger into 2, 3, or 4 columns based on density
+        const numCols = col.length > 14 ? 4 : col.length > 7 ? 3 : 2;
+        const rSub = sm ? 15 : 18;
+        const subColRows = Math.ceil(col.length / numCols);
+        const subGap = Math.max(54, Math.min(84, 420 / Math.max(1, subColRows)));
+        const colSpread = sm ? 60 : 85;
+
         col.forEach((n, i) => {
-          const subColIdx = i % 2;
-          const rowIdx = Math.floor(i / 2);
-          const xOffset = subColIdx === 0 ? -xSeparation : xSeparation;
+          const colIdx = i % numCols;
+          const rowIdx = Math.floor(i / numCols);
+          const xOffset = (colIdx - (numCols - 1) / 2) * colSpread;
           const y = 260 + (rowIdx - (subColRows - 1) / 2) * subGap;
-          const clampedX = Math.max(70, Math.min(935, x + xOffset));
+          const clampedX = Math.max(60, Math.min(940, x + xOffset));
           pos[n] = { x: clampedX, y: y, r: rSub };
         });
       } else {
-        const gap = Math.min(sm ? 70 : 110, (sm ? 320 : 400) / Math.max(1, col.length));
+        const gap = Math.min(sm ? 80 : 120, (sm ? 340 : 420) / Math.max(1, col.length));
         col.forEach((n, i) => {
           pos[n] = { x: x, y: 260 + (i - (col.length - 1) / 2) * gap, r: baseR };
         });
@@ -439,6 +448,9 @@
       if (!id) return '';
       const destMatch = id.match(/DEST[-_]?(\d+)/i);
       if (destMatch) return 'D-' + destMatch[1];
+      const sndMatch = id.match(/SENDER[-_]?([A-Z0-9]+)/i);
+      if (sndMatch) return 'SND-' + sndMatch[1];
+      if (id.toLowerCase() === 'sender' || id.toLowerCase().startsWith('sender')) return 'SNDR';
       const cmpMatch = id.match(/CMP[-_]([A-Z0-9]+)/i);
       if (cmpMatch) return 'CMP-' + cmpMatch[1];
       const numMatch = id.match(/[-_](\d{1,3})$/);
@@ -474,7 +486,6 @@
           const row = document.querySelector(`.tx-table tr[data-tx-id="${txId}"]`);
           if (row) {
             row.classList.add('highlight-tx');
-            row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }
         });
         line.addEventListener('mouseleave', () => {
