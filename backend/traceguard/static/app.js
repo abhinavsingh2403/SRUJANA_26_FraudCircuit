@@ -1535,6 +1535,23 @@
   });
 
   // Setup event listeners
+  const seedBtn = $('seed-sample-btn');
+  if (seedBtn) {
+    seedBtn.addEventListener('click', async () => {
+      try {
+        seedBtn.disabled = true;
+        seedBtn.textContent = 'Loading sample data…';
+        const res = await api('/api/realtime/seed', { method: 'POST' });
+        showNotice(res.message || 'Sample data loaded successfully!', 'ok');
+        await refreshCases(true);
+      } catch (err) {
+        showNotice(err.message || 'Failed to seed sample data', 'error');
+      } finally {
+        seedBtn.disabled = false;
+        seedBtn.textContent = 'Seed Real-Time & Graph Data';
+      }
+    });
+  }
   $('import-csv').addEventListener('click', () => $('csv-file').click());
   $('replay-scenario').addEventListener('click', replayScenario);
   $('replay-all').addEventListener('click', replayAllScenarios);

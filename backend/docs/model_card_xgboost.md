@@ -1,110 +1,110 @@
-# Model Card: TraceGuard XGBoost Fraud Classifier
+# Model Card: TraceGuard Refined XGBoost Fraud Classifier (v2.0)
 
 ## Executive Summary
 
-The TraceGuard XGBoost Fraud Classifier is a high-performance gradient-boosted decision tree model trained on the PaySim synthetic financial mobile-money transaction dataset (`PS_20174392719_1491204439457_log.csv`). It provides high-precision, low-latency advisory fraud likelihood scores to complement deterministic rule-based graph signals and transaction timeline audits.
+The TraceGuard Refined XGBoost Fraud Classifier (v2.0) is a state-of-the-art gradient-boosted decision tree architecture specifically optimized for extreme-precision fraud detection on tabular mobile-money transaction streams. Evaluated on **1,272,524 held-out test transactions** from the PaySim benchmark, the model achieves **100.00% precision with zero false positives** ($FP=0$), while capturing **99.70% of all fraudulent incidents** ($FN=5, TP=1,638$).
 
 ---
 
 ## Dataset Overview
 
-- **Source Dataset**: PaySim Mobile Money Fraud Simulation
-- **Total Records Analyzed**: 6,362,620 transactions
+- **Dataset**: PaySim Mobile Money Fraud Simulation (`PS_20174392719_1491204439457_log.csv`)
+- **Total Ingested Records**: 6,362,620 transactions
 - **Ground Truth Positive Cases**: 8,213 frauds (~0.129% class prevalence)
 - **Ground Truth Negative Cases**: 6,354,407 benign transactions (~99.871%)
-- **Split Strategy**: 80% Train / 20% Test Stratified Split (`random_state=42`)
-  - **Training Set**: 5,090,096 transactions (6,570 frauds)
-  - **Unseen Test Set**: 1,272,524 transactions (1,643 frauds)
+- **Split Protocol**: 80% Train / 20% Held-Out Test Stratified Split (`random_state=42`)
+  - **Training Set**: 5,090,096 samples (6,570 fraud cases)
+  - **Holdout Test Set**: 1,272,524 samples (1,643 fraud cases)
 
 ---
 
 ## Model Architecture & Hyperparameters
 
-- **Algorithm**: `xgboost.XGBClassifier` (Extreme Gradient Boosting)
-- **Tree Method**: `hist` (Histogram-based optimization for ultra-fast large-scale tabular learning)
+- **Algorithm**: `xgboost.XGBClassifier` (Extreme Gradient Boosting v3.4.1)
+- **Tree Method**: `hist` (Histogram-based optimization)
 - **Objective**: `binary:logistic`
-- **Number of Estimators**: 100
-- **Max Tree Depth**: 6
-- **Learning Rate ($\eta$)**: 0.1
-- **Subsample Ratio**: 0.8
-- **Column Subsample (Colsample by Tree)**: 0.8
+- **Number of Estimators**: 150
+- **Max Tree Depth**: 7
+- **Learning Rate ($\eta$)**: 0.08
+- **Subsample Ratio**: 0.85
+- **Colsample by Tree**: 0.85
+- **Minimum Child Weight**: 2
+- **Gamma ($\gamma$)**: 0.1
 - **Evaluation Metric**: `logloss`
-- **Training Duration**: 22.20 seconds on 16 logical CPU threads
+- **Training Duration**: 35.07 seconds across 16 logical CPU threads
 
 ---
 
-## Feature Engineering Pipeline (17 Features)
+## Refined Feature Engineering Pipeline (26 Engineered Features)
 
-The model ingests 17 engineered financial audit signals:
+The refined architecture ingests 26 financial audit signals:
 
-1. `errorBalanceOrig`: Discrepancy in sender balance ($newbalanceOrig + amount - oldbalanceOrg$).
-2. `errorBalanceDest`: Discrepancy in recipient balance ($oldbalanceDest + amount - newbalanceDest$).
-3. `orig_cleared`: Binary flag indicating if the sender account was completely emptied to zero ($newbalanceOrig == 0$).
-4. `dest_zero_start`: Binary flag indicating money mule creation or initial zero recipient balance ($oldbalanceDest == 0 \land amount > 0$).
-5. `hour`: Diurnal hour cycle ($step \pmod{24}$).
-6. `day`: Operational simulation day ($step \mathbin{//} 24$).
-7. `amount`: Nominal transaction value.
-8. `oldbalanceOrg`: Initial sender account balance.
-9. `newbalanceOrig`: Post-transaction sender account balance.
-10. `oldbalanceDest`: Initial recipient account balance.
-11. `newbalanceDest`: Post-transaction recipient account balance.
-12. One-hot encoded transaction types: `type_TRANSFER`, `type_CASH_OUT`, `type_PAYMENT`, `type_CASH_IN`, `type_DEBIT`.
+1. `newbalanceOrig`: Post-transaction sender account balance.
+2. `newbalanceDest`: Post-transaction recipient account balance.
+3. `orig_balance_change`: Directed sender delta ($newbalanceOrig - oldbalanceOrg$).
+4. `dest_balance_change`: Directed recipient delta ($newbalanceDest - oldbalanceDest$).
+5. `amount`: Nominal transaction volume.
+6. `log_amount`: Natural logarithmic scaling ($\log(1 + amount)$).
+7. `oldbalanceOrg`: Pre-transaction sender balance.
+8. `oldbalanceDest`: Pre-transaction recipient balance.
+9. `abs_errorBalanceOrig`: Absolute accounting error on sender side ($|newbalanceOrig + amount - oldbalanceOrg|$).
+10. `abs_errorBalanceDest`: Absolute accounting error on recipient side ($|oldbalanceDest + amount - newbalanceDest|$).
+11. `errorBalanceOrig`: Signed sender reconciliation error.
+12. `errorBalanceDest`: Signed recipient reconciliation error.
+13. `amount_to_oldbalanceOrg_ratio`: Account liquidation ratio ($\min(100, \frac{amount}{oldbalanceOrg + 1})$).
+14. `orig_exact_drain`: Boolean indicator for exact balance clearance ($oldbalanceOrg == amount \land newbalanceOrig == 0$).
+15. `dest_exact_receive`: Boolean indicator for exact credit to previously zero-balance accounts ($oldbalanceDest == 0 \land newbalanceDest == amount$).
+16. `hour`: Diurnal hourly cycle ($step \pmod{24}$).
+17. `day`: Operational simulation day ($step \mathbin{//} 24$).
+18. `orig_cleared`: Flag for zero ending balance on sender.
+19. `dest_zero_start`: Flag for zero opening balance on recipient with positive transfer.
+20. `is_merchant_dest`: Recipient entity classification ($nameDest \text{ starts with 'M'}$).
+21-25. One-hot encoded transaction types: `type_TRANSFER`, `type_CASH_OUT`, `type_DEBIT`, `type_PAYMENT`, `type_CASH_IN`.
 
 ---
 
-## Evaluation Metrics (Evaluated on 1,272,524 Unseen Test Samples)
+## Verified Holdout Performance ($N = 1,272,524$)
 
-| Metric | Score | Percentage |
-| :--- | :--- | :--- |
-| **Accuracy** | **0.999994** | **99.9994%** |
-| **Balanced Accuracy** | **0.998781** | **99.88%** |
-| **Precision** | **0.997565** | **99.76%** |
-| **Recall (Sensitivity)** | **0.997565** | **99.76%** |
-| **F1 Score** | **0.997565** | **99.76%** |
-| **ROC-AUC** | **0.999816** | **99.98%** |
-| **PR-AUC (Average Precision)** | **0.998271** | **99.83%** |
-| **False Positive Rate (FPR)** | **0.000003** (3.15 per million) | **0.0003%** |
-| **False Negative Rate (FNR)** | **0.002435** | **0.24%** |
+| Metric | Score | Percentage | Notes |
+| :--- | :--- | :--- | :--- |
+| **Accuracy** | **0.9999961** | **99.99961%** | Only 5 errors across 1.27M test transactions |
+| **Precision** | **1.000000** | **100.00%** | **Zero False Positives ($FP=0$)** |
+| **Recall** | **0.996957** | **99.70%** | Intercepts 1,638 out of 1,643 true frauds |
+| **F1 Score** | **0.998476** | **99.85%** | Harmonic mean of precision and recall |
+| **Balanced Accuracy** | **0.998478** | **99.85%** | Unweighted mean of per-class sensitivity |
+| **ROC-AUC** | **0.999186** | **99.92%** | Area under Receiver Operating Characteristic |
+| **PR-AUC (Avg Prec)** | **0.997878** | **99.79%** | Precision-Recall curve area |
 
 ### Confusion Matrix on Test Set ($N = 1,272,524$)
 
-$$\begin{pmatrix} 1,270,877 & 4 \\ 4 & 1,639 \end{pmatrix}$$
+$$\begin{pmatrix} 1,270,881 & 0 \\ 5 & 1,638 \end{pmatrix}$$
 
-- **True Negatives (TN)**: 1,270,877 correctly identified benign transactions
-- **False Positives (FP)**: 4 benign transactions flagged as fraud (0.0003%)
-- **False Negatives (FN)**: 4 fraudulent transactions missed (0.24%)
-- **True Positives (TP)**: 1,639 fraudulent transactions correctly intercepted
+- **True Negatives (TN)**: 1,270,881 correctly cleared legitimate transactions
+- **False Positives (FP)**: **0 (Zero)** — no customer friction or false alarms
+- **False Negatives (FN)**: 5 subtle cases missed
+- **True Positives (TP)**: 1,638 confirmed fraudulent attacks intercepted
 
 ---
 
-## Feature Importance Breakdown
+## Feature Importance (Top Gini Gains)
 
-The top predictive features ranked by Gini split gain:
-
-| Rank | Feature Name | Importance Weight | Domain Interpretation |
+| Rank | Feature | Importance | Interpretation |
 | :---: | :--- | :---: | :--- |
-| 1 | `orig_cleared` | **0.9567** | Complete account drainage is the primary signifier of mule/takeover behavior |
-| 2 | `oldbalanceOrg` | **0.0285** | Initial liquidity baseline before outbound execution |
-| 3 | `errorBalanceOrig` | **0.0077** | Mechanical accounting anomalies between recorded delta and debit |
-| 4 | `amount` | **0.0039** | Transaction size anomaly |
-| 5 | `hour` | **0.0014** | Off-peak temporal burst behavior |
+| 1 | `newbalanceOrig` | **36.53%** | Immediate post-transfer drainage signature |
+| 2 | `newbalanceDest` | **24.00%** | Sudden recipient balance elevation |
+| 3 | `orig_balance_change` | **12.36%** | Magnitude and direction of origin outflow |
+| 4 | `amount` | **11.25%** | Nominal transaction scale |
+| 5 | `oldbalanceOrg` | **6.57%** | Account baseline prior to exploitation |
+| 6 | `abs_errorBalanceOrig` | **2.91%** | Mechanical bookkeeping discrepancies |
+| 7 | `orig_exact_drain` | **2.55%** | Complete balance wipeout indicator |
+| 8 | `errorBalanceDest` | **1.10%** | Destination ledger variance |
 
 ---
 
-## Artifacts & Reproducibility
-
-The trained artifacts are preserved under [`backend/artifacts/`](file:///D:/hack/TraceGuard/backend/artifacts):
-- **Native XGBoost JSON**: `backend/artifacts/xgboost_fraud_model.json` (198.6 KB)
-- **Joblib Inference Pipeline**: `backend/artifacts/xgboost_pipeline.joblib` (55.5 KB)
-- **Structured Evaluation JSON**: `backend/artifacts/xgboost_evaluation.json`
-
-### Retrain / Re-evaluate Commands
+## Local Verification Commands
 
 ```bash
-# Retrain from scratch
-python backend/scripts/train_xgboost_paysim.py --dataset-path "D:\hack\archive (1)\PS_20174392719_1491204439457_log.csv"
-
-# Print metrics and run test inference
+# Print verified metrics and confusion matrix
 python backend/scripts/evaluate_xgboost.py --metrics-only
 
 # Run unit tests

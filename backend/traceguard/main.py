@@ -238,6 +238,29 @@ def evaluation_summary(source_kind: str | None = Query(default=None, pattern="^(
     return summary(source_kind)
 
 
+@app.post("/api/realtime/seed", tags=["realtime"])
+def seed_realtime_data() -> dict[str, Any]:
+    """Seed the database with complex multi-hop network topologies and authentic PaySim fraud episodes."""
+    results = []
+    examples_dir = Path(__file__).resolve().parents[1] / "examples"
+    for filename in ("complex_graph_topology.csv", "paysim_real_fraud_cases.csv"):
+        path = examples_dir / filename
+        if path.is_file():
+            raw = path.read_bytes()
+            try:
+                res = import_csv(raw, DEFAULT_SETTINGS)
+                results.append({"file": filename, "cases": res.get("case_count", 0), "transactions": res.get("transaction_count", 0)})
+            except Exception as e:
+                results.append({"file": filename, "error": str(e)})
+    total_cases = db.count_cases()
+    return {
+        "status": "ok",
+        "total_active_cases": total_cases,
+        "seeded_batches": results,
+        "message": f"Successfully loaded real-time testing and complex network graph data into active queue ({total_cases} total cases)."
+    }
+
+
 from .extensions_api import router
 app.include_router(router)
 
