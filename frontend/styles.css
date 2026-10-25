@@ -1841,6 +1841,20 @@ th.amt {
 /* Live operational evaluation */
 .eval-toolbar { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin:18px 0; }
 .eval-toolbar select { padding:10px; max-width:100%; border:1px solid var(--line,#ddd); border-radius:8px; background:white; }
+#evaluation-status {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  background: var(--card-solid, #ffffff);
+  border: 1px solid var(--line, rgba(17, 17, 17, 0.12));
+  border-radius: 9999px;
+  padding: 8px 18px;
+  font-size: 13px;
+  color: var(--ink, #111111);
+  margin: 8px 0 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
 .eval-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin:20px 0; }
 .eval-metric { padding:20px; } .eval-metric strong { font-size:30px; }
 .eval-section { margin-top:20px; padding:24px; }

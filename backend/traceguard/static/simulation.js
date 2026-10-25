@@ -295,7 +295,7 @@ function explainStep(data) {
       </div>`;
   }
 
-  const formattedTime = tx.timestamp ? tx.timestamp.replace('T', ' ').replace('Z', ' UTC') : '—';
+  const formattedTime = tx.timestamp ? tx.timestamp.replace('T', ' ').replace(/\.\d+Z$/, ' UTC').replace(/Z$/, ' UTC') : '—';
 
   box.innerHTML = `
     <div class="step-card-header">
@@ -543,7 +543,8 @@ function render(data) {
   $('ledger').replaceChildren();
   data.graph.edges.forEach((t, i) => {
     const row = el('tr');
-    for (const value of [i + 1, t.timestamp, t.sender_id, t.recipient_id, money(t)]) row.append(el('td', value));
+    const cleanTime = t.timestamp ? t.timestamp.replace('T', ' ').replace(/\.\d+Z$/, ' UTC').replace(/Z$/, ' UTC') : '—';
+    for (const value of [i + 1, cleanTime, t.sender_id, t.recipient_id, money(t)]) row.append(el('td', value));
     $('ledger').append(row);
   });
 

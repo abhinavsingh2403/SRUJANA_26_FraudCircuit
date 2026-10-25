@@ -150,12 +150,66 @@
     return params.toString();
   }
 
+  function formatUtcTimestamp(dateStr) {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return String(dateStr);
+      const pad = n => String(n).padStart(2, '0');
+      const yyyy = d.getUTCFullYear();
+      const mm = pad(d.getUTCMonth() + 1);
+      const dd = pad(d.getUTCDate());
+      const hh = pad(d.getUTCHours());
+      const min = pad(d.getUTCMinutes());
+      const ss = pad(d.getUTCSeconds());
+      return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss} UTC`;
+    } catch {
+      return String(dateStr);
+    }
+  }
+
+  function formatLocalTime(dateStr) {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return String(dateStr);
+      return d.toLocaleTimeString(undefined, {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      });
+    } catch {
+      return String(dateStr);
+    }
+  }
+
   function formatExactTimestamp(dateStr) {
     if (!dateStr) return '';
     try {
       const d = new Date(dateStr);
       if (Number.isNaN(d.getTime())) return String(dateStr);
-      return `${d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'medium' })} (${dateStr})`;
+      const utc = formatUtcTimestamp(dateStr);
+      const local = formatLocalTime(dateStr);
+      return `${utc} (Local: ${local})`;
+    } catch {
+      return String(dateStr);
+    }
+  }
+
+  function formatAnalystTimestamp(dateStr, { includeLocal = true, includeRelative = true } = {}) {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return String(dateStr);
+      const utc = formatUtcTimestamp(dateStr);
+      const extras = [];
+      if (includeLocal) {
+        extras.push(`Local: ${formatLocalTime(dateStr)}`);
+      }
+      if (includeRelative) {
+        const diffSec = Math.round((Date.now() - d.getTime()) / 1000);
+        const rel = diffSec < 5 ? 'just now' : diffSec < 60 ? `${diffSec}s ago` : formatTimeAgo(dateStr);
+        extras.push(rel);
+      }
+      return extras.length ? `${utc} (${extras.join(' · ')})` : utc;
     } catch {
       return String(dateStr);
     }
@@ -1790,7 +1844,8 @@
     const status = !result.valid ? `INVALID: ${result.reason || 'integrity check failed'}`
       : result.event_count === 0 ? 'No review events — no recorded decision history to verify'
       : 'Review chain valid; current review state matches';
-    return `${status}. ${result.event_count} event(s). Checked ${result.checked_at || 'at request time'}. ${result.warning || ''}`;
+    const checkedFormatted = result.checked_at ? formatAnalystTimestamp(result.checked_at, { includeLocal: true, includeRelative: false }) : 'at request time';
+    return `${status}. ${result.event_count} event(s). Checked ${checkedFormatted}. ${result.warning || ''}`;
   }
 
   let evalPollingTimer = null;
@@ -1807,7 +1862,7 @@
       const result = await api('/api/evaluation/summary' + (source ? `?source_kind=${encodeURIComponent(source)}` : ''));
       if (request !== evaluationRequest) return;
       evaluationSnapshot = result;
-      $('evaluation-status').textContent = `Snapshot: ${result.generated_at} · Source: ${$('evaluation-source').selectedOptions[0].textContent}`;
+      $('evaluation-status').innerHTML = `<strong>Snapshot:</strong> <span class="mono">${formatUtcTimestamp(result.generated_at)}</span> <span class="d" style="font-size:12px;">(Local: ${formatLocalTime(result.generated_at)} · ${formatTimeAgo(result.generated_at)})</span> · <strong>Source:</strong> ${escapeHtml($('evaluation-source').selectedOptions[0].textContent)}`;
       const c = result.cases;
       const metrics = $('evaluation-metrics'); metrics.replaceChildren();
       const values = [['Stored cases', c.total], ['Closed cases', c.closed], ['Review completion', c.review_completion_rate === null ? 'Not available' : `${(c.review_completion_rate*100).toFixed(1)}%`], ['Recorded runs', result.runs.total]];
@@ -1839,11 +1894,17 @@
         for (const run of result.runs.items) {
           const row = node('tr');
           const graph = run.graph_summary;
-          const cells = [ `${run.source} (${run.source_kind})\n${run.run_id}`, run.completed_at,
-            `${run.transaction_count} transactions / ${run.case_count} cases`,
-            `${graph.graph_analysis_incomplete ? 'Graph search incomplete' : 'Graph search budget not exhausted'}; ${run.cases_with_truncation} case(s) with truncated payloads`,
-            `${run.analysis_duration_ms} ms`];
-          for (const text of cells) row.append(node('td', '', text));
+          const completedUtc = formatUtcTimestamp(run.completed_at);
+          const completedLocal = formatLocalTime(run.completed_at);
+
+          const tdSource = node('td', '', `${run.source} (${run.source_kind})\n${run.run_id}`);
+          const tdCompleted = node('td', 'mono');
+          tdCompleted.innerHTML = `<strong>${completedUtc}</strong><br><span class="d" style="font-size:11px;">Local: ${completedLocal}</span>`;
+          tdCompleted.title = `Exact: ${run.completed_at}\nLocal: ${completedLocal}\nElapsed: ${formatTimeAgo(run.completed_at)}`;
+          const tdStats = node('td', '', `${run.transaction_count} transactions / ${run.case_count} cases`);
+          const tdCoverage = node('td', '', `${graph.graph_analysis_incomplete ? 'Graph search incomplete' : 'Graph search budget not exhausted'}; ${run.cases_with_truncation} case(s) with truncated payloads`);
+          const tdDuration = node('td', 'mono', `${run.analysis_duration_ms} ms`);
+          row.append(tdSource, tdCompleted, tdStats, tdCoverage, tdDuration);
           const td = node('td');
           const inspectBtn = node('button', 'pill btn', 'Inspect in Simulator');
           inspectBtn.style.padding = '5px 12px';
@@ -2248,8 +2309,12 @@
     filtered.forEach(rev => {
       const tr = node('tr');
 
-      // 1. Timestamp
-      const tdTime = node('td', 'mono', formatExactTimestamp(rev.created_at) || rev.created_at || '—');
+      // 1. Timestamp (UTC + Local)
+      const tdTime = node('td', 'mono');
+      const utcFormatted = formatUtcTimestamp(rev.created_at);
+      const localFormatted = formatLocalTime(rev.created_at);
+      tdTime.innerHTML = `<span style="font-weight:600;">${utcFormatted}</span><br><span class="d" style="font-size:10px;">Local: ${localFormatted}</span>`;
+      tdTime.title = formatExactTimestamp(rev.created_at);
       tdTime.style.fontSize = '11px';
       tdTime.style.whiteSpace = 'nowrap';
 
