@@ -25,18 +25,14 @@
       <a href="/simulation.html">Simulation</a>
       <a href="/research.html" class="on" aria-current="page" id="nav-research">Research workspace</a>
       <a href="/#/queue" id="nav-queue">Case Queue</a>
+      <a href="/#/reviews" id="nav-reviews">Review History</a>
       <a href="/#/scenarios" id="nav-scenarios">Scenario Console</a>
       <a href="/#/import" id="nav-import">Import Data</a>
       <a href="/#/evaluation" id="nav-evaluation">Evaluation &amp; Audit</a>
     </nav>
     <div class="sp"></div>
-    <div class="pill status-pill">
-      <span class="status-dot ok"></span>
-      <span id="connection-status">API connected</span>
-    </div>
     <div class="pill">F01 · Fraud &amp; Transaction Risk</div>
-    <div class="pill">Local decision support</div>
-  </header>
+    </header>
 
   <!-- Research Workspace Sub-Navigation -->
   <nav class="research-subnav" aria-label="Research sections">
@@ -62,7 +58,7 @@
       
       <div style="margin: 12px 0; display:flex; gap:10px; flex-wrap:wrap;">
         <button id="parse" class="btn" type="button">Parse description</button>
-        <button id="append-to-queue" class="btn" type="button" style="background:#087f72;color:#fff;font-weight:600;">Upload &amp; Append Case to Live Queue</button>
+        <button id="append-to-queue" class="btn" type="button" style="background:var(--dark);color:#fff;font-weight:600;">Upload &amp; Append Case to Live Queue</button>
       </div>
       <p id="parse-state" role="status"></p>
       <p id="queue-state" role="status"></p>

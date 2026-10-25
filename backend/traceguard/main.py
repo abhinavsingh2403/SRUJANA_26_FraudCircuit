@@ -235,6 +235,11 @@ def analytics_review_outcomes() -> dict[str, Any]:
     return db.review_outcome_summary()
 
 
+@app.get("/api/reviews", tags=["cases"])
+def get_all_reviews(limit: int = 100) -> list[dict[str, Any]]:
+    return db.all_review_history(limit=limit)
+
+
 @app.get("/api/evaluation/summary", tags=["evaluation"])
 def evaluation_summary(source_kind: str | None = Query(default=None, pattern="^(synthetic_fixture|uploaded_csv)$")) -> dict[str, Any]:
     from .provenance import summary

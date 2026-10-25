@@ -23,18 +23,14 @@
       <a href="/simulation.html">Simulation</a>
       <a href="/research.html">Research workspace</a>
       <a href="#/queue" class="on" aria-current="page" id="nav-queue">Case Queue</a>
+      <a href="#/reviews" id="nav-reviews">Review History</a>
       <a href="#/scenarios" id="nav-scenarios">Scenario Console</a>
       <a href="#/import" id="nav-import">Import Data</a>
       <a href="#/evaluation" id="nav-evaluation">Evaluation &amp; Audit</a>
     </nav>
     <div class="sp"></div>
-    <div class="pill status-pill">
-      <span class="status-dot"></span>
-      <span id="connection-status">Connecting to API…</span>
-    </div>
     <div class="pill">F01 · Fraud &amp; Transaction Risk</div>
-    <div class="pill">Local decision support</div>
-  </header>
+    </header>
 
   <main>
     <section id="run-result" class="notice card" aria-live="polite" hidden></section>
@@ -91,7 +87,7 @@
 
           <div class="queue-search-row">
             <div class="search-input-box">
-              <span class="search-icon" aria-hidden="true">⌕</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="search-icon" aria-hidden="true" style="opacity:0.6"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               <input type="text" id="queue-search" placeholder="Instant search by Case ID, Account (e.g. CMP-A), Scenario, or Rule code..." aria-label="Search cases" autocomplete="off" spellcheck="false">
               <button id="search-clear-btn" class="search-clear-btn" type="button" aria-label="Clear search" title="Clear filter (Esc)" hidden>×</button>
             </div>
@@ -211,6 +207,69 @@
       </section>
     </div>
 
+        <!-- ========================================== -->
+    <!-- PAGE: REVIEW HISTORY                      -->
+    <!-- ========================================== -->
+    <div id="page-reviews" class="page-view" hidden>
+      <section class="page-header">
+        <h1>Review History &amp; Audit Trail</h1>
+        <p class="sub">Cryptographically linked human review ledger and decision trail. All status transitions and closure outcomes are tamper-evident. <span class="mono">GET /api/reviews</span></p>
+      </section>
+
+      <!-- Review Metrics KPI Cards -->
+      <section class="kpi-grid">
+        <div class="card kpi">
+          <p class="eyebrow">TOTAL DECISIONS</p>
+          <div class="val" id="rev-total-count">0</div>
+          <p class="d">Logged analyst determinations</p>
+        </div>
+        <div class="card kpi">
+          <p class="eyebrow">CONFIRMED SUSPICIOUS</p>
+          <div class="val" id="rev-suspicious-count">0</div>
+          <p class="d">Escalated for enforcement action</p>
+        </div>
+        <div class="card kpi">
+          <p class="eyebrow">FALSE POSITIVES</p>
+          <div class="val" id="rev-fp-count">0</div>
+          <p class="d">Cleared as benign activity</p>
+        </div>
+        <div class="card kpi">
+          <p class="eyebrow">INCONCLUSIVE</p>
+          <div class="val" id="rev-inconclusive-count">0</div>
+          <p class="d">Pending further intelligence</p>
+        </div>
+      </section>
+
+      <!-- Review Ledger Card -->
+      <section class="card">
+        <div class="ch">
+          <div>
+            <p class="eyebrow">CASE AUDIT LEDGER</p>
+            <h2>Recorded Review Events</h2>
+          </div>
+          <button class="pill btn" id="refresh-reviews-btn" type="button">Refresh reviews</button>
+        </div>
+        <div class="tw" style="margin-top:12px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp (UTC)</th>
+                <th>Case ID</th>
+                <th>Workflow Transition</th>
+                <th>Outcome</th>
+                <th>Reviewer</th>
+                <th>Reasoning / Notes</th>
+                <th>Cryptographic Integrity</th>
+              </tr>
+            </thead>
+            <tbody id="reviews-table-body">
+              <tr><td colspan="7" class="d" style="text-align:center;padding:24px;">Loading review ledger…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
     <!-- ========================================== -->
     <!-- PAGE 2: SCENARIO CONSOLE                  -->
     <!-- ========================================== -->
@@ -222,14 +281,6 @@
 
       <!-- Parameter controls and batch runner -->
       <section class="scenario-controls-bar">
-        <div class="param-group">
-          <label for="param-gap">Gap scale:</label>
-          <input type="number" id="param-gap" min="0.05" max="100" step="0.1" value="1.0">
-        </div>
-        <div class="param-group">
-          <label for="param-amount">Amount scale:</label>
-          <input type="number" id="param-amount" min="0.01" max="1000" step="0.1" value="1.0">
-        </div>
         <div class="sp"></div>
         <button id="scenario-page-replay-all" class="pill btn" type="button">Replay all 14 scenarios</button>
       </section>
@@ -253,7 +304,7 @@
       <div id="drop-zone" class="drop-zone">
         <div class="drop-icon">↑</div>
         <h3>Drop transaction CSV file here</h3>
-        <p>Or click to browse from your device. Supported: <span class="mono">.csv</span> up to 5 MiB (100,000 rows max).</p>
+        <p>Or click to browse from your device. Supported: <span class="mono">.csv</span> up to 100 MiB (500,000 rows max).</p>
         <button id="browse-csv-btn" class="pill btn" type="button" style="background:var(--dark);color:#fff">Select CSV file</button>
       </div>
 
@@ -305,8 +356,8 @@ TX-003,2026-10-24T10:12:00Z,MULE-501,CASH-901,92000,TRANSFER</div>
         <select id="evaluation-source"><option value="">All stored data</option><option value="uploaded_csv">Uploaded CSVs</option><option value="synthetic_fixture">Synthetic fixtures</option></select>
         <button class="pill btn" id="evaluation-refresh" type="button">Refresh evidence</button>
         <button class="pill btn" id="evaluation-export" type="button" disabled>Download snapshot JSON</button>
-        <span class="pill" id="evaluation-live-indicator" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#087f72;background:#e8f5f3;border:1px solid #b2dfdb;">
-          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#087f72;box-shadow:0 0 0 2px rgba(8,127,114,0.25);"></span>
+        <span class="pill" id="evaluation-live-indicator" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--dark);background:rgba(246,233,107,0.35);border:1px solid rgba(17,17,17,0.18);">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--dark);box-shadow:0 0 0 2px rgba(17,17,17,0.15);"></span>
           Live real-time updates (3s)
         </span>
       </div>

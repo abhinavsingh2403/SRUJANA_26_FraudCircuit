@@ -1924,3 +1924,42 @@ th.amt {
   color: var(--ink);
   border-color: var(--dark);
 }
+
+
+/* Limitations and Interpretation Typography & Card Styling */
+.limitations-box {
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--dark);
+  border-radius: 10px;
+  background: #fdfdf9;
+  padding: 14px 18px;
+  margin-top: 20px;
+  box-shadow: 0 1px 4px rgba(17, 17, 17, 0.04);
+}
+
+.limitations-header {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--dark);
+  cursor: pointer;
+  margin-bottom: 8px;
+  outline: none;
+}
+
+.limitations-list {
+  margin: 8px 0 0 18px;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: #383830;
+}
+
+.limitations-item {
+  margin-bottom: 6px;
+}
+.limitations-item:last-child {
+  margin-bottom: 0;
+}

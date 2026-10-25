@@ -48,9 +48,9 @@ class Settings:
     global_outlier_multiple: float = 4.0
     stable_amount_context_tolerance: float = 0.10
 
-    max_upload_bytes: int = 5 * 1024 * 1024
+    max_upload_bytes: int = 100 * 1024 * 1024
     max_transaction_amount: float = 1e18  # numeric safety bound for this screening prototype
-    max_csv_rows: int = 100_000
+    max_csv_rows: int = 500_000
     max_csv_columns: int = 128
     max_csv_error_details: int = 25
     response_case_preview_limit: int = 100

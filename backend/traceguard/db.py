@@ -376,3 +376,13 @@ def review_outcome_summary(path: str | None = None) -> dict[str, Any]:
         "outcome_counts": counts,
         "warning": "These are outcomes among cases that humans reviewed and labelled, not the system-wide false-positive rate or fraud prevalence. Investigation queues are selected samples and may be biased.",
     }
+
+
+def all_review_history(limit: int = 100, path: str | None = None) -> list[dict[str, Any]]:
+    with _connection(path) as conn:
+        rows = conn.execute(
+            "SELECT case_id, previous_status, new_status, previous_outcome, new_outcome, reviewer, note, created_at, prev_hash, event_hash "
+            "FROM review_log ORDER BY id DESC LIMIT ?",
+            (limit,)
+        ).fetchall()
+        return [dict(r) for r in rows]

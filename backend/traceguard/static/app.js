@@ -456,7 +456,8 @@
       const p = pos[n];
       const r = p.r || baseR;
       const displayLabel = formatNodeLabel(n, r);
-      nodes += `<circle class="graph-node" data-acct-id="${escapeHtml(n)}" cx="${p.x}" cy="${p.y}" r="${r}" fill="#fff" stroke="#111" stroke-width="2.2"><title>${escapeHtml(n)}</title></circle><text x="${p.x}" y="${p.y + (r <= 18 ? 3.5 : 4.5)}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${r <= 18 ? 10 : 12}" font-weight="700" fill="#111" pointer-events="none">${escapeHtml(displayLabel)}</text>`;
+      const labelY = p.y > 450 ? p.y - r - 6 : p.y + r + 13;
+      nodes += `<circle class="graph-node" data-acct-id="${escapeHtml(n)}" cx="${p.x}" cy="${p.y}" r="${r}" fill="#fff" stroke="#111" stroke-width="2.2"><title>${escapeHtml(n)}</title></circle><circle cx="${p.x}" cy="${p.y}" r="${Math.max(3.5, r * 0.28)}" fill="#111" pointer-events="none"></circle><text x="${p.x}" y="${labelY}" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="${sm ? 10 : 11}" font-weight="700" fill="#111" stroke="#fffdea" stroke-width="3.5" paint-order="stroke" pointer-events="none">${escapeHtml(displayLabel)}</text>`;
     });
 
     svg.innerHTML = base + top + nodes + lab;
@@ -1137,9 +1138,17 @@
   });
 
   /* Quick Actions in Side Panel */
-  $('oc').addEventListener('click', () => {
-    if (state.selectedCaseData) openModal(state.selectedCaseData);
-    else if (state.cases.length) openModal(state.cases[0]);
+  $('oc').addEventListener('click', async () => {
+    const targetCaseId = state.selectedCaseData?.case_id || state.cases[0]?.case_id;
+    if (targetCaseId) {
+      if (!state.selectedCaseData || state.selectedCaseData.case_id !== targetCaseId) {
+        await loadCase(targetCaseId);
+      }
+      const invSection = $('investigation-section');
+      if (invSection) {
+        invSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
   });
 
   $('quick-escalate').addEventListener('click', async () => {
@@ -1502,14 +1511,14 @@
       renderEvidence(evidenceBox, caseData);
       detail.append(evidenceBox);
 
-      // Limitations
+      // Limitations and interpretation
       if ((caseData.limitations || []).length) {
-        const details = node('details', 'review-history');
+        const details = node('details', 'limitations-box');
         details.open = true;
-        details.append(node('summary', '', 'Limitations and interpretation'));
-        const list = node('ul');
-        for (const limit of caseData.limitations) list.append(node('li', '', limit));
-        details.append(list);
+        const summary = node('summary', 'limitations-header', 'Limitations and interpretation');
+        const list = node('ul', 'limitations-list');
+        for (const limit of caseData.limitations) list.append(node('li', 'limitations-item', limit));
+        details.append(summary, list);
         detail.append(details);
       }
 
@@ -1521,14 +1530,45 @@
       detail.append(sectionHeading('Human review', 'Closing requires an explicit outcome'));
       renderReviewForm(detail, caseData);
 
-      // Review history
+      // Review history card in case detail
       if ((caseData.review_history || []).length) {
-        const history = node('details', 'review-history');
-        history.append(
-          node('summary', '', `Review history · ${caseData.review_history.length} event(s)`),
-          node('pre', '', JSON.stringify(caseData.review_history, null, 2))
+        const historyCard = node('section', 'card review-history-card');
+        historyCard.style.marginTop = '20px';
+        historyCard.style.border = '1px solid var(--line)';
+        historyCard.style.borderRadius = '12px';
+        historyCard.style.padding = '16px 20px';
+        
+        const ch = node('div', 'ch');
+        ch.append(
+          node('h3', '', `Case Review History (${caseData.review_history.length} decision event${caseData.review_history.length > 1 ? 's' : ''})`),
+          node('span', 'chip mono', 'Tamper-evident chain')
         );
-        detail.append(history);
+        historyCard.append(ch);
+
+        const tableWrap = node('div', 'tw');
+        tableWrap.style.marginTop = '10px';
+        const tbl = node('table');
+        tbl.innerHTML = '<thead><tr><th>Timestamp</th><th>Workflow Transition</th><th>Outcome</th><th>Reviewer</th><th>Reasoning / Notes</th><th>Audit Hash</th></tr></thead>';
+        const tbody = node('tbody');
+        caseData.review_history.forEach(ev => {
+          const r = node('tr');
+          const tdTime = node('td', 'mono', formatTimeAgo(ev.created_at));
+          tdTime.title = formatExactTimestamp(ev.created_at);
+          const tdTrans = node('td', '', `${ev.previous_status || 'OPEN'} → ${ev.new_status}`);
+          const tdOut = node('td');
+          if (ev.new_outcome) tdOut.append(badge(ev.new_outcome));
+          else tdOut.append(node('span', 'd', '—'));
+          const tdRev = node('td', 'mono', ev.reviewer || 'analyst');
+          const tdNote = node('td', '', ev.note || '—');
+          const tdHash = node('td', 'chip mono', (ev.event_hash || '').slice(0, 10) + '…');
+          tdHash.title = ev.event_hash || '';
+          r.append(tdTime, tdTrans, tdOut, tdRev, tdNote, tdHash);
+          tbody.append(r);
+        });
+        tbl.append(tbody);
+        tableWrap.append(tbl);
+        historyCard.append(tableWrap);
+        detail.append(historyCard);
       }
 
       if (updateQueue) renderQueue();
@@ -1686,8 +1726,8 @@
       showToast('Select a .csv file.', true);
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('The file exceeds the 5 MiB upload limit.', true);
+    if (file.size > 100 * 1024 * 1024) {
+      showToast('The file exceeds the 100 MiB upload limit.', true);
       return;
     }
     clearDetail('Importing CSV…');
@@ -1787,7 +1827,7 @@
         inspectBtn.style.cursor = 'pointer';
         inspectBtn.style.display = 'block';
         inspectBtn.style.marginBottom = '6px';
-        inspectBtn.style.background = '#087f72';
+        inspectBtn.style.background = 'var(--dark)';
         inspectBtn.style.color = '#fff';
         inspectBtn.addEventListener('click', () => {
           window.location.href = `/simulation.html?scenario=${encodeURIComponent(run.source)}`;
@@ -1820,7 +1860,7 @@
   }
 
   /* Multi-page Routing & View Management */
-  const PAGES = ['queue', 'scenarios', 'import', 'evaluation'];
+  const PAGES = ['queue', 'reviews', 'scenarios', 'import', 'evaluation'];
 
   function showPage(pageId) {
     if (!PAGES.includes(pageId)) pageId = 'queue';
@@ -1838,6 +1878,7 @@
     });
 
     if (pageId === 'scenarios') renderScenarioGrid();
+    if (pageId === 'reviews') loadReviewHistoryPage();
     if (pageId === 'evaluation') {
       loadEvaluation(false);
       if (!evalPollingTimer) {
@@ -2108,6 +2149,96 @@
       if (row) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }
+
+  /* ========================================== */
+  /* REVIEW HISTORY & AUDIT LEDGER PAGE         */
+  /* ========================================== */
+  async function loadReviewHistoryPage() {
+    const tableBody = $('reviews-table-body');
+    if (!tableBody) return;
+    tableBody.innerHTML = '<tr><td colspan="7" class="d" style="text-align:center;padding:24px;">Loading review ledger…</td></tr>';
+
+    try {
+      const [reviews, outcomes] = await Promise.all([
+        api('/api/reviews?limit=100').catch(() => []),
+        api('/api/analytics/review-outcomes').catch(() => ({}))
+      ]);
+
+      if ($('rev-total-count')) $('rev-total-count').textContent = outcomes.reviewed_cases_with_outcome ?? reviews.length ?? 0;
+      if ($('rev-suspicious-count')) $('rev-suspicious-count').textContent = outcomes.outcome_counts?.CONFIRMED_SUSPICIOUS ?? 0;
+      if ($('rev-fp-count')) $('rev-fp-count').textContent = outcomes.outcome_counts?.FALSE_POSITIVE ?? 0;
+      if ($('rev-inconclusive-count')) $('rev-inconclusive-count').textContent = outcomes.outcome_counts?.INCONCLUSIVE ?? 0;
+
+      tableBody.replaceChildren();
+
+      if (!reviews || !reviews.length) {
+        tableBody.innerHTML = '<tr><td colspan="7" class="d" style="text-align:center;padding:24px;">No review events recorded yet. Perform a case review in the Case Queue to establish an audit entry.</td></tr>';
+        return;
+      }
+
+      reviews.forEach(rev => {
+        const tr = node('tr');
+
+        // 1. Timestamp
+        const tdTime = node('td', 'mono', formatExactTimestamp(rev.created_at) || rev.created_at || '—');
+        tdTime.style.fontSize = '11px';
+
+        // 2. Case ID (clickable to jump into Case Queue)
+        const tdCase = node('td');
+        const caseLink = node('a', 'mono', rev.case_id);
+        caseLink.href = '#/queue';
+        caseLink.style.fontWeight = '700';
+        caseLink.style.color = 'var(--ink)';
+        caseLink.style.textDecoration = 'underline';
+        caseLink.style.cursor = 'pointer';
+        caseLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.location.hash = '#/queue';
+          loadCase(rev.case_id);
+        });
+        tdCase.append(caseLink);
+
+        // 3. Workflow Transition
+        const tdTransition = node('td');
+        const prevB = badge(rev.previous_status || 'OPEN');
+        const arrow = document.createTextNode(' → ');
+        const nextB = badge(rev.new_status || 'CLOSED');
+        tdTransition.append(prevB, arrow, nextB);
+
+        // 4. Outcome
+        const tdOutcome = node('td');
+        if (rev.new_outcome) {
+          tdOutcome.append(badge(rev.new_outcome));
+        } else {
+          tdOutcome.append(node('span', 'd', '—'));
+        }
+
+        // 5. Reviewer
+        const tdReviewer = node('td', 'mono', rev.reviewer || 'analyst');
+
+        // 6. Reasoning / Note
+        const tdNote = node('td', '', rev.note || '—');
+        tdNote.style.maxWidth = '240px';
+        tdNote.style.fontSize = '12px';
+
+        // 7. Cryptographic Integrity
+        const tdIntegrity = node('td');
+        const hashBadge = node('span', 'chip mono', rev.event_hash ? rev.event_hash.slice(0, 10) + '…' : 'Verified');
+        hashBadge.title = `Event Hash: ${rev.event_hash || ''}\nPrev Hash: ${rev.prev_hash || ''}`;
+        hashBadge.style.background = 'var(--lemon-soft)';
+        hashBadge.style.fontSize = '10px';
+        tdIntegrity.append(hashBadge);
+
+        tr.append(tdTime, tdCase, tdTransition, tdOutcome, tdReviewer, tdNote, tdIntegrity);
+        tableBody.append(tr);
+      });
+    } catch (err) {
+      tableBody.innerHTML = `<tr><td colspan="7" class="d" style="text-align:center;padding:24px;color:#c00;">Failed to load reviews: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  const refRevBtn = $('refresh-reviews-btn');
+  if (refRevBtn) refRevBtn.addEventListener('click', loadReviewHistoryPage);
 
   // Initialize
   renderFilterButtons();

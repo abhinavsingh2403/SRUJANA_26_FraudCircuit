@@ -28,7 +28,7 @@
  $('append-to-queue').onclick=()=>task($('append-to-queue'),$('queue-state'),async()=>{
   if(!Object.keys(spec).length){const r=await api('/api/simulate/parse',{text:$('scenario-text').value});form(r.spec);}
   const r=await api('/api/simulate/save-to-queue',{spec:current(),overrides:{gap_scale:Number($('gap').value),amount_scale:Number($('amount').value)}});
-  $('queue-state').innerHTML=`✓ ${r.message} <a href="/#/queue" style="font-weight:700;margin-left:8px;text-decoration:underline;">View in Case Queue →</a>`;
+  $('queue-state').innerHTML=`${r.message} <a href="/#/queue" style="font-weight:700;margin-left:8px;text-decoration:underline;">View in Case Queue →</a>`;
   $('queue-state').className='success';
  });
  $('sweep').onclick=()=>task($('sweep'),$('simulation-state'),async()=>{

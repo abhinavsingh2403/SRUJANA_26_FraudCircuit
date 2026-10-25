@@ -74,23 +74,23 @@ function explainStep(data) {
 
   let flowNote = '';
   if (isConduit) {
-    flowNote = `🔄 <strong>Conduit behavior:</strong> Account <code>${tx.sender_id}</code> previously received funds and is now forwarding money downstream.`;
+    flowNote = `<strong>Conduit behavior:</strong> Account <code>${tx.sender_id}</code> previously received funds and is now forwarding money downstream.`;
   } else if (senderOut === 1 && recipIn === 1) {
-    flowNote = `🌱 <strong>New flow opened:</strong> Originator <code>${tx.sender_id}</code> initiated transfer to <code>${tx.recipient_id}</code>.`;
+    flowNote = `<strong>New flow opened:</strong> Originator <code>${tx.sender_id}</code> initiated transfer to <code>${tx.recipient_id}</code>.`;
   } else {
-    flowNote = `📊 <strong>Aggregated activity:</strong> Account <code>${tx.recipient_id}</code> has received ${recipIn} transfer(s) across the sequence.`;
+    flowNote = `<strong>Aggregated activity:</strong> Account <code>${tx.recipient_id}</code> has received ${recipIn} transfer(s) across the sequence.`;
   }
 
   let alertNote = '';
   if (hasAlert) {
     const rules = [...new Set(matchingEvidence.map(e => e.rule_id))].join(', ');
-    alertNote = `<div class="step-highlight-tag alert">🚨 Threshold Alert: Rule ${rules} triggered on this step</div>`;
+    alertNote = `<div class="step-highlight-tag alert">Threshold Alert: Rule ${rules} triggered on this step</div>`;
   } else {
-    alertNote = `<div class="step-highlight-tag neutral">✓ Within nominal baseline thresholds</div>`;
+    alertNote = `<div class="step-highlight-tag neutral">Within nominal baseline thresholds</div>`;
   }
 
   box.innerHTML = `
-    <h4><span>⚡</span> Step ${data.step} of ${data.total_steps} · ${tx.transaction_id}</h4>
+    <h4>Step ${data.step} of ${data.total_steps} · ${tx.transaction_id}</h4>
     <p><strong>${tx.sender_id}</strong> transferred <strong>${money(tx)}</strong> to <strong>${tx.recipient_id}</strong> at ${tx.timestamp.replace('T', ' ').replace('Z', ' UTC')}.</p>
     <p>${flowNote}</p>
     ${alertNote}
@@ -117,7 +117,7 @@ function explainExecutiveVerdict(data) {
 
   if (badge) {
     badge.style.display = 'inline-block';
-    badge.textContent = highestPriority === 'HIGH' ? '🚨 HIGH RISK CASE' : highestPriority === 'MEDIUM' ? '⚠️ MEDIUM RISK' : highestPriority === 'CLEAN' ? '✅ NO ANOMALIES' : 'ℹ️ ' + highestPriority;
+    badge.textContent = highestPriority === 'HIGH' ? 'HIGH RISK CASE' : highestPriority === 'MEDIUM' ? '⚠️ MEDIUM RISK' : highestPriority === 'CLEAN' ? '✅ NO ANOMALIES' : 'ℹ️ ' + highestPriority;
     badge.className = `pill verdict-tag-${highestPriority.toLowerCase()}`;
   }
 
