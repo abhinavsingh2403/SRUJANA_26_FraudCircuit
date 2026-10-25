@@ -1,0 +1,430 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 960" width="100%" height="100%" style="background:#090a0f; font-family:'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0e131b"/>
+      <stop offset="100%" stop-color="#07090d"/>
+    </linearGradient>
+
+    <!-- Card Background Gradients -->
+    <linearGradient id="cardGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#161c26"/>
+      <stop offset="100%" stop-color="#0f141d"/>
+    </linearGradient>
+
+    <linearGradient id="coreCardGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1b2333"/>
+      <stop offset="100%" stop-color="#111724"/>
+    </linearGradient>
+
+    <linearGradient id="kaliCardGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#191116"/>
+      <stop offset="100%" stop-color="#0f0b0e"/>
+    </linearGradient>
+
+    <!-- Arrow Markers -->
+    <marker id="arrowGold" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f6e96b"/>
+    </marker>
+    <marker id="arrowEmerald" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#34d399"/>
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f87171"/>
+    </marker>
+
+    <!-- Shadows & Glows -->
+    <filter id="cardShadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+    <filter id="coreGlow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#f6e96b" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <!-- Deep Architecture Canvas Background -->
+  <rect width="1600" height="960" fill="url(#bgGrad)"/>
+  
+  <!-- Subtle Blueprint Alignment Grid -->
+  <g opacity="0.025" stroke="#ffffff" stroke-width="1">
+    <path d="M 0 80 H 1600 M 0 160 H 1600 M 0 240 H 1600 M 0 320 H 1600 M 0 400 H 1600 M 0 480 H 1600 M 0 560 H 1600 M 0 640 H 1600 M 0 720 H 1600 M 0 800 H 1600 M 0 880 H 1600"/>
+    <path d="M 80 0 V 960 M 160 0 V 960 M 240 0 V 960 M 320 0 V 960 M 400 0 V 960 M 480 0 V 960 M 560 0 V 960 M 640 0 V 960 M 720 0 V 960 M 800 0 V 960 M 880 0 V 960 M 960 0 V 960 M 1040 0 V 960 M 1120 0 V 960 M 1200 0 V 960 M 1280 0 V 960 M 1360 0 V 960 M 1440 0 V 960 M 1520 0 V 960"/>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- HEADER BAR (Spanning Top: x=48, y=28, w=1504, h=84)                       -->
+  <!-- ========================================================================= -->
+  <g transform="translate(48, 28)">
+    <rect x="0" y="0" width="1504" height="84" rx="16" fill="#101520" stroke="#1f293d" stroke-width="1.2" filter="url(#cardShadow)"/>
+    
+    <!-- TG Brand Monogram -->
+    <rect x="20" y="18" width="48" height="48" rx="12" fill="#f6e96b"/>
+    <text x="44" y="49" fill="#090a0f" font-size="22" font-weight="900" text-anchor="middle" letter-spacing="-1">TG</text>
+    
+    <!-- Title Information (Pure SVG - Zero HTML Divs) -->
+    <text x="84" y="40" fill="#ffffff" font-size="20" font-weight="800" letter-spacing="-0.5">TraceGuard Enterprise System Architecture</text>
+    <text x="84" y="62" fill="#94a3b8" font-size="12">High-Throughput Directed Graph Analytics · Point-in-Time Hybrid ML · Cryptographic SHA-256 Merkle Ledger</text>
+
+    <!-- Status Chips on Right -->
+    <g transform="translate(1090, 26)">
+      <!-- F-01 Pill -->
+      <rect x="0" y="0" width="180" height="32" rx="16" fill="#182234" stroke="#334155" stroke-width="1"/>
+      <circle cx="16" cy="16" r="4.5" fill="#f6e96b"/>
+      <text x="30" y="21" fill="#e2e8f0" font-size="11" font-weight="700">Problem Statement F-01</text>
+      
+      <!-- WAL Mode Active Pill -->
+      <rect x="194" y="0" width="190" height="32" rx="16" fill="#0f291e" stroke="#166534" stroke-width="1"/>
+      <circle cx="210" cy="16" r="4.5" fill="#34d399"/>
+      <text x="224" y="21" fill="#86efac" font-size="11" font-weight="700">SQLite WAL Active</text>
+    </g>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- 1. DATA INGESTION TIER (Left Column: x=48, y=144, w=280, h=440)           -->
+  <!-- ========================================================================= -->
+  <g transform="translate(48, 144)">
+    <rect x="0" y="0" width="280" height="440" rx="16" fill="url(#cardGrad)" stroke="#1e293b" stroke-width="1" filter="url(#cardShadow)"/>
+    
+    <!-- Title Area -->
+    <rect x="20" y="20" width="140" height="20" rx="4" fill="#334155" opacity="0.4"/>
+    <text x="28" y="34" fill="#94a3b8" font-size="10" font-weight="800" letter-spacing="1.2">1. INGESTION RAILS</text>
+    <text x="20" y="64" fill="#ffffff" font-size="16" font-weight="800">Transaction Feeds</text>
+
+    <!-- Ingestion Sub-Card 1: Core Banking CSV -->
+    <g transform="translate(18, 82)">
+      <rect x="0" y="0" width="244" height="100" rx="10" fill="#0b0f17" stroke="#1e293b" stroke-width="1"/>
+      <text x="14" y="24" fill="#f6e96b" font-size="12" font-weight="700">Bank Ledger Batches</text>
+      <text x="14" y="44" fill="#94a3b8" font-size="11">Up to 500k rows · Strict ISO-8601</text>
+      
+      <rect x="14" y="58" width="128" height="24" rx="4" fill="#0f291e" stroke="#166534" stroke-width="0.8"/>
+      <text x="22" y="74" fill="#4ade80" font-size="10" font-weight="700" font-family="'JetBrains Mono', monospace">ATOMIC ROLLBACK</text>
+    </g>
+
+    <!-- Ingestion Sub-Card 2: Scenario Fixtures -->
+    <g transform="translate(18, 196)">
+      <rect x="0" y="0" width="244" height="100" rx="10" fill="#0b0f17" stroke="#1e293b" stroke-width="1"/>
+      <text x="14" y="24" fill="#ffffff" font-size="12" font-weight="700">Deterministic Fixtures</text>
+      <text x="14" y="44" fill="#94a3b8" font-size="11">14 Pre-built Motifs (Cycles, Splits)</text>
+      
+      <rect x="14" y="58" width="144" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="0.8"/>
+      <text x="22" y="74" fill="#f6e96b" font-size="10" font-weight="700" font-family="'JetBrains Mono', monospace">REPRODUCIBLE RUNS</text>
+    </g>
+
+    <!-- Ingestion Sub-Card 3: Real-Time Payment Stream -->
+    <g transform="translate(18, 310)">
+      <rect x="0" y="0" width="244" height="100" rx="10" fill="#0b0f17" stroke="#1e293b" stroke-width="1"/>
+      <text x="14" y="24" fill="#ffffff" font-size="12" font-weight="700">Payment Stream API</text>
+      <text x="14" y="44" fill="#94a3b8" font-size="11">FastAPI REST &amp; UPI Switch Ingest</text>
+      
+      <rect x="14" y="58" width="156" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="0.8"/>
+      <text x="22" y="74" fill="#38bdf8" font-size="10" font-weight="700" font-family="'JetBrains Mono', monospace">POST /api/transactions</text>
+    </g>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- 2. TRACEGUARD RISK & DETECTION ENGINE (Center Hero: x=376, y=144, w=580, h=440) -->
+  <!-- ========================================================================= -->
+  <g transform="translate(376, 144)">
+    <rect x="0" y="0" width="580" height="440" rx="16" fill="url(#coreCardGrad)" stroke="#f6e96b" stroke-width="1.6" filter="url(#coreGlow)"/>
+    
+    <!-- Title Area -->
+    <rect x="22" y="20" width="210" height="20" rx="4" fill="#f6e96b" opacity="0.15"/>
+    <text x="127" y="34" fill="#f6e96b" font-size="10" font-weight="800" letter-spacing="1" text-anchor="middle">2. TRACEGUARD RISK CORE</text>
+    <text x="22" y="64" fill="#ffffff" font-size="16" font-weight="800">Topological Graph Clustering &amp; Hybrid Intelligence</text>
+
+    <!-- Sub-Section A: Directed Graph Motifs (Width: 536, Height: 160) -->
+    <g transform="translate(22, 82)">
+      <rect x="0" y="0" width="536" height="160" rx="12" fill="#0b0f17" stroke="#1e293b" stroke-width="1"/>
+      <text x="16" y="24" fill="#ffffff" font-size="12" font-weight="700">Directed Graph Clustering &amp; Motif Walker</text>
+      <text x="16" y="42" fill="#94a3b8" font-size="11">Partitions isolated payment records into connected topological subgraphs</text>
+
+      <!-- 3 Balanced Motif Boxes (Each 162 wide, gap 13) -->
+      <g transform="translate(16, 56)">
+        <!-- Motif 1: Cycles -->
+        <rect x="0" y="0" width="162" height="88" rx="8" fill="#131924" stroke="#1f293d"/>
+        <text x="12" y="22" fill="#f6e96b" font-size="11" font-weight="700">Johnson's Cycle</text>
+        <text x="12" y="38" fill="#94a3b8" font-size="10">Circular money routing</text>
+        <rect x="12" y="50" width="126" height="22" rx="4" fill="#090d14"/>
+        <text x="20" y="65" fill="#e2e8f0" font-size="10" font-weight="600" font-family="'JetBrains Mono', monospace">A ➔ B ➔ C ➔ A</text>
+
+        <!-- Motif 2: Fan-Out -->
+        <rect x="175" y="0" width="162" height="88" rx="8" fill="#131924" stroke="#1f293d"/>
+        <text x="12" y="22" fill="#f6e96b" font-size="11" font-weight="700">Fan-Out / Fan-In</text>
+        <text x="12" y="38" fill="#94a3b8" font-size="10">Rapid dispersal pattern</text>
+        <rect x="12" y="50" width="126" height="22" rx="4" fill="#090d14"/>
+        <text x="20" y="65" fill="#e2e8f0" font-size="10" font-weight="600" font-family="'JetBrains Mono', monospace">1-to-20 Splitting</text>
+
+        <!-- Motif 3: Pass-Through -->
+        <rect x="350" y="0" width="154" height="88" rx="8" fill="#131924" stroke="#1f293d"/>
+        <text x="12" y="22" fill="#f6e96b" font-size="11" font-weight="700">Pass-Through</text>
+        <text x="12" y="38" fill="#94a3b8" font-size="10">Flow retention window</text>
+        <rect x="12" y="50" width="130" height="22" rx="4" fill="#090d14"/>
+        <text x="18" y="65" fill="#e2e8f0" font-size="9.5" font-weight="600" font-family="'JetBrains Mono', monospace">&gt;75% in &lt;6 hours</text>
+      </g>
+    </g>
+
+    <!-- Sub-Section B: Hybrid Decision & ML Matrix (Width: 536, Height: 160) -->
+    <g transform="translate(22, 256)">
+      <rect x="0" y="0" width="536" height="160" rx="12" fill="#0b0f17" stroke="#1e293b" stroke-width="1"/>
+      <text x="16" y="24" fill="#ffffff" font-size="12" font-weight="700">Hybrid Rule Matrix &amp; ML Inference Engine</text>
+
+      <!-- Rule Suite Box (Width: 246) -->
+      <g transform="translate(16, 38)">
+        <rect x="0" y="0" width="246" height="106" rx="8" fill="#131924" stroke="#1f293d"/>
+        <text x="12" y="22" fill="#f6e96b" font-size="11" font-weight="700">Deterministic Rule Suite</text>
+        <text x="12" y="38" fill="#94a3b8" font-size="10">Diagnosable Threshold Gates</text>
+        <text x="12" y="58" fill="#e2e8f0" font-size="10" font-family="'JetBrains Mono', monospace">R1: RAPID_PASS_THROUGH</text>
+        <text x="12" y="74" fill="#e2e8f0" font-size="10" font-family="'JetBrains Mono', monospace">R4: DIRECTED_CYCLE</text>
+        <text x="12" y="90" fill="#e2e8f0" font-size="10" font-family="'JetBrains Mono', monospace">R5: LAYERED_CHAIN</text>
+      </g>
+
+      <!-- Evaluated XGBoost Model (Width: 246) -->
+      <g transform="translate(274, 38)">
+        <rect x="0" y="0" width="246" height="106" rx="8" fill="#131924" stroke="#1f293d"/>
+        <text x="12" y="22" fill="#34d399" font-size="11" font-weight="700">Evaluated XGBoost Model</text>
+        <text x="12" y="38" fill="#94a3b8" font-size="10">Point-in-Time Features (No Leakage)</text>
+
+        <!-- Metric Table Grid (Pristine 2-column alignment) -->
+        <g transform="translate(12, 54)">
+          <text x="0" y="14" fill="#94a3b8" font-size="10">Precision:</text>
+          <text x="58" y="14" fill="#34d399" font-size="11" font-weight="700" font-family="'JetBrains Mono', monospace">94.58%</text>
+
+          <text x="120" y="14" fill="#94a3b8" font-size="10">ROC-AUC:</text>
+          <text x="178" y="14" fill="#e2e8f0" font-size="11" font-weight="700" font-family="'JetBrains Mono', monospace">0.931</text>
+
+          <text x="0" y="34" fill="#94a3b8" font-size="10">F1-Score:</text>
+          <text x="58" y="34" fill="#e2e8f0" font-size="11" font-weight="700" font-family="'JetBrains Mono', monospace">87.58%</text>
+
+          <text x="120" y="34" fill="#94a3b8" font-size="10">Holdout:</text>
+          <text x="178" y="34" fill="#e2e8f0" font-size="11" font-weight="700" font-family="'JetBrains Mono', monospace">4,107</text>
+        </g>
+      </g>
+    </g>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- 3. STORAGE & CRYPTOGRAPHIC LEDGER (Right Tier: x=1004, y=144, w=300, h=440)-->
+  <!-- ========================================================================= -->
+  <g transform="translate(1004, 144)">
+    <rect x="0" y="0" width="300" height="440" rx="16" fill="url(#cardGrad)" stroke="#1e293b" stroke-width="1" filter="url(#cardShadow)"/>
+    
+    <!-- Title Area -->
+    <rect x="20" y="20" width="180" height="20" rx="4" fill="#334155" opacity="0.4"/>
+    <text x="28" y="34" fill="#94a3b8" font-size="10" font-weight="800" letter-spacing="1.2">3. STORAGE &amp; NON-REPUDIATION</text>
+    <text x="20" y="64" fill="#ffffff" font-size="16" font-weight="800">Cryptographic Ledger</text>
+
+    <!-- Storage Sub-Card 1: Merkle Audit Chain -->
+    <g transform="translate(18, 82)">
+      <rect x="0" y="0" width="264" height="106" rx="10" fill="#0b0f17" stroke="#1e293b" stroke-width="1"/>
+      <text x="14" y="24" fill="#34d399" font-size="12" font-weight="700">SHA-256 Merkle Audit Chain</text>
+      <text x="14" y="42" fill="#94a3b8" font-size="11">Tamper-evident review decision sequence</text>
+      <text x="14" y="60" fill="#cbd5e1" font-size="10" font-family="'JetBrains Mono', monospace">prev_hash ➔ entry_hash</text>
+      
+      <rect x="14" y="70" width="152" height="24" rx="4" fill="#0f291e" stroke="#166534" stroke-width="0.8"/>
+      <text x="22" y="86" fill="#4ade80" font-size="10" font-weight="700" font-family="'JetBrains Mono', monospace">GENESIS ANCHORED</text>
+    </g>
+
+    <!-- Storage Sub-Card 2: SQLite WAL Mode Storage -->
+    <g transform="translate(18, 202)">
+      <rect x="0" y="0" width="264" height="110" rx="10" fill="#0b0f17" stroke="#1e293b" stroke-width="1"/>
+      <text x="14" y="24" fill="#ffffff" font-size="12" font-weight="700">SQLite High-Concurrency Engine</text>
+      <text x="14" y="42" fill="#94a3b8" font-size="11">Write-Ahead Logging (WAL) Mode</text>
+      
+      <!-- Table Chips with EXACT Fitting (264 width available) -->
+      <g transform="translate(14, 62)">
+        <rect x="0" y="0" width="46" height="24" rx="4" fill="#1e293b"/>
+        <text x="7" y="16" fill="#e2e8f0" font-size="10" font-family="'JetBrains Mono', monospace">cases</text>
+        
+        <rect x="54" y="0" width="80" height="24" rx="4" fill="#1e293b"/>
+        <text x="61" y="16" fill="#e2e8f0" font-size="10" font-family="'JetBrains Mono', monospace">review_log</text>
+        
+        <rect x="142" y="0" width="42" height="24" rx="4" fill="#1e293b"/>
+        <text x="149" y="16" fill="#e2e8f0" font-size="10" font-family="'JetBrains Mono', monospace">runs</text>
+        
+        <rect x="192" y="0" width="44" height="24" rx="4" fill="#1e293b"/>
+        <text x="198" y="16" fill="#e2e8f0" font-size="10" font-family="'JetBrains Mono', monospace">traces</text>
+      </g>
+    </g>
+
+    <!-- Storage Sub-Card 3: Run Provenance -->
+    <g transform="translate(18, 326)">
+      <rect x="0" y="0" width="264" height="94" rx="10" fill="#0b0f17" stroke="#1e293b" stroke-width="1"/>
+      <text x="14" y="24" fill="#ffffff" font-size="12" font-weight="700">Run Provenance Fingerprint</text>
+      <text x="14" y="44" fill="#94a3b8" font-size="11">Canonical input SHA-256 verification</text>
+      
+      <rect x="14" y="58" width="170" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="0.8"/>
+      <text x="22" y="74" fill="#f6e96b" font-size="10" font-weight="700" font-family="'JetBrains Mono', monospace">input_sha256 verified</text>
+    </g>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- 4. TESTING SANDBOX (Far Right Corner: x=1352, y=144, w=200, h=440)        -->
+  <!-- ========================================================================= -->
+  <g transform="translate(1352, 144)">
+    <rect x="0" y="0" width="200" height="440" rx="16" fill="url(#kaliCardGrad)" stroke="#ef4444" stroke-opacity="0.35" stroke-width="1.2" stroke-dasharray="6 4"/>
+    
+    <!-- Title Area -->
+    <rect x="16" y="20" width="130" height="20" rx="4" fill="#ef4444" opacity="0.15"/>
+    <text x="81" y="34" fill="#f87171" font-size="9" font-weight="800" letter-spacing="1" text-anchor="middle">RED-TEAM SANDBOX</text>
+    <text x="16" y="64" fill="#ffffff" font-size="15" font-weight="800">Kali Linux (WSL2)</text>
+    <text x="16" y="82" fill="#94a3b8" font-size="10.5">Isolated Security Test Harness</text>
+
+    <!-- Sandbox Sub-Box 1: Replay Simulation -->
+    <g transform="translate(14, 98)">
+      <rect x="0" y="0" width="172" height="84" rx="8" fill="#140f13" stroke="#2e1a22"/>
+      <text x="12" y="22" fill="#f87171" font-size="11" font-weight="700">Attack Simulation</text>
+      <text x="12" y="38" fill="#94a3b8" font-size="10">Replays synthetic cycles</text>
+      <rect x="12" y="50" width="144" height="22" rx="4" fill="#090d14"/>
+      <text x="18" y="65" fill="#e2e8f0" font-size="9" font-family="'JetBrains Mono', monospace">POST /scenarios/replay</text>
+    </g>
+
+    <!-- Sandbox Sub-Box 2: Exploit Probing -->
+    <g transform="translate(14, 194)">
+      <rect x="0" y="0" width="172" height="84" rx="8" fill="#140f13" stroke="#2e1a22"/>
+      <text x="12" y="22" fill="#f87171" font-size="11" font-weight="700">Exploit Probing</text>
+      <text x="12" y="38" fill="#94a3b8" font-size="10">Malformed payload tests</text>
+      <rect x="12" y="50" width="144" height="22" rx="4" fill="#090d14"/>
+      <text x="18" y="65" fill="#4ade80" font-size="9" font-family="'JetBrains Mono', monospace">0 partial writes verify</text>
+    </g>
+
+    <!-- Sandbox Sub-Box 3: Private vSwitch -->
+    <g transform="translate(14, 290)">
+      <rect x="0" y="0" width="172" height="84" rx="8" fill="#140f13" stroke="#2e1a22"/>
+      <text x="12" y="22" fill="#94a3b8" font-size="11" font-weight="700">Virtual vSwitch</text>
+      <text x="12" y="38" fill="#94a3b8" font-size="10">Private virtual interface</text>
+      <rect x="12" y="50" width="144" height="22" rx="4" fill="#090d14"/>
+      <text x="18" y="65" fill="#f6e96b" font-size="9" font-family="'JetBrains Mono', monospace">172.25.x.x (WSL vNIC)</text>
+    </g>
+
+    <text x="100" y="412" fill="#64748b" font-size="9.5" text-anchor="middle">Non-Production Lab Client</text>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- 5. ANALYST INVESTIGATION WORKBENCH (Bottom Spanning Layer: x=48, y=636)    -->
+  <!-- ========================================================================= -->
+  <g transform="translate(48, 636)">
+    <rect x="0" y="0" width="1504" height="284" rx="16" fill="url(#cardGrad)" stroke="#1e293b" stroke-width="1" filter="url(#cardShadow)"/>
+    
+    <!-- Title Area (No horizontal collision) -->
+    <rect x="24" y="20" width="280" height="20" rx="4" fill="#334155" opacity="0.4"/>
+    <text x="32" y="34" fill="#94a3b8" font-size="10" font-weight="800" letter-spacing="1.2">4. ANALYST INVESTIGATION &amp; FORENSIC WORKBENCH</text>
+    
+    <text x="24" y="66" fill="#ffffff" font-size="16" font-weight="800">Human-in-the-Loop Investigation Operations</text>
+    <text x="400" y="65" fill="#94a3b8" font-size="12">Native ES6 SPA · Zero Framework Bloat · Direct SVG Graph Layout</text>
+
+    <!-- 4 Balanced Panels (Width: 346 each, Gap: 24, Total: 4 * 346 + 3 * 24 = 1456) -->
+    <g transform="translate(24, 86)">
+      
+      <!-- Panel 4.1: Case Queue (x=0, w=346) -->
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="346" height="174" rx="12" fill="#0b0f17" stroke="#1e293b" stroke-width="1"/>
+        <text x="18" y="28" fill="#f6e96b" font-size="13" font-weight="700">Triage Case Queue</text>
+        <text x="18" y="48" fill="#94a3b8" font-size="11">Priority-ranked investigator review order</text>
+        
+        <!-- Priority Badges (Zero Overlap, Centered Text) -->
+        <g transform="translate(18, 66)">
+          <!-- High -->
+          <rect x="0" y="0" width="84" height="26" rx="4" fill="#3b0764" stroke="#7e22ce" stroke-width="0.8"/>
+          <text x="42" y="17" fill="#f3e8ff" font-size="10" font-weight="800" text-anchor="middle">HIGH (3)</text>
+          
+          <!-- Medium -->
+          <rect x="94" y="0" width="102" height="26" rx="4" fill="#422006" stroke="#a16207" stroke-width="0.8"/>
+          <text x="145" y="17" fill="#fef08a" font-size="10" font-weight="800" text-anchor="middle">MEDIUM (21)</text>
+
+          <!-- Low -->
+          <rect x="206" y="0" width="84" height="26" rx="4" fill="#14532d" stroke="#15803d" stroke-width="0.8"/>
+          <text x="248" y="17" fill="#bbf7d0" font-size="10" font-weight="800" text-anchor="middle">LOW (13)</text>
+        </g>
+        
+        <text x="18" y="124" fill="#94a3b8" font-size="10.5">Active search, status filters &amp; pagination</text>
+        <text x="18" y="144" fill="#cbd5e1" font-size="10" font-family="'JetBrains Mono', monospace">GET /api/cases?limit=100</text>
+      </g>
+
+      <!-- Panel 4.2: Dynamic SVG Graph Visualizer (x=370, w=346) -->
+      <g transform="translate(370, 0)">
+        <rect x="0" y="0" width="346" height="174" rx="12" fill="#0b0f17" stroke="#1e293b" stroke-width="1"/>
+        <text x="18" y="28" fill="#f6e96b" font-size="13" font-weight="700">Dynamic SVG Graph Visualizer</text>
+        <text x="18" y="48" fill="#94a3b8" font-size="11">Interactive topological layout engine</text>
+        
+        <!-- Graph Micro-Diagram -->
+        <g transform="translate(18, 66)">
+          <circle cx="20" cy="18" r="16" fill="#f6e96b" stroke="#111827" stroke-width="2"/>
+          <text x="20" y="23" fill="#111827" font-size="10" font-weight="800" text-anchor="middle">SND</text>
+
+          <path d="M 40 18 H 86" stroke="#f6e96b" stroke-width="2" marker-end="url(#arrowGold)"/>
+
+          <circle cx="108" cy="18" r="16" fill="#ffffff" stroke="#111827" stroke-width="2"/>
+          <text x="108" y="23" fill="#111827" font-size="10" font-weight="800" text-anchor="middle">#01</text>
+
+          <path d="M 128 18 H 174" stroke="#f6e96b" stroke-width="2" marker-end="url(#arrowGold)"/>
+
+          <circle cx="196" cy="18" r="16" fill="#ffffff" stroke="#111827" stroke-width="2"/>
+          <text x="196" y="23" fill="#111827" font-size="10" font-weight="800" text-anchor="middle">#02</text>
+        </g>
+
+        <text x="18" y="124" fill="#94a3b8" font-size="10.5">Multi-column fan-out layout · Zero hover jump</text>
+        <text x="18" y="144" fill="#cbd5e1" font-size="10" font-family="'JetBrains Mono', monospace">SVG stroke glow &amp; row sync</text>
+      </g>
+
+      <!-- Panel 4.3: Case Audit Ledger (x=740, w=346) -->
+      <g transform="translate(740, 0)">
+        <rect x="0" y="0" width="346" height="174" rx="12" fill="#0b0f17" stroke="#1e293b" stroke-width="1"/>
+        <text x="18" y="28" fill="#34d399" font-size="13" font-weight="700">Case Audit Ledger</text>
+        <text x="18" y="48" fill="#94a3b8" font-size="11">Tamper-evident reviewer action ledger</text>
+
+        <g transform="translate(18, 68)">
+          <text x="0" y="14" fill="#ffffff" font-size="11" font-weight="600">Reviewer Dispositions:</text>
+          <text x="0" y="34" fill="#94a3b8" font-size="10.5">Confirmed Suspicious · False Positive</text>
+          
+          <rect x="0" y="46" width="186" height="24" rx="4" fill="#0f291e" stroke="#166534" stroke-width="0.8"/>
+          <text x="10" y="62" fill="#4ade80" font-size="10" font-weight="700" font-family="'JetBrains Mono', monospace">Chain Integrity: 100% Valid</text>
+        </g>
+      </g>
+
+      <!-- Panel 4.4: Scenario Console & Simulation Lab (x=1110, w=346) -->
+      <g transform="translate(1110, 0)">
+        <rect x="0" y="0" width="346" height="174" rx="12" fill="#0b0f17" stroke="#1e293b" stroke-width="1"/>
+        <text x="18" y="28" fill="#ffffff" font-size="13" font-weight="700">Scenario &amp; Simulation Lab</text>
+        <text x="18" y="48" fill="#94a3b8" font-size="11">Hypothetical NL parser &amp; parameter sweeps</text>
+
+        <g transform="translate(18, 68)">
+          <text x="0" y="14" fill="#f6e96b" font-size="10.5" font-weight="700">Natural Language Motif Parsing:</text>
+          <text x="0" y="34" fill="#94a3b8" font-size="10.5">"Chain of 2 intermediaries moves 1000..."</text>
+          
+          <rect x="0" y="46" width="194" height="24" rx="4" fill="#182234" stroke="#334155" stroke-width="0.8"/>
+          <text x="10" y="62" fill="#38bdf8" font-size="10" font-weight="700" font-family="'JetBrains Mono', monospace">One-Click Append to Queue</text>
+        </g>
+      </g>
+    </g>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- CONNECTING ARROWS & PROTOCOL EDGES (Generous 48px Gaps, Zero Overlap)    -->
+  <!-- ========================================================================= -->
+  
+  <!-- Edge 1: Ingestion -> Core Engine (Horizontal Gap: x=328 to x=376, Center=352) -->
+  <path d="M 328 364 H 376" stroke="#f6e96b" stroke-width="2.5" marker-end="url(#arrowGold)"/>
+  <rect x="332" y="338" width="40" height="20" rx="4" fill="#111622" stroke="#1e293b" stroke-width="0.8"/>
+  <text x="352" y="352" fill="#f6e96b" font-size="9" font-weight="800" text-anchor="middle">FLOW</text>
+
+  <!-- Edge 2: Core Engine -> Storage (Horizontal Gap: x=956 to x=1004, Center=980) -->
+  <path d="M 956 364 H 1004" stroke="#f6e96b" stroke-width="2.5" marker-end="url(#arrowGold)"/>
+  <rect x="958" y="338" width="44" height="20" rx="4" fill="#111622" stroke="#1e293b" stroke-width="0.8"/>
+  <text x="980" y="352" fill="#f6e96b" font-size="9" font-weight="800" text-anchor="middle">PERSIST</text>
+
+  <!-- Edge 3: Core Engine -> Analyst Workbench (Vertical Gap: y=584 to y=636, Center=610) -->
+  <path d="M 666 584 V 636" stroke="#f6e96b" stroke-width="2.5" marker-end="url(#arrowGold)"/>
+  <rect x="626" y="600" width="80" height="20" rx="4" fill="#111622" stroke="#1e293b" stroke-width="0.8"/>
+  <text x="666" y="614" fill="#f6e96b" font-size="9" font-weight="800" text-anchor="middle">LIVE CASES</text>
+
+  <!-- Edge 4: Analyst Review -> Cryptographic Ledger (Vertical Gap: y=636 to y=584) -->
+  <path d="M 1154 636 V 618 H 1154 V 584" stroke="#34d399" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arrowEmerald)"/>
+  <rect x="1108" y="600" width="92" height="20" rx="4" fill="#0f291e" stroke="#166534" stroke-width="0.8"/>
+  <text x="1154" y="614" fill="#4ade80" font-size="9" font-weight="800" text-anchor="middle">MERKLE LOG</text>
+
+  <!-- Edge 5: Kali Sandbox -> Ingest Gateway (Horizontal Gap: x=1352 leftwards to x=1304) -->
+  <path d="M 1352 364 H 1304" stroke="#f87171" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#arrowRed)"/>
+  <rect x="1308" y="338" width="40" height="20" rx="4" fill="#1f1418" stroke="#3b1d24" stroke-width="0.8"/>
+  <text x="1328" y="352" fill="#f87171" font-size="8.5" font-weight="800" text-anchor="middle">TEST</text>
+
+</svg>
