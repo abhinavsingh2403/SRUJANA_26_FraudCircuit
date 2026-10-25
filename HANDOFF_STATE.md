@@ -1,90 +1,54 @@
-# Handoff State — Checkpoint 1 Resume
+# Current handoff — 25 October 2026 revision
 
-Snapshot: 25 October 2026. Pulled latest main (d9a6c73). Backend 96/96 tests pass. Server running at http://localhost:8000. Multi-page frontend confirmed via live browser verification (Case Queue, Scenario Console, Import Data, Evaluation & Audit).
+Scope: non-ML correctness and Evaluation & Auditability. Read `REVISION_NOTES.md` for tested behavior, commands and remaining limitations. Earlier handoff below is historical, not the current verification record.
 
-## Completed
-## Main Branch & try_kr_rha Integration
+Changed: frontend app/index/styles and synchronized backend static copies; backend cases/config/db/explain/fixtures/main/pipeline/rules/security/service; new provenance module; API contracts; tests/test_extensions.py and new tests/test_live_evaluation.py; new evaluation browser journey and verifier option. Added revision logs/screenshots and updated final verification/checksums.
 
-- **Original Lemon Aesthetic Restored**: Verified and locked the warm lemon and light aesthetic (--lemon: #f6e96b, --lemon-soft: #fdf8d2, #fffdea, #111 ink typography) across all workbench components.
-- **Top 4 KPI Cards Balanced**:
-  - Card 1: .kpi.dark (#111111 solid dark contrast).
-  - Card 2: .kpi.lime (#f6e96b warm lemon highlight).
-  - Cards 3 & 4: clean white cards with crisp borders and proportional typography.
-  - Interactive smooth animations with 3D perspective tilt and animateCount() ticker.
-- **Graph Topology Clumping & Overlap Resolved**:
-  - Implemented DFS-based cycle detection in buildGraphLayout() to recognize back-edges and eliminate DAG layer collapse.
-  - Added dual sub-column staggering for fanout groups exceeding 5 nodes with adaptive radii, preventing node blob collisions.
-  - Implemented proximity-based edge label placement checks to eliminate overlapping amount tags.
-- **Frontend / Backend Live Verification**:
-  - Backend unit tests: 96/96 passed in 0.776s.
-  - Full system integration script (backend/scripts/verify_integration.py): 100% passed with HTTP 200 across all routes.
-  - Frontend production build (npm run build): completed with 0 errors.
-  - Live reverse-proxy on http://localhost:5173/api/cases validated with 13 scenarios / cases.
-- **Git Push Completed**: Successfully merged into main and pushed to origin/main.
-- Retained and verified the original lemon/light color scheme (`#f6e96b`, `#fdf8d2`, `#fffdea`) across both `frontend/` and `backend/traceguard/static/`.
-- Implemented peak-tier analyst workbench interactions across UI:
-  - **Instant Live Case Search**: Pre-indexed search bar in queue table filtering by Case ID, Account ID, Scenario, or Rule Code in real-time.
-  - **Bidirectional SVG Graph <-> Table Highlighting**: Hovering an edge/node in the SVG graph highlights and scrolls to the matching transaction/account in the timeline table, and hovering a row in the table illuminates the corresponding edge in the graph with glowing halo accents.
-  - **Tactile CSV Drag-and-Drop Dropzone**: Added responsive dropzone supporting drag-and-drop CSV uploads with dragover feedback.
-  - **1-Click Copy**: Added tactile copy button for Case IDs with instant clipboard feedback.
-  - **Keyboard Hotkeys**: Added global analyst navigation (`J`/`K` or `Down`/`Up` to navigate cases, `G` to open graph modal, `Esc` to close).
-  - **Tamper-Evident SHA-256 Audit Visualization**: Verification output displaying chain validity and head hash snippets.
-- Full backend test suite passed: 96/96 tests in 1.04s.
+Actual checks: 125 backend tests passed; both JS syntax checks, Python compilation, frontend build, HTTP integration, analyst and research browser journeys, and the new evaluation browser journey passed. Desktop/mobile screenshots inspected; diff whitespace check passed. ML training/dataset evaluation and production security testing were not run.
 
-## Files changed or added relative to supplied ZIP
+Remaining: local unauthenticated access, self-reported reviewer identity, no external audit anchor, optional model artifacts excluded from run fingerprint, at most 25 runs in evaluation snapshots, no real-world accuracy claim. Keep legacy case IDs; do not invent run metadata for them.
 
-- `API_CONTRACT.md`
-- `BLUNT_RISK_REVIEW.md`
-- `CHANGELOG.md`
-- `DECISIONS.md`
-- `HANDOFF_STATE.md`
-- `ONE_MINUTE_DEMO.md`
-- `PROJECT_SPEC.md`
-- `README.md`
-- `README_START_HERE.md`
-- `SHA256SUMS.txt`
-- `backend/README.md`
-- `backend/docs/api_contract.md`
-- `backend/docs/known_limitations.md`
-- `backend/docs/model_card.md`
-- `backend/docs/research_and_design_decisions.md`
-- `backend/docs/rule_policy.md`
-- `backend/docs/validation_run.md`
-- `backend/pyproject.toml`
-- `backend/reports/browser_integration.json`
-- `backend/reports/controlled_benchmark_integration.json`
-- `backend/reports/http_integration.json`
-- `backend/reports/replay_integration.json`
-- `backend/reports/stress_100k_random_integration.json`
-- `backend/reports/stress_100k_structured_integration.json`
-- `backend/reports/unittest_integration.txt`
-- `backend/scripts/browser_journey.cjs`
-- `backend/scripts/check_startup.py`
-- `backend/scripts/verify_integration.py`
-- `backend/tests/test_adversarial_coverage.py`
-- `backend/tests/test_api.py`
-- `backend/tests/test_features_and_pipeline.py`
-- `backend/traceguard/__main__.py`
-- `backend/traceguard/cases.py`
-- `backend/traceguard/db.py`
-- `backend/traceguard/features.py`
-- `backend/traceguard/graph_analysis.py`
-- `backend/traceguard/main.py`
-- `backend/traceguard/rules.py`
-- `backend/traceguard/startup.py`
-- `frontend/.gitignore`
-- `frontend/README.md`
-- `frontend/app.js`
-- `frontend/evaluation.html`
-- `frontend/import.html`
-- `frontend/index.html`
-- `frontend/package.json`
-- `frontend/scenarios.html`
-- `frontend/styles.css`
-- `frontend/vite.config.js`
+Next exact task: if deployment is requested, design authenticated identities and an external audit anchor with the intended deployment owner before exposure. ML dataset work remains deferred by user request.
 
-## Risks and one next task
+---
 
-Local unauthenticated prototype only. Audit history is not immutable. Bounded graph searches and supporting lists are incomplete by design. Prior stored cases that no longer qualify are not deleted by replay. Browser transport-fault tests are explicitly identified; teammate setup, full accessibility and concurrent-user tests were not run.
+# TraceGuard integration handoff — 25 October 2026
 
-**Next exact task:** on the teammate's Windows demo laptop, install the pinned requirements into a fresh environment, set TRACEGUARD_DB to a new file, start loopback Uvicorn, and rehearse `ONE_MINUTE_DEMO.md`, including closure/outcome/audit and malformed CSV. Record the rehearsal result and backup demo video before presentation.
+This build continues the pulled repository at `c8248ec52a6b632df7db0a43689c79c027774b5e`. Earlier handoff claims are superseded by the actual checks below. No remote push was requested or performed.
+
+## Delivered changes
+
+- Preserved the original lemon workbench and all 14 bundled scenario outputs. Added `/research.html` for offline parsing, editable synthetic specs, real isolated simulation, sensitivity sweeps, graph/timeline inspection, advisory text triage, PaySim windows and security events.
+- Added shared extraction, engine-derived explanations, deterministic generator, streaming PaySim adapter, chronological baseline benchmark and optional advisory score hook. Labels/flags/balances never become predictors. Missing PaySim data reports not_run/not_configured.
+- Added bounded case traces and account/time security-event correlation. Original cases without stored feature traces explicitly report unavailable. Added guarded owned-mock traffic, atomic event deduplication and input-limit checks.
+- Fixed real existing integration defects: hardcoded port 8000 outside default ports; unrelated old cases shown after a zero-case run; stale details during CSV import; Vite build output missing JavaScript. Static build now preserves same-origin paths and packages fallback assets.
+- Added golden-output regression tests for every bundled scenario, simulation isolation, trace consistency, leakage/tie handling, validation, guard behavior, event boundaries, LLM fallback and a small optional chronological-model smoke test.
+
+Changed code: `backend/traceguard/{extension_common,explain,simulator,paysim_adapter,paysim_window,model_hook,triage,security,extensions_api}.py`; integration changes in `main.py`, `pipeline.py`, `service.py`, `db.py`; `frontend/{app.js,index.html,research.html,research.js,research.css,build.cjs,package.json}` and packaged copies. New scripts/tests/artifacts and updated contracts, READMEs, model card, risks, changelog and decisions are included. `backend/artifacts/changed_files.txt` enumerates the exact working-tree changes.
+
+## Actual commands and results
+
+- Initial core dependency failure was resolved by installing `backend/requirements.txt`; the untouched baseline then passed 96 tests.
+- `python -m unittest discover -s tests -v`: **112 tests passed**, including optional ML toy smoke test in the validation environment. Latest full output: `backend/artifacts/unittest.log`. Optional ML test skips when sklearn is absent; ordinary tests require no dataset/network.
+- `python -m compileall -q traceguard scripts tests lab`: passed.
+- `python scripts/replay_all.py`: ran successfully; outputs saved in `artifacts/replay_all.json`. Golden comparison proves all 14 original scenario outputs unchanged, not just case counts.
+- `node --check` on frontend and packaged JavaScript: passed. `npm run build`: passed with all required pages and `/static/` assets copied.
+- Original real browser journey: **15 checks passed**, report `backend/reports/browser_integration.json`. Covers replay, queue, detail, review/outcome, audit verification, 105-case pagination, CSV errors, imported-markup safety, truncation, unavailable API, stale responses and mobile bounds. Failure-state transport injections are identified separately in that report/script.
+- Research browser: **10 checks passed**, including offline parse/run, real graph-edge inspection, sliders/sweep, advisory triage, missing-data state, no persistence, API-failure handling and desktop/mobile bounds. Final live HTTP checks passed. Reports: `backend/artifacts/research_browser.json` and `backend/reports/http_integration.json`.
+- `python scripts/verify_lab.py`: passed against two isolated owned-loopback services. One synthetic case and two matching events; `artifacts/lab_integration.json`.
+- `scripts/self_test_limits.py` ran against loopback: oversized 413; malformed, duplicate-ID and PaySim-shaped CSV 422. `artifacts/self_test_report.md` records observations. No scanner was run.
+- `make_triage_dataset.py` and `eval_triage.py`: ran; 96 synthetic narratives; family-disjoint train 66/test 30; macro-F1 **0.1714**; HIGH recall undefined because no HIGH test support. Injection errors remain visible. `artifacts/triage_eval.json` is authoritative.
+- `run_paysim_benchmark.py`: ran and reported **not_run**, metrics null because no source file was supplied. The toy unit test exercises the adapter/model plumbing only, not PaySim performance.
+- Separate 100k stress modes completed: randomized-unlabeled **29.587 seconds, one MEDIUM case**; structured-payroll **18.571 seconds, zero cases**. Reports preserve generator, seed and interpretation. These are pipeline timings in the earlier validation runtime, not load/concurrency or real-world accuracy tests. Rules/default graph behavior were not changed, so no threshold retuning or synthetic benchmark re-optimization was performed.
+
+## Remaining limits / unfinished advanced scope
+
+- No licensed real PaySim dataset or live LLM evaluation; no Indian UPI performance claim. Optional gradient boosting is not implemented.
+- Trace scalar gates and actual fired evidence are implemented; unmatched graph candidate paths are not retained, so detailed graph near misses are explicitly unavailable. Shaded rule-window timeline bands are not implemented. Simulated replay animates the final result, not a streaming detector. Simulator advisory comparison is marked not_run unless narrative triage is requested separately.
+- Stored traces retain at most 20 trigger rows per case; PaySim graph/trace displays at most 200 rows; case payloads are bounded. Large-window label metrics can undercount truncated trigger alerts, and explicitly disclose this limit.
+- The text classifier is weak synthetic-template recognition; its severity must not drive operational action. Missing optional packages/models return unavailable. Trusted local joblib artifacts must not be replaced by untrusted files.
+- API and event ingestion are unauthenticated local-demo endpoints. Review chains have no external anchor. No production readiness, immutable audit history, bank integration, perfect coverage or absence of bugs is claimed.
+
+## One next task
+
+Implement exact transaction-level PaySim alert accounting independent of bounded case payloads, with a truncation-sized labelled toy regression, before reporting large-window evaluation metrics. Then evaluate only on a provenance/licence-reviewed local dataset with fixed chronological splits.

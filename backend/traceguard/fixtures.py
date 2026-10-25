@@ -225,5 +225,6 @@ def apply_scenario_params(transactions: list[Transaction], params: dict[str, flo
             recipient_id=tx.recipient_id,
             amount=tx.amount * amount_scale,
             transaction_type=tx.transaction_type,
+            currency=tx.currency,
         ))
     return sorted(adjusted, key=lambda tx: (tx.timestamp_us, tx.transaction_id))

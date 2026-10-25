@@ -89,7 +89,9 @@ Allowed statuses: `OPEN`, `INVESTIGATING`, `ESCALATED`, `CLOSED`. Closing requir
 
 ### `GET /api/cases/{case_id}/audit`
 
-Verifies the per-case SHA-256 review-event chain and returns `valid`, `event_count`, and related chain metadata. This is **tamper-evident, not tamper-proof**: no external trusted anchor is used.
+Verifies the per-case SHA-256 review-event chain, transition continuity and agreement with current status/outcome in one SQLite read snapshot. Returns `valid`, `event_count`, `checked_at`, `current_status`, `current_outcome`, `warning`, and `status` (`verified`, `no_events`, `invalid`). Valid results include `head_hash`; failures include `reason` and `broken_at_event_id` (null for a state-level mismatch). `valid=true,status=no_events` means no contradiction was found, not that a decision history was verified. Missing cases return 404.
+
+Damaged chains block new review writes with 422. Startup only hashes logs during migration from a schema without hash columns; it does not repair missing hashes in a modern schema. Reviewer names remain self-reported. Case evidence is outside the review chain. This is **tamper-evident, not tamper-proof**: a database owner can rewrite the entire chain or delete a tail without detection when the remaining state still agrees. No external trusted anchor is used.
 
 ### `GET /api/analytics/review-outcomes`
 
@@ -97,18 +99,20 @@ Returns counts for current human-reviewed case outcomes, with an explicit warnin
 
 ### `GET /api/evaluation/summary`
 
-Until a trained model and benchmark evaluation are genuinely integrated, expected fields include:
+Optional `source_kind=synthetic_fixture|uploaded_csv`; omitted means all stored cases, including legacy cases with unknown provenance. Invalid values return 422.
 
-```json
-{
-  "model_status": "not_configured",
-  "evaluation_status": "not_run",
-  "metrics": null,
-  "dataset": null
-}
-```
+The response preserves `model_status`, `evaluation_status`, `metrics`, `dataset`, `message`, and `required_reporting` from the existing API. Optional model reports are separate from operational counts. No model training or dataset evaluation is performed here.
 
-Do not fill these values with mocked or estimated results. Update the endpoint only after an actual training/evaluation workflow and saved artifact/metrics exist.
+Additional fields:
+- `generated_at`, `scope`.
+- `cases`: `total`, `closed`, `priority_counts`, `status_counts`, `outcome_counts`, `review_completion_rate` (closed / total; null with no cases), `last_updated_at`.
+- `runs`: `total`, `returned`, `limit` (25), `truncated`, `items` in descending completion order. Counts are unique analysis identities, not execution attempts.
+- Each run includes source kind, input SHA-256, engine/settings SHA-256, actual settings, transaction/case counts, priorities, graph diagnostics, truncated-case count, input time bounds and analysis duration. Duration excludes explanation generation and database persistence. Input hashes are canonical transaction hashes, not original CSV-byte hashes.
+- `active_policy`, `priority_policy`, `legacy_cases_without_run_metadata`, `limitations`.
+
+Cases, traces and run metadata commit in one transaction. Zero-case runs are retained. Exact replay updates an existing run and preserves current reviews; changes to engine source or settings create distinct run/case identities. Existing cases are not silently relabelled or backfilled with invented run metadata. Source filters omit unknown-provenance legacy cases.
+
+Run fingerprints include source implementation and settings, not optional ML artifact bytes. Engine source is fingerprinted once per process; restart after source edits. Metadata is not cryptographically signed. There are no accuracy or fraud prevalence claims based on these counts.
 
 ## Semantics the UI must preserve
 
@@ -123,3 +127,5 @@ Do not fill these values with mocked or estimated results. Update the endpoint o
 Replay/import responses include `graph_summary` and `analysis_warnings`. `graph_analysis_incomplete=1` means at least one cycle/chain expansion budget was exhausted; absence of a graph alert is not a clean finding. Replay-all aggregates warnings and keeps per-scenario diagnostics in `results`. No endpoint or request shape changed during this integration.
 
 `LOW` cases remain investigation leads. The exact existing priority/grouping policy is documented in `backend/docs/rule_policy.md` (or `rule_policy.md` from backend/docs). Context does not remove risk evidence but affects the routine-rule LOW branch. Case detail truncation and per-evidence observed truncation flags must both be inspected. Queue count is returned-row count, never total database count.
+
+Additive research endpoints are documented in the canonical root `API_CONTRACT.md` and generated `/docs`; avoid maintaining a second copy of those schemas here.

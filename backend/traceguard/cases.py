@@ -22,13 +22,35 @@ def _short_hash(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()[:20]
 
 
-def make_run_id(source_id: str, transactions: Iterable[Transaction]) -> str:
+def make_run_id(source_id: str, transactions: Iterable[Transaction], settings: Settings = DEFAULT_SETTINGS) -> str:
     canonical = [
         [t.transaction_id, t.timestamp, t.sender_id, t.recipient_id, format(t.amount, ".17g"), t.transaction_type, t.currency]
         for t in sorted(transactions, key=lambda x: (x.timestamp_us, x.transaction_id))
     ]
-    raw = json.dumps({"source_id": source_id, "transactions": canonical}, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    from .provenance import analysis_identity
+    raw = json.dumps({"source_id": source_id, "transactions": canonical, "analysis": analysis_identity(settings)}, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     return "run_" + _short_hash(raw)
+
+
+PRIORITY_POLICY = {
+    "high_min_rules": 3, "high_min_triggers": 4,
+    "high_min_linked_transactions": 2, "high_min_linked_accounts": 2,
+    "structural": {"R4_DIRECTED_CYCLE", "R5_LAYERED_CHAIN", "R6_REPEATED_VALUE_BURST"},
+    "corroborating": {"R1_RAPID_PASS_THROUGH", "R2_FAN_IN_DISPERSAL", "R3_AMOUNT_DEVIATION", "R7_DORMANT_REACTIVATION"},
+    "specific": {"R6_REPEATED_VALUE_BURST", "R7_DORMANT_REACTIVATION"},
+    "routine_rules": {"R2_FAN_IN_DISPERSAL", "R2A_FAN_IN_CLUSTER", "R2B_FAN_OUT_BURST"},
+    "routine_context": {"C1_STABLE_AMOUNT_CONTEXT", "C2_REPEATED_COUNTERPARTY_CONTEXT", "C3_STABLE_INBOUND_AMOUNT_CONTEXT"},
+}
+
+
+def priority_policy():
+    p = PRIORITY_POLICY
+    return [
+        {"priority": "HIGH", "description": f"At least {p['high_min_rules']} distinct risk rules on {p['high_min_triggers']} trigger transactions, a structural and corroborating pair sharing at least {p['high_min_linked_transactions']} transactions and {p['high_min_linked_accounts']} accounts, plus repeated-value or dormant-reactivation evidence."},
+        {"priority": "MEDIUM", "description": "Risk evidence exists and neither the HIGH nor LOW policy applies."},
+        {"priority": "LOW", "description": "Pass-through is the only risk rule, or all risk rules are routine fan-in/fan-out signals with a stable-amount or repeated-counterparty context signal. Risk evidence stays visible; legitimacy is not established."},
+        {"priority": "INSUFFICIENT_HISTORY", "description": "Case contains coverage limitations but no supported risk rule. Insufficient history is based on observation counts and the coverage rule's global-outlier gates, not simply account age."},
+    ]
 
 
 def _priority(evidence: list[Evidence]) -> str:
@@ -40,13 +62,13 @@ def _priority(evidence: list[Evidence]) -> str:
     # HIGH is a conservative *review-priority* heuristic, not a fraud probability.
     # Require a structural motif and corroborating behavior to overlap on multiple
     # transactions/accounts, not merely to appear somewhere in the same case.
-    structural = {"R4_DIRECTED_CYCLE", "R5_LAYERED_CHAIN", "R6_REPEATED_VALUE_BURST"}
-    corroborating = {"R1_RAPID_PASS_THROUGH", "R2_FAN_IN_DISPERSAL", "R3_AMOUNT_DEVIATION", "R7_DORMANT_REACTIVATION"}
+    structural = PRIORITY_POLICY["structural"]
+    corroborating = PRIORITY_POLICY["corroborating"]
     structural_items = [item for item in risk_evidence if item.rule_id in structural]
     corroborating_items = [item for item in risk_evidence if item.rule_id in corroborating]
     linked_corroboration = any(
-        len(set(struct_item.transaction_ids).intersection(corroborating_item.transaction_ids)) >= 2
-        and len(set(struct_item.account_ids).intersection(corroborating_item.account_ids)) >= 2
+        len(set(struct_item.transaction_ids).intersection(corroborating_item.transaction_ids)) >= PRIORITY_POLICY["high_min_linked_transactions"]
+        and len(set(struct_item.account_ids).intersection(corroborating_item.account_ids)) >= PRIORITY_POLICY["high_min_linked_accounts"]
         for struct_item in structural_items
         for corroborating_item in corroborating_items
     )
@@ -54,8 +76,8 @@ def _priority(evidence: list[Evidence]) -> str:
     # dormant reactivation) in addition to linked structural + corroborating
     # evidence. Routine graph connectivity alone is common in dense ledgers and
     # must not promote a case to HIGH. This remains a heuristic, not calibration.
-    specific_pattern_present = bool(signal_rules.intersection({"R6_REPEATED_VALUE_BURST", "R7_DORMANT_REACTIVATION"}))
-    if (len(signal_rules) >= 3 and len(trigger_transactions) >= 4
+    specific_pattern_present = bool(signal_rules.intersection(PRIORITY_POLICY["specific"]))
+    if (len(signal_rules) >= PRIORITY_POLICY["high_min_rules"] and len(trigger_transactions) >= PRIORITY_POLICY["high_min_triggers"]
             and linked_corroboration and specific_pattern_present):
         return "HIGH"
 
@@ -69,11 +91,11 @@ def _priority(evidence: list[Evidence]) -> str:
 
     # Recurrent routine-looking collection/dispersal patterns receive LOW review
     # priority only when context also exists and no stronger signal is present.
-    routine_rules = {"R2_FAN_IN_DISPERSAL", "R2A_FAN_IN_CLUSTER", "R2B_FAN_OUT_BURST"}
+    routine_rules = PRIORITY_POLICY["routine_rules"]
     # C1 is emitted only when stable outgoing amounts have enough prior history
     # spread over a configured minimum duration; a short burst by itself cannot
     # suppress an alert. None of these context signals proves legitimacy.
-    routine_context = {"C1_STABLE_AMOUNT_CONTEXT", "C2_REPEATED_COUNTERPARTY_CONTEXT", "C3_STABLE_INBOUND_AMOUNT_CONTEXT"}
+    routine_context = PRIORITY_POLICY["routine_context"]
     if signal_rules and signal_rules.issubset(routine_rules) and context_codes.intersection(routine_context):
         return "LOW"
     if signal_rules:

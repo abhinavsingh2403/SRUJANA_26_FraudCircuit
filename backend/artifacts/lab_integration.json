@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "scope": "owned loopback mock only",
+  "case_count": 1,
+  "events": 2,
+  "related_events": 2,
+  "notice": "Fixed synthetic calls; not an intrusion or security audit."
+}

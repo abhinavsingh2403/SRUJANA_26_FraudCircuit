@@ -178,3 +178,53 @@ python scripts/verify_integration.py --browser
 The harness starts/stops its own loopback server with a fresh temporary database. Primary scenario/import/review/audit requests use the real API. Fault/race and forced incomplete-response tests explicitly intercept transport. `TRACEGUARD_CHROMIUM` can specify an existing Chromium executable; `NODE_PATH` can locate an externally installed Playwright. No browser binaries or node_modules ship in the archive.
 
 Current evidence and initial failed attempts: `docs/validation_run.md`. Old reports are historical; use reports ending `_integration.json` for this source revision. Replaying refreshes matching case payloads but does not delete older cases that revised rules no longer generate. Use a new `TRACEGUARD_DB` path for a clean demonstration. No existing database is bundled.
+
+## Research workspace and local lab
+
+Start from this directory:
+
+```bash
+python -m pip install -r requirements.txt
+python -m uvicorn traceguard.main:app --host 127.0.0.1 --port 8000
+```
+
+Open `http://127.0.0.1:8000/` for the investigation queue and `/research.html` for hypothetical simulation, text triage, PaySim replay and security-event inspection. Keep both on the same origin. Node is not required to run the UI. The original lemon workbench is retained.
+
+The simulator parses offline, shows an editable bounded spec, generates deterministic synthetic rows and calls the actual rule engine. It provides trace details, directed graph, selectable evidence edges, account timeline, final-result animation, what-if sliders and sensitivity sweeps. It never saves cases. Default chain fires R1 and produces LOW; default LEGIT_BURST produces LOW; a new account alone can produce no case. These are regression observations about our rules, not detection accuracy. Graph unmatched-path near misses and shaded rule-window timeline bands are not implemented; the UI exposes settings and actual evidence instead.
+
+Optional advisory text baseline:
+
+```bash
+python -m pip install -r requirements-ml.txt
+python scripts/make_triage_dataset.py
+python scripts/eval_triage.py
+```
+
+The bundled 96 narratives are synthetic. Family-held-out results are in `artifacts/triage_eval.json`: macro-F1 0.1714; the test split has no HIGH examples, so HIGH recall is undefined. The classifier is weak and must not guide operational decisions. Without optional packages/artifact it reports unavailable. `TRIAGE_LLM_PROVIDER=none` is the default. Optional providers are `ollama` or `openai_compatible`, with `TRIAGE_LLM_BASE_URL`, `TRIAGE_LLM_MODEL` and optional `TRIAGE_LLM_API_KEY` in the environment only. Never put secrets in files committed to this project. Live LLM quality was not evaluated.
+
+PaySim is not bundled. Set `PAYSIM_PATH` to a locally obtained, licensed file with the exact eleven-column schema. Run `python scripts/check_paysim.py` for schema/hash/recurrence. Training additionally requires `PAYSIM_PROVENANCE` and `PAYSIM_LICENSE` describing the source and licence you verified, then:
+
+```bash
+python scripts/run_paysim_benchmark.py --max-rows 100000 --alert-budget 0.01
+```
+
+This selects complete steps, computes chronological boundaries from the actual step range, trains type/log-amount and history logistic baselines on training only, selects thresholds on validation, and evaluates test once. Missing steps reduce feature history; zero-amount rows are excluded because canonical ingestion requires positive amounts. There is no real PaySim result in this build: status is not_run and model_status is not_configured. Toy schema tests do not establish PaySim performance. Optional gradient boosting is not implemented.
+
+The PaySim window simulator supports lookback, separate overlay results and optional evaluation labels. Graph/timeline show at most 200 rows, with review rows first. Label metrics are computed on background separately from overlay; retained case-trigger limits can undercount large alert sets, explicitly disclosed in the response. Do not interpret these bounded window metrics as full-dataset performance.
+
+Lab-only security scope: our own mock API on loopback or an owned isolated RFC1918 VM network. Never target event Wi-Fi, other teams, banks, UPI rails or unowned hosts. See `lab/README.md`. API is unauthenticated by design. Security telemetry is supplied separately; transaction patterns cannot prove API compromise.
+
+```bash
+python scripts/verify_lab.py
+LAB_MODE=1 python scripts/self_test_limits.py --target http://127.0.0.1:8000 --yes
+python -m unittest discover -s tests -v
+python -m compileall -q traceguard scripts tests lab
+python scripts/replay_all.py
+python scripts/verify_integration.py --browser
+python scripts/stress_100k_benign.py --mode randomized-unlabeled --output artifacts/stress_random_100k.json
+python scripts/stress_100k_benign.py --mode structured-payroll --output artifacts/stress_structured_100k.json
+```
+
+Browser verification needs Playwright and a Chromium installation; optionally set `TRACEGUARD_CHROMIUM` to its executable. Tests need no network or real dataset. The optional ML smoke test skips if scikit-learn is absent. The two stress modes must be run separately. Current reports live in `artifacts/`; older `reports/` files are historical runs, not fresh evidence for every change.
+
+From `frontend/`, `npm run build` copies pages and assets to `dist/` and synchronizes packaged backend assets. It preserves `/static/` paths; serve it with the same-origin API, not a file URL. `node --check app.js` and `node --check research.js` validate syntax.

@@ -10,12 +10,14 @@ if (!base) throw new Error('Use scripts/verify_integration.py --browser (isolate
   const browser = await chromium.launch({headless: true,
     ...(process.env.TRACEGUARD_CHROMIUM ? {executablePath: process.env.TRACEGUARD_CHROMIUM, args:['--no-sandbox','--no-zygote','--single-process','--in-process-gpu','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']} : {})});
   const page = await browser.newPage({viewport:{width:1366,height:768}});
-  const errors=[]; page.on('pageerror',e=>errors.push(e.message));
+  const errors=[]; page.on('pageerror',e=>{errors.push(e.message);console.error('PAGE ERROR:',e.message);});
+  page.on('requestfailed',r=>console.error('REQUEST FAILED',r.url(),r.failure()));
+  page.on('console',m=>{if(m.type()==='error')console.error('CONSOLE',m.text());});
   const checks=[];
   const wait = async (fn,arg) => page.waitForFunction(fn,arg,{timeout:15000});
   const api = async path => (await page.request.get(base+path)).json();
   try {
-    await page.goto(base); await wait(()=>document.querySelector('#connection-status').textContent==='API connected');
+    await page.goto(base); try { await wait(()=>document.querySelector('#connection-status').textContent==='API connected'); } catch(e) { console.error((await page.locator('body').innerText()).slice(0,1500)); throw e; }
     assert.match(await page.locator('#queue-list').innerText(),/No cases/); checks.push('fresh empty queue');
     await page.selectOption('#scenario-select','compound-layered-cycle'); await page.click('#replay-scenario');
     await wait(()=>document.querySelector('#case-detail h2')?.textContent==='compound-layered-cycle');
@@ -43,6 +45,7 @@ if (!base) throw new Error('Use scripts/verify_integration.py --browser (isolate
     // Zero-case replay scopes view so unrelated cases are not left on screen
     await page.selectOption('#scenario-select','legitimate-high-volume'); await page.click('#replay-scenario');
     await wait(()=>document.querySelector('#run-result')?.textContent.includes('0 case(s)'));
+    await wait(()=>/zero cases/i.test(document.querySelector('#detail-empty h2').textContent));
     assert.match(await page.locator('#detail-empty h2').innerText(),/zero cases/i);
     assert.match(await page.locator('#queue-list').innerText(),/No cases match/i);
     checks.push('zero-case replay scopes queue without leaving stale cases');
@@ -78,6 +81,7 @@ if (!base) throw new Error('Use scripts/verify_integration.py --browser (isolate
     for(let i=0;i<135;i++)csv+=`XSS-${i},${new Date(Date.UTC(2026,9,24,12,0,i)).toISOString()},${hostile},DEST-${i%5},100,TRANSFER\n`;
     await page.setInputFiles('#csv-file',{name:'bounded.csv',mimeType:'text/csv',buffer:Buffer.from(csv)});
     await wait(()=>document.querySelector('#case-detail h2')?.textContent==='csv-import');
+    await wait(()=>document.querySelector('#case-detail').textContent.includes('Incomplete case payload'));
     assert.match(await page.locator('#case-detail').innerText(),/Incomplete case payload/);
     assert.match(await page.locator('.tx-table').innerText(),/<img src=x/);
     assert.equal(await page.locator('#case-detail img').count(),0); assert.equal(await page.evaluate(()=>window.TG_XSS),undefined);
@@ -94,12 +98,14 @@ if (!base) throw new Error('Use scripts/verify_integration.py --browser (isolate
     assert.equal(await page.locator('#case-detail').isVisible(),false);await page.unroute('**/api/cases/case_*');
     checks.push('case-detail failure does not retain a previous review form');
     // A late detail response must not overwrite the analyst's newer selection.
+    await page.getByRole('button',{name:'All cases',exact:true}).click();
+    await wait(()=>document.querySelectorAll('.case-row').length>1);
     const queued=(await api('/api/cases')).cases;
     const older=queued[0].case_id, newer=queued[1].case_id;
     let release;const gate=new Promise(resolve=>{release=resolve;});
     let arrived;const entered=new Promise(resolve=>{arrived=resolve;});
     await page.route('**/api/cases/'+older,async r=>{const response=await r.fetch();arrived();await gate;await r.fulfill({response});});
-    await page.locator('.case-row').filter({hasText:older}).click();await entered;
+    await page.locator('.case-row').filter({hasText:older}).click();await Promise.race([entered,new Promise((_,reject)=>setTimeout(()=>reject(Error("Delayed request did not arrive")),15000))]);
     await page.locator('.case-row').filter({hasText:newer}).click();
     await wait(id=>document.querySelector('#case-detail .eyebrow')?.textContent.includes(id),newer);
     release();await page.waitForTimeout(200);

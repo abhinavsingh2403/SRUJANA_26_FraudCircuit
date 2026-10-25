@@ -1,3 +1,19 @@
+## 25 October 2026 — live evaluation and integrity corrections
+
+- Replace fixed evaluation claims with source-filtered database counts, run provenance, real limits and JSON exports.
+- Check review hashes/transitions/current state; never auto-rehash a damaged modern chain; reject appends to damaged logs.
+- Version analysis identities by engine/settings; preserve review state on replay; atomically persist cases/traces/run metadata.
+- Centralize priority policy and fan-in threshold, retain accurate trace truncation totals, and preserve currency during fixture scaling.
+- 125 backend tests plus HTTP, analyst/research/evaluation browser checks passed. ML dataset work unchanged.
+
+# Research integration — 25 October 2026
+
+- Preserved all 14 original scenario outputs; added isolated deterministic simulation, full-input feature traces with bounded persistence, PaySim streaming/window adapters, advisory text triage and local-lab security telemetry.
+- Added an offline research page without replacing the lemon workbench.
+- Fixed hardcoded port-8000 API routing, stale unrelated cases after zero-case replay, stale detail while importing, and missing JS in the static build output.
+- Added regression tests, synthetic family-held-out triage evaluation, chronological toy model smoke test, guarded lab sequence and observed input-limit checks.
+- No real PaySim evaluation or live LLM evaluation; optional advanced graph near-miss visualization and gradient boosting remain unimplemented.
+
 # Changelog
 
 ## 2026-10-24 — Final acceptance hardening, pagination, and release packaging

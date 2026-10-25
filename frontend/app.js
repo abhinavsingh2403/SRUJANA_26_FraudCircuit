@@ -76,9 +76,7 @@
     toastTimer = setTimeout(() => { box.hidden = true; }, 5000);
   }
 
-  const API_BASE = (window.location.protocol === 'file:' || (window.location.port !== '8000' && window.location.port !== '5173' && window.location.port !== ''))
-    ? 'http://127.0.0.1:8000'
-    : '';
+  const API_BASE = ''; // All local demo requests stay on the page origin.
 
   async function api(path, options = {}) {
     const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
@@ -967,7 +965,7 @@
       try {
         const result = await api(`/api/cases/${encodeURIComponent(caseData.case_id)}/audit`);
         auditResult.hidden = false;
-        auditResult.textContent = `Review chain ${result.valid ? 'chain valid' : 'INVALID'} · ${result.event_count ?? 'unknown'} event(s). ${result.warning || 'Without an external anchor a database owner can rewrite the whole chain or delete its tail.'}`;
+        auditResult.textContent = auditMessage(result);
       } catch (error) {
         auditResult.hidden = false;
         auditResult.textContent = `Audit verification failed: ${error.message}`;
@@ -1079,6 +1077,10 @@
         detail.append(details);
       }
 
+      for (const [title, value] of [["Engine trace and near gates", caseData.trace], ["Related security events · correlation, not causation", caseData.related_security_events]]) {
+        if (value) { const section = node("details", "review-history"); section.append(node("summary", "", title), node("pre", "", JSON.stringify(value, null, 2))); detail.append(section); }
+      }
+
       // Human review form
       detail.append(sectionHeading('Human review', 'Closing requires an explicit outcome'));
       renderReviewForm(detail, caseData);
@@ -1186,7 +1188,7 @@
       });
       runResult(`Analysis complete: ${result.transaction_count} transactions; ${result.case_count} case(s).`, result);
       state.latestRunId = result.run_id || null;
-      state.viewMode = result.case_count > 0 ? 'run' : 'all';
+      state.viewMode = result.run_id ? 'run' : 'all';
       state.offset = 0;
       state.filterPriority = 'All';
       state.filterStatus = 'All';
@@ -1252,6 +1254,7 @@
       showToast('The file exceeds the 5 MiB upload limit.', true);
       return;
     }
+    clearDetail('Importing CSV…');
     try {
       const result = await api('/api/transactions/import', {
         method: 'POST',
@@ -1260,7 +1263,7 @@
       });
       runResult(`CSV imported: ${result.transaction_count} rows; ${result.case_count} case(s).`, result);
       state.latestRunId = result.run_id || null;
-      state.viewMode = result.case_count > 0 ? 'run' : 'all';
+      state.viewMode = result.run_id ? 'run' : 'all';
       state.offset = 0;
       state.filterPriority = 'All';
       state.filterStatus = 'All';
@@ -1284,15 +1287,83 @@
     }
   }
 
+  let evaluationSnapshot = null;
+  let auditSnapshot = null;
+  let evaluationRequest = 0;
+
+  function downloadEvidence(data, filename) {
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}));
+    const link = document.createElement('a');
+    link.href = url; link.download = filename; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function auditMessage(result) {
+    const status = !result.valid ? `INVALID: ${result.reason || 'integrity check failed'}`
+      : result.event_count === 0 ? 'No review events — no recorded decision history to verify'
+      : 'Review chain valid; current review state matches';
+    return `${status}. ${result.event_count} event(s). Checked ${result.checked_at || 'at request time'}. ${result.warning || ''}`;
+  }
+
   async function loadEvaluation() {
+    const request = ++evaluationRequest;
+    evaluationSnapshot = null;
+    $('evaluation-export').disabled = true;
+    $('evaluation-content').hidden = true;
+    $('evaluation-status').textContent = 'Loading current evidence…';
+    const source = $('evaluation-source').value;
     try {
-      const result = await api('/api/evaluation/summary');
-      $('evaluation-status').textContent = result.model_status === 'not_configured'
-        ? 'Rules-only mode. No trained ML model or measured benchmark result is configured. Metrics are intentionally not shown.'
-        : `Model status: ${result.model_status}; evaluation status: ${result.evaluation_status}.`;
+      const result = await api('/api/evaluation/summary' + (source ? `?source_kind=${encodeURIComponent(source)}` : ''));
+      if (request !== evaluationRequest) return;
+      evaluationSnapshot = result;
+      $('evaluation-status').textContent = `Snapshot: ${result.generated_at} · Source: ${$('evaluation-source').selectedOptions[0].textContent}`;
+      const c = result.cases;
+      const metrics = $('evaluation-metrics'); metrics.replaceChildren();
+      const values = [['Stored cases', c.total], ['Closed cases', c.closed], ['Review completion', c.review_completion_rate === null ? 'Not available' : `${(c.review_completion_rate*100).toFixed(1)}%`], ['Recorded runs', result.runs.total]];
+      for (const [label, value] of values) {
+        const card = node('article', 'card eval-metric');
+        card.append(node('p', 'eyebrow', label), node('strong', '', String(value))); metrics.append(card);
+      }
+      const outcomes = $('evaluation-outcomes'); outcomes.replaceChildren();
+      for (const [key, label] of [['CONFIRMED_SUSPICIOUS', 'Confirmed suspicious'], ['FALSE_POSITIVE', 'False positive'], ['INCONCLUSIVE', 'Inconclusive']]) {
+        outcomes.append(node('p', '', `${label}: ${c.outcome_counts[key] || 0}`));
+      }
+      outcomes.append(node('p', 'd', `Open / investigating / escalated: ${c.total-c.closed}. ${c.closed ? 'Closed includes inconclusive reviews.' : 'No outcomes yet is not a zero-error result.'}`));
+      $('evaluation-model').textContent = `Optional model artifact status: ${result.model_status}. Evaluation artifact status: ${result.evaluation_status}. ${result.metrics === null ? 'No measured model metrics are available from that artifact.' : 'An optional model report exists; these operational counts do not validate it.'}`;
+      $('evaluation-legacy').textContent = `${result.legacy_cases_without_run_metadata} older case(s) lack run metadata. They appear only in the all-data view.`;
+      $('evaluation-run-count').textContent = result.runs.total ? `Showing ${result.runs.returned} of ${result.runs.total} recorded runs, newest first.${result.runs.truncated ? ' Older runs are omitted from this bounded snapshot.' : ''}` : 'No recorded runs in this source. Replay a scenario or import a CSV to create one; older records are not reconstructed.';
+      const rows = $('evaluation-runs'); rows.replaceChildren();
+      for (const run of result.runs.items) {
+        const row = node('tr');
+        const graph = run.graph_summary;
+        const cells = [ `${run.source} (${run.source_kind})\n${run.run_id}`, run.completed_at,
+          `${run.transaction_count} transactions / ${run.case_count} cases`,
+          `${graph.graph_analysis_incomplete ? 'Graph search incomplete' : 'Graph search budget not exhausted'}; ${run.cases_with_truncation} case(s) with truncated payloads`,
+          `${run.analysis_duration_ms} ms`];
+        for (const text of cells) row.append(node('td', '', text));
+        const td = node('td'); const details = node('details');
+        details.append(node('summary', '', 'Inspect run'), node('pre', '', JSON.stringify(run, null, 2)));
+        td.append(details); row.append(td); rows.append(row);
+      }
+      $('evaluation-settings').textContent = JSON.stringify(result.active_policy, null, 2);
+      const policy = $('evaluation-policy'); policy.replaceChildren();
+      for (const entry of result.priority_policy) policy.append(node('p', '', `${entry.priority}: ${entry.description}`));
+      const limits = $('evaluation-limitations'); limits.replaceChildren();
+      for (const text of result.limitations) limits.append(node('li', '', text));
+      $('evaluation-content').hidden = false; $('evaluation-export').disabled = false;
     } catch (error) {
-      $('evaluation-status').textContent = `Evaluation metadata unavailable: ${error.message}`;
+      if (request !== evaluationRequest) return;
+      $('evaluation-status').textContent = `Evidence unavailable: ${error.message}. Refresh to retry; no cached figures are shown.`;
     }
+    try {
+      const result = await api('/api/cases?limit=20');
+      if (request !== evaluationRequest) return;
+      const options = $('audit-case-options'); options.replaceChildren();
+      for (const item of result.cases) {
+        const option = node('option'); option.value = item.case_id;
+        option.label = `${item.source_scenario_id} · ${item.status}`; options.append(option);
+      }
+    } catch (_) { $('audit-case-options').replaceChildren(); }
   }
 
   /* Multi-page Routing & View Management */
@@ -1314,6 +1385,7 @@
     });
 
     if (pageId === 'scenarios') renderScenarioGrid();
+    if (pageId === 'evaluation') loadEvaluation();
   }
 
   function handleRoute() {
@@ -1366,7 +1438,7 @@
           });
           runResult(`Analysis complete: ${result.transaction_count} transactions; ${result.case_count} case(s).`, result);
           state.latestRunId = result.run_id || null;
-          state.viewMode = result.case_count > 0 ? 'run' : 'all';
+          state.viewMode = result.run_id ? 'run' : 'all';
           state.offset = 0;
           showToast(`Replayed ${sc.id}: generated ${result.case_count} case(s).`);
           window.location.hash = '#/queue';
@@ -1431,31 +1503,36 @@
     });
   }
 
-  // Live Audit Inspector on Evaluation page
+  $('evaluation-refresh').addEventListener('click', loadEvaluation);
+  $('evaluation-source').addEventListener('change', loadEvaluation);
+  $('evaluation-export').addEventListener('click', () => {
+    if (evaluationSnapshot) downloadEvidence(evaluationSnapshot, 'traceguard-evaluation.json');
+  });
   const auditBtn = $('audit-inspector-btn');
   const auditInput = $('audit-inspector-input');
   const auditBox = $('audit-inspector-result');
-  if (auditBtn && auditInput && auditBox) {
-    auditBtn.addEventListener('click', async () => {
-      const cid = auditInput.value.trim();
-      if (!cid) {
-        showToast('Enter a case_id to verify audit chain.', true);
-        return;
-      }
-      auditBtn.disabled = true;
-      try {
-        const result = await api(`/api/cases/${encodeURIComponent(cid)}/audit`);
-        auditBox.hidden = false;
-        auditBox.innerHTML = `<strong>Case ${escapeHtml(cid)}:</strong> Review chain ${result.valid ? '<span style="color:#2ea043;font-weight:700">chain valid</span>' : '<span style="color:#962222;font-weight:700">INVALID</span>'}. Verified <strong>${result.event_count ?? 0}</strong> event(s).<br><small style="color:var(--muted)">${escapeHtml(result.warning || 'Without an external anchor a database owner can rewrite the whole chain or delete its tail.')}</small>`;
-      } catch (err) {
-        auditBox.hidden = false;
-        auditBox.textContent = `Audit check failed: ${err.message}`;
-        showToast(`Audit failed: ${err.message}`, true);
-      } finally {
-        auditBtn.disabled = false;
-      }
-    });
-  }
+  auditInput.addEventListener('input', () => {
+    auditSnapshot = null; $('audit-export').disabled = true; auditBox.hidden = true;
+  });
+  auditInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !auditBtn.disabled) auditBtn.click(); });
+  $('audit-export').addEventListener('click', () => {
+    if (auditSnapshot) downloadEvidence(auditSnapshot, 'traceguard-audit-verification.json');
+  });
+  auditBtn.addEventListener('click', async () => {
+    const cid = auditInput.value.trim();
+    if (!cid) { showToast('Select or paste a case ID.', true); return; }
+    auditSnapshot = null; $('audit-export').disabled = true;
+    auditBtn.disabled = true; auditBox.hidden = false; auditBox.textContent = 'Verifying stored review history…';
+    try {
+      const result = await api(`/api/cases/${encodeURIComponent(cid)}/audit`);
+      if (auditInput.value.trim() !== cid) return;
+      auditSnapshot = result;
+      auditBox.textContent = `Case ${cid}: ${auditMessage(result)}${result.head_hash ? ` Head: ${result.head_hash}` : ''}`;
+      $('audit-export').disabled = false;
+    } catch (err) {
+      if (auditInput.value.trim() === cid) auditBox.textContent = `Audit check unavailable: ${err.message}`;
+    } finally { auditBtn.disabled = false; }
+  });
 
   // Setup event listeners
   $('import-csv').addEventListener('click', () => $('csv-file').click());
@@ -1478,7 +1555,6 @@
   // Initialize
   renderFilterButtons();
   loadScenarios();
-  loadEvaluation();
   handleRoute();
   refreshCases(false);
 })();

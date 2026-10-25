@@ -1,0 +1,21 @@
+{
+  "revision": "2026-10-25 operational evaluation and review integrity",
+  "backend_tests": {
+    "passed": 125,
+    "failed": 0
+  },
+  "frontend_syntax": "passed",
+  "frontend_build": "passed",
+  "python_compile": "passed",
+  "http_integration": "passed",
+  "analyst_browser_journey": "passed",
+  "research_browser_journey": "passed",
+  "evaluation_browser_journey": "passed",
+  "screenshots_inspected": [
+    "evaluation_desktop.png",
+    "evaluation_mobile.png"
+  ],
+  "ml_dataset_work": "unchanged; not run",
+  "production_security_audit": "not run",
+  "details": "REVISION_NOTES.md"
+}

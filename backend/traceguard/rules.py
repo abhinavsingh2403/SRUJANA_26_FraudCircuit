@@ -78,7 +78,7 @@ def evaluate_rules(tx: Transaction, f: Features, settings: Settings = DEFAULT_SE
     if (f.prior_inbound_unique_senders >= settings.min_fan_in_senders
             and combined_recipients_short >= settings.min_fan_out_recipients
             and f.outbound_short_window_count + 1 >= settings.min_fan_out_transactions
-            and recent_outflow_ratio is not None and recent_outflow_ratio >= 0.50):
+            and recent_outflow_ratio is not None and recent_outflow_ratio >= settings.fan_in_min_outflow_ratio):
         evidence.append(_signal(
             "R2_FAN_IN_DISPERSAL", "Fan-in and dispersal pattern",
             "The account received funds from multiple senders and has transferred to multiple recipients within the rolling window.",

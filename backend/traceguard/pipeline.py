@@ -16,10 +16,11 @@ def analyse_transactions_detailed(
     transactions: Iterable[Transaction],
     source_scenario_id: str = "csv-import",
     settings: Settings = DEFAULT_SETTINGS,
+    review_start_us: int | None = None,
 ) -> tuple[str, list[dict[str, object]], dict[str, int]]:
     txs = sorted(list(transactions), key=lambda t: (t.timestamp_us, t.transaction_id))
     if not txs:
-        return make_run_id(source_scenario_id, []), [], {
+        return make_run_id(source_scenario_id, [], settings), [], {
             "transactions_analyzed": 0, "directed_cycles_detected": 0,
             "layered_chains_detected": 0, "cycle_search_budget_exhausted": 0,
             "chain_search_budget_exhausted": 0,
@@ -49,8 +50,9 @@ def analyse_transactions_detailed(
                     involved_accounts.update((related.sender_id, related.recipient_id))
             enriched.append(replace(item, account_ids=tuple(sorted(involved_accounts))))
         analyses.append(TransactionAnalysis(tx, tuple(enriched), {"coverage": features.coverage, "account_history_count": features.account_history_count}))
-    run_id = make_run_id(source_scenario_id, txs)
-    cases = build_cases(analyses, txs, source_scenario_id, run_id, settings)
+    run_id = make_run_id(source_scenario_id, txs, settings)
+    review_analyses = analyses if review_start_us is None else [a for a in analyses if a.transaction.timestamp_us >= review_start_us]
+    cases = build_cases(review_analyses, txs, source_scenario_id, run_id, settings)
     if graph_result.stats.get("graph_analysis_incomplete", 0):
         warning = (
             "Bounded graph analysis reached its per-event expansion limit "
@@ -61,7 +63,14 @@ def analyse_transactions_detailed(
         for case in cases:
             if warning not in case.limitations:
                 case.limitations.append(warning)
-    return run_id, [case.to_dict() for case in cases], graph_result.stats
+    payloads = [case.to_dict() for case in cases]
+    from .model_hook import advisory_scores
+    scores = advisory_scores(txs, settings)
+    for case in payloads:
+        values = [scores[t] for t in case["transaction_ids"] if t in scores]
+        if values:
+            case["score_components"].update(model_score=max(values), model_status="configured", model_notice="model rank score, not a probability")
+    return run_id, payloads, graph_result.stats
 
 
 def analyse_transactions(

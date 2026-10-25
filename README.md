@@ -1,8 +1,14 @@
+> **25 October 2026 revision:** Evaluation & Auditability now reads live run provenance and review counts, supports source filtering and JSON exports, and checks review-chain continuity against current case state. See `REVISION_NOTES.md` for changes and verification. Existing case IDs remain accessible; newly analysed inputs use engine/settings-versioned IDs.
+
 # TraceGuard — F-01 fraud investigation prototype
 
 **Tagline:** See the pattern, not just the payment.
 
 TraceGuard is a hackathon prototype for explaining and prioritising potentially suspicious transaction patterns. It is decision support—not a fraud verdict, not a bank-connected system, and not a production-ready risk engine.
+
+## Updated research build
+
+Open `/research.html` after starting the backend for isolated hypothetical simulation, advisory text triage, PaySim window replay and local-lab security events. See `backend/README.md` for commands and `HANDOFF_STATE.md` for actual checks and limitations. Real PaySim data and live LLM evaluation were not supplied.
 
 ## Current state
 
@@ -10,7 +16,7 @@ TraceGuard is a hackathon prototype for explaining and prioritising potentially 
 - Fourteen deterministic synthetic scenarios exercise selected rules and edge cases.
 - API provides replay, CSV import, case investigation, human review, review-audit verification and honest model/evaluation status.
 - The current model status is `not_configured`; no fraud performance metrics are claimed.
-- A dependency-free HTML/CSS/JavaScript investigation UI is served by FastAPI. A trained/validated ML model is not included.
+- A dependency-free HTML/CSS/JavaScript investigation UI is served by FastAPI. An optional weak synthetic-template text classifier is included separately; no PaySim transaction model is configured.
 - A dedicated `frontend/` folder provides the standalone frontend workspace with Vite dev server and proxy support.
 
 ## Repository structure

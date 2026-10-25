@@ -1,11 +1,11 @@
 # Blunt risk review — do not call TraceGuard perfect
 
-This is a hardened hackathon prototype, not a bank-grade fraud engine. In the recorded environment, 96 automated tests pass, the core API paths are exercised, a same-origin workbench exists, and 100k-row synthetic stress scripts completed. Those facts do not prove zero bugs, real-world detection effectiveness, production security or zero false positives.
+This is a hardened hackathon prototype, not a bank-grade fraud engine. In the recorded environment, 112 automated tests pass, the core API paths are exercised, a same-origin workbench exists, and 100k-row synthetic stress scripts completed. Those facts do not prove zero bugs, real-world detection effectiveness, production security or zero false positives.
 
 ## Current state
 
 - Backend v0.4.0 and a dependency-free same-origin HTML/CSS/JavaScript workbench are included.
-- No trained/validated ML model ships with the package. Evaluation API deliberately returns `model_status=not_configured`, `evaluation_status=not_run`, `metrics=null`.
+- No PaySim transaction model ships with the package. A separate weak synthetic-template text classifier is optional. Evaluation API deliberately returns `model_status=not_configured`, `evaluation_status=not_run`, `metrics=null`.
 - Detection uses transparent heuristics and bounded graph/sequence candidate analysis; review priorities are operational levels, not calibrated fraud probabilities.
 - Controlled synthetic benchmark and two 100k-row stress reports are provided with their limitations.
 
@@ -51,3 +51,14 @@ Representative institution-specific data, approved integration and governance, i
 ## Integration-specific residuals
 
 The R5 chronology fix reduced random-stress chain candidates from 117 to 52; the one MEDIUM case remains. Older reports are historical. No thresholds were tuned. Some per-rule supporting lists are capped before case assembly; case-level totals are totals of assembled references, not a complete ledger. Existing per-evidence truncation flags are displayed, but not every rule exposes a separate support-total field. Dense single-account imports can be slower than these two generators: the expansion budget does not bound every adjacency scan or feature-history traversal. UI queue supports pagination beyond 100 matching cases via limit/offset controls; API supports up to 500 per page. Review-history length is not paginated. Concurrent multi-user, accessibility audit, security audit and teammate setup were not performed. Browser tests cover injected transport faults separately from the real API path.
+
+## Research extension limits
+
+- Parser extraction can be wrong; review the editable spec. Generated transactions reflect our generator, and sweeps measure our rule behavior, not fraud coverage.
+- The narrative classifier has weak family-held-out results (macro-F1 0.1714), missing HIGH test support and failed injection examples. It is advisory only. No live LLM was evaluated.
+- PaySim is synthetic mobile money, not Indian UPI. No licensed source file was supplied and no real PaySim metrics are claimed. Labels encode the simulator's assumptions.
+- Trace fired flags are engine-derived. Unmatched graph paths are not retained, so graph near-miss observations are unavailable. Stored traces, case payloads and displayed graphs are bounded and explicitly marked.
+- Window evaluation can undercount alert transactions when case payloads truncate. Simulation displays are final-result animations, not streaming detection.
+- Security-events writes are unauthenticated like the rest of this local API. Events can be forged by anyone with access. Correlation does not establish compromise or causation.
+- The review hash chain has no external anchor; a database owner can rewrite history or delete its tail. No immutable audit guarantee.
+- Passing checks does not establish a flawless system, security audit, production readiness, bank integration or real-world accuracy.

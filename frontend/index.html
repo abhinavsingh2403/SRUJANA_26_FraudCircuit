@@ -17,6 +17,7 @@
       <span>TraceGuard</span>
     </a>
     <nav class="nav" aria-label="Modules">
+      <a href="/research.html">Research workspace</a>
       <a href="#/queue" class="on" aria-current="page" id="nav-queue">Case Queue</a>
       <a href="#/scenarios" id="nav-scenarios">Scenario Console</a>
       <a href="#/import" id="nav-import">Import Data</a>
@@ -28,7 +29,7 @@
       <span id="connection-status">Connecting to API…</span>
     </div>
     <div class="pill">F01 · Fraud &amp; Transaction Risk</div>
-    <div class="pill">Synthetic data · Rules mode</div>
+    <div class="pill">Local decision support</div>
   </header>
 
   <main>
@@ -277,67 +278,33 @@ TX-003,2026-10-24T10:12:00Z,MULE-501,CASH-901,92000,TRANSFER</div>
     <!-- ========================================== -->
     <div id="page-evaluation" class="page-view" hidden>
       <section class="page-header">
+        <p class="eyebrow">EVIDENCE, NOT ASSUMPTIONS</p>
         <h1>Evaluation &amp; Auditability</h1>
-        <p class="sub">Transparent disclosure of machine learning status, rule triage boundaries, and tamper-evident decision logging. <span class="mono">GET /api/evaluation/summary</span></p>
+        <p class="sub">Inspect actual analysis runs, review progress and the integrity of recorded decisions.</p>
       </section>
-
-      <div class="grid">
-        <article class="card info-card">
-          <p class="eyebrow">EVALUATION STATUS</p>
-          <h2>What the model does—and does not—know</h2>
-          <p id="evaluation-status">Checking evaluation metadata…</p>
-          <div class="notice-box">
-            <strong>Honest Disclosure:</strong> Rules-only mode is active. No trained ML model or measured benchmark metric is bundled. Synthetic scenario accuracy does not establish Indian UPI fraud performance.
-          </div>
-        </article>
-
-        <article class="card info-card">
-          <p class="eyebrow">AUDITABILITY</p>
-          <h2>Tamper-evident review log</h2>
-          <p>Review decisions are stored with a per-case SHA-256 hash chain so accidental or partial changes can be detected. Without an external anchor a database owner can rewrite the whole chain or delete its tail.</p>
-          
-          <div class="d" style="margin-top:14px;font-weight:600">Live Chain Inspector</div>
-          <div class="audit-inspector-bar">
-            <input type="text" id="audit-inspector-input" placeholder="Enter case_id (e.g. case_568fb9da...)">
-            <button id="audit-inspector-btn" class="pill btn" type="button" style="background:var(--dark);color:#fff">Verify chain</button>
-          </div>
-          <div id="audit-inspector-result" class="notice-box" hidden></div>
-        </article>
+      <div class="eval-toolbar">
+        <label for="evaluation-source">Data source</label>
+        <select id="evaluation-source"><option value="">All stored data</option><option value="uploaded_csv">Uploaded CSVs</option><option value="synthetic_fixture">Synthetic fixtures</option></select>
+        <button class="pill btn" id="evaluation-refresh" type="button">Refresh evidence</button>
+        <button class="pill btn" id="evaluation-export" type="button" disabled>Download snapshot JSON</button>
       </div>
-
-      <div class="grid" style="margin-top:16px">
-        <section class="card" style="grid-column: span 12">
-          <h2>Priority classification policy</h2>
-          <p class="d" style="margin:4px 0 14px">Priorities represent analyst review order, not fraud probabilities or verdicts.</p>
-          <table class="schema-table">
-            <thead>
-              <tr><th>Priority</th><th>Meaning</th><th>Required signals</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><span class="b HIGH">HIGH</span></td>
-                <td>Review first</td>
-                <td>Requires structural motif (Cycle, Chain, Value Burst) AND corroborating rule signals linked across transactions.</td>
-              </tr>
-              <tr>
-                <td><span class="b MEDIUM">MEDIUM</span></td>
-                <td>Investigation required</td>
-                <td>At least one primary risk rule triggered (e.g. Rapid Pass-Through, Fan-in Dispersal, Amount Deviation).</td>
-              </tr>
-              <tr>
-                <td><span class="b LOW">LOW</span></td>
-                <td>Routine / Context</td>
-                <td>Signals flagged by baseline rules but accompanied by benign settlement patterns or low deviation.</td>
-              </tr>
-              <tr>
-                <td><span class="b INSUFFICIENT_HISTORY">INSUFFICIENT HISTORY</span></td>
-                <td>Coverage limitation</td>
-                <td>Target account baseline history is shorter than 30 days. This is a coverage boundary, not a fraud signal.</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
+      <p id="evaluation-status" role="status" aria-live="polite">Loading operational evidence…</p>
+      <div id="evaluation-content" hidden>
+        <div class="eval-metrics" id="evaluation-metrics"></div>
+        <div class="grid">
+          <article class="card info-card"><p class="eyebrow">REVIEW OUTCOMES</p><h2>What analysts recorded</h2><div id="evaluation-outcomes"></div><p class="d">Outcomes are human assessments on selected cases. They do not establish detection accuracy, recall or population false-positive rate.</p></article>
+          <article class="card info-card"><p class="eyebrow">MEASUREMENT BOUNDARY</p><h2>What is and is not measured</h2><p id="evaluation-model"></p><p>No labelled evaluation runs on this page. Operational counts are computed from the current database. Synthetic fixtures test behavior; they do not validate real-world fraud detection.</p><p id="evaluation-legacy" class="d"></p></article>
+        </div>
+        <section class="card eval-section"><p class="eyebrow">RUN PROVENANCE</p><h2>Recorded analyses</h2><p id="evaluation-run-count" class="d"></p><div class="eval-scroll"><table class="schema-table"><thead><tr><th>Source / run</th><th>Completed (UTC)</th><th>Transactions / cases</th><th>Coverage &amp; bounds</th><th>Analysis time</th><th>Provenance</th></tr></thead><tbody id="evaluation-runs"></tbody></table></div><p class="d">Time measures rule analysis before trace persistence. Repeating identical input with the same engine and settings updates one run. Different runs may contain overlapping transactions.</p></section>
+        <section class="card eval-section"><h2>Active priority policy &amp; settings</h2><p>Priority determines review order, not a probability or verdict. Context may lower priority under the explicit routine-pattern policy; it never removes the underlying risk evidence.</p><div id="evaluation-policy"></div><details><summary>Inspect current engine fingerprint and configured thresholds</summary><pre id="evaluation-settings"></pre></details></section>
+        <section class="card eval-section"><h2>Interpretation limits</h2><ul id="evaluation-limitations"></ul></section>
       </div>
+      <section class="card eval-section"><p class="eyebrow">LIVE REVIEW INTEGRITY</p><h2>Verify a case’s recorded decisions</h2><p>Checks SHA-256 links, event contents, review transitions and the current review status. An empty history is reported separately. This does not authenticate reviewer identity or certify case evidence.</p>
+        <label for="audit-inspector-input">Case ID (suggestions show up to 20 stored cases across all sources)</label>
+        <div class="audit-inspector-bar"><input type="text" id="audit-inspector-input" list="audit-case-options" placeholder="Select or paste an existing case ID" autocomplete="off"><datalist id="audit-case-options"></datalist><button id="audit-inspector-btn" class="pill btn" type="button">Verify chain</button><button id="audit-export" class="pill btn" type="button" disabled>Download verification JSON</button></div>
+        <div id="audit-inspector-result" class="notice-box" role="status" aria-live="polite" hidden></div>
+        <p class="d">Without an external anchor, a database owner can rewrite a chain or delete its tail. Reviewer names are self-reported in this local prototype.</p>
+      </section>
     </div>
 
     <!-- Hover Preview Floating Card -->
@@ -366,7 +333,7 @@ TX-003,2026-10-24T10:12:00Z,MULE-501,CASH-901,92000,TRANSFER</div>
           <svg id="gs" viewBox="0 0 1000 520" role="img" class="case-graph" aria-label="Detailed transaction graph"></svg>
         </div>
         <div class="gm" id="gm"></div>
-        <p class="d" style="margin:12px 0 0">Synthetic demo graph. Line thickness follows amount. Priorities are heuristic review labels, not fraud probabilities.</p>
+        <p class="d" style="margin:12px 0 0">Graph of retained case transactions. Line thickness follows amount. Priorities are heuristic review labels, not fraud probabilities.</p>
       </div>
     </div>
 

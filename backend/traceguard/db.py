@@ -11,7 +11,7 @@ import hashlib
 import json
 import os
 import sqlite3
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -70,9 +70,13 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE cases ADD COLUMN review_outcome TEXT")
 
     log_columns = _columns(conn, "review_log")
+    legacy_chain = "event_hash" not in log_columns
     for column in ("previous_outcome", "new_outcome", "prev_hash", "event_hash"):
         if column not in log_columns:
             conn.execute(f"ALTER TABLE review_log ADD COLUMN {column} TEXT")
+
+    if not legacy_chain:
+        return
 
     # Migrate the prior skeleton's conflated status/outcome values into separate
     # workflow status and review outcome fields. Unknown statuses are preserved
@@ -164,11 +168,14 @@ def initialize(path: str | None = None) -> None:
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_review_log_case ON review_log(case_id, id)")
         _migrate(conn)
+        conn.execute("CREATE TABLE IF NOT EXISTS analysis_runs(run_id TEXT PRIMARY KEY, source_kind TEXT NOT NULL, completed_at TEXT NOT NULL, payload TEXT NOT NULL)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_runs_source_time ON analysis_runs(source_kind, completed_at)")
+        conn.execute("CREATE TABLE IF NOT EXISTS case_traces(case_id TEXT PRIMARY KEY,payload TEXT NOT NULL, FOREIGN KEY(case_id) REFERENCES cases(case_id))")
 
 
-def upsert_cases(cases: list[dict[str, Any]], path: str | None = None) -> None:
+def upsert_cases(cases: list[dict[str, Any]], path: str | None = None, connection=None) -> None:
     now = _now()
-    with _connection(path) as conn:
+    with (nullcontext(connection) if connection is not None else _connection(path)) as conn:
         for case in cases:
             case_id = str(case["case_id"])
             payload = dict(case)
@@ -267,6 +274,9 @@ def update_review(case_id: str, new_status: str, reviewer: str, note: str,
         row = conn.execute("SELECT status, review_outcome FROM cases WHERE case_id = ?", (case_id,)).fetchone()
         if row is None:
             return None
+        integrity = _verify_review_chain(conn, case_id)
+        if not integrity["valid"]:
+            raise ValueError("Review log integrity failed; resolve the damaged record before appending")
         previous_status = row["status"]
         previous_outcome = row["review_outcome"]
         latest = conn.execute(
@@ -308,26 +318,44 @@ def review_history(case_id: str, path: str | None = None) -> list[dict[str, Any]
     return [dict(row) for row in rows]
 
 
-def verify_review_chain(case_id: str, path: str | None = None) -> dict[str, Any] | None:
-    history = review_history(case_id, path)
-    if get_case(case_id, path) is None:
+def _verify_review_chain(conn, case_id: str) -> dict[str, Any] | None:
+    row = conn.execute("SELECT status, review_outcome FROM cases WHERE case_id=?", (case_id,)).fetchone()
+    if row is None:
         return None
-    expected_prev = GENESIS_HASH
-    for event in history:
-        if event.get("prev_hash") != expected_prev:
-            return {"case_id": case_id, "valid": False, "event_count": len(history),
-                    "broken_at_event_id": event["id"], "reason": "previous_hash_mismatch"}
-        if _event_hash(event) != event.get("event_hash"):
-            return {"case_id": case_id, "valid": False, "event_count": len(history),
-                    "broken_at_event_id": event["id"], "reason": "event_hash_mismatch"}
-        expected_prev = str(event["event_hash"])
-    return {
-        "case_id": case_id,
-        "valid": True,
-        "event_count": len(history),
-        "head_hash": expected_prev,
-        "warning": "This per-case hash chain can detect modified/reordered stored events; without an external anchor it cannot prove that a database owner did not rewrite the whole chain or delete its tail.",
+    history = [dict(r) for r in conn.execute("SELECT * FROM review_log WHERE case_id=? ORDER BY id", (case_id,))]
+    result = {
+        "case_id": case_id, "valid": True, "event_count": len(history),
+        "checked_at": _now(), "status": "verified" if history else "no_events",
+        "current_status": row["status"], "current_outcome": row["review_outcome"],
+        "warning": "Checks stored event hashes, continuity and current review state only. Reviewer names are self-reported. Case evidence is not covered by this chain. Without an external anchor a database owner can rewrite the whole chain or delete its tail.",
     }
+    def failure(reason, event=None):
+        return {**result, "valid": False, "status": "invalid", "reason": reason,
+                "broken_at_event_id": event["id"] if event else None}
+    previous = GENESIS_HASH
+    last_state = ("OPEN", None)
+    for event in history:
+        if event["prev_hash"] != previous:
+            return failure("previous_hash_mismatch", event)
+        if _event_hash(event) != event["event_hash"]:
+            return failure("event_hash_mismatch", event)
+        if last_state is not None and last_state != (event["previous_status"], event["previous_outcome"]):
+            return failure("review_transition_mismatch", event)
+        if event["new_status"] not in _VALID_STATUSES or (event["new_status"] == "CLOSED" and event["new_outcome"] not in _VALID_OUTCOMES) or (event["new_status"] != "CLOSED" and event["new_outcome"] is not None):
+            return failure("invalid_review_state", event)
+        last_state = (event["new_status"], event["new_outcome"])
+        previous = event["event_hash"]
+    if history and last_state != (row["status"], row["review_outcome"]):
+        return failure("current_state_mismatch")
+    if not history and (row["status"] != "OPEN" or row["review_outcome"] is not None):
+        return failure("missing_review_history")
+    return {**result, "head_hash": previous}
+
+
+def verify_review_chain(case_id: str, path: str | None = None) -> dict[str, Any] | None:
+    with _connection(path) as conn:
+        conn.execute("BEGIN")  # one read snapshot, including current state
+        return _verify_review_chain(conn, case_id)
 
 
 def review_outcome_summary(path: str | None = None) -> dict[str, Any]:

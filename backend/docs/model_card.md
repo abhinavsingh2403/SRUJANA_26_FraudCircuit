@@ -51,3 +51,11 @@ This is the existing operational policy in `traceguard/cases.py`, not a calibrat
 ## Required evaluation before ML integration
 
 Use source-aware chronological splitting, keep all rows from one discrete source time step within the same split, exclude target labels/existing flags/post-event data, and fit preprocessing only on training data. Report average precision, precision/recall, false positives, precision at top K, threshold, class prevalence and dataset limitations. Include legitimate high-volume cases and at least one failure case. Don't quote metrics until actually run and reproducible.
+
+## Advisory extensions — 25 October 2026
+
+The earlier no-model statement applies to transaction/PaySim scoring. A separate optional TF-IDF plus logistic regression **text** classifier is now bundled, with its reproducible report at `artifacts/triage_eval.json`. It uses 96 authored synthetic narratives, with scenario-family-disjoint training (66) and test (30). Labels and text derive from the same scenario templates, so performance measures template recognition only. Observed macro-F1 is 0.1714; HIGH and INSUFFICIENT_INFORMATION have no test support; HIGH recall is null. Injection results include failures. No real narrative or live LLM quality has been demonstrated. Text severity never changes authoritative rule priority.
+
+PaySim remains not configured/not run without a licensed local dataset. The optional benchmark fits preprocessing on training only, keeps complete timestamp steps together, selects a validation alert-budget threshold and reports test metrics separately. Predictors exclude labels, flags, balances and future events. Test-time historical features may use earlier test events, matching sequential inference. The type/log-amount baseline is the no-history ablation. Rank scores are not calibrated probabilities. Sampling omits history, and PaySim's synthetic labels encode simulator assumptions; it is not Indian UPI. No gradient-boosted model is included.
+
+Artifacts are trusted local joblib files, never accepted through upload endpoints. Install optional dependencies or regenerate artifacts with `scripts/eval_triage.py` before using the text baseline in a different environment. Version compatibility is not guaranteed across arbitrary sklearn versions.

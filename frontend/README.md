@@ -93,3 +93,7 @@ To bundle the frontend for static deployment:
 npm run build
 ```
 Output files will be generated in `frontend/dist/`.
+
+## Updated build and research workspace
+
+`npm run build` now uses `build.cjs` to preserve same-origin `/static/` assets, including both JavaScript files, and sync packaged backend assets. Vite remains optional for development. FastAPI serves `research.html` for the additive research tools. Any backend port works; API requests use the current origin. Do not open pages via file URLs.

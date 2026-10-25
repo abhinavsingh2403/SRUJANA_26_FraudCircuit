@@ -1,0 +1,1 @@
+Synthetic templates grounded in bundled scenario facts and rule priorities. Labels derive from the same facts as text. Scores measure template recognition, not real-world triage quality. Entire scenario families stay in one split; rare classes may be absent in a split. No LLM labels.

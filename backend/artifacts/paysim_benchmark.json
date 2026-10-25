@@ -1,0 +1,19 @@
+{
+  "evaluation_status": "not_run",
+  "metrics": null,
+  "dataset": {
+    "status": "unavailable",
+    "dataset_present": false,
+    "header_valid": false,
+    "row_count": null,
+    "step_min": null,
+    "step_max": null,
+    "sha256": null,
+    "recurrence": null,
+    "warnings": [
+      "PaySim dataset not available; configure PAYSIM_PATH to a licensed local file"
+    ],
+    "notice": "PaySim is synthetic mobile-money simulation data, not Indian UPI. Timestamps represent simulated hours."
+  },
+  "notice": "PaySim is synthetic mobile-money simulation data, not Indian UPI. Timestamps represent simulated hours."
+}

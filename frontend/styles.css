@@ -1494,3 +1494,15 @@ th.amt {
   font-size: 12px;
 }
 
+
+/* Live operational evaluation */
+.eval-toolbar { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin:18px 0; }
+.eval-toolbar select { padding:10px; max-width:100%; border:1px solid var(--line,#ddd); border-radius:8px; background:white; }
+.eval-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin:20px 0; }
+.eval-metric { padding:20px; } .eval-metric strong { font-size:30px; }
+.eval-section { margin-top:20px; padding:24px; }
+.eval-scroll { overflow-x:auto; } #evaluation-runs td { min-width:130px; white-space:pre-line; vertical-align:top; }
+#page-evaluation pre { white-space:pre-wrap; overflow-wrap:anywhere; max-height:360px; overflow:auto; font-size:12px; background:#f6f7f8; padding:12px; }
+#page-evaluation details { margin:12px 0; } #page-evaluation summary { cursor:pointer; font-weight:600; }
+#evaluation-limitations li { margin:10px 0; } #audit-inspector-result { overflow-wrap:anywhere; }
+@media(max-width:760px) { .eval-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .eval-section { padding:16px; } .audit-inspector-bar { flex-wrap:wrap; } }

@@ -65,3 +65,19 @@ Provide both client-side hash routing (`window.location.hash`) and standalone HT
 
 
 
+
+## 25 October 2026 — additive research integration
+
+Actual code superseded stale handoff claims: frontend API requests redirected nonstandard ports to 8000, zero-case runs returned to all cases, and Vite omitted non-module JavaScript from its build. Corrected same-origin routing/run scoping and replaced the build step with a dependency-free asset copy. Keep Vite for optional development only.
+
+Preserve original rule defaults and golden outputs. New explanations call the same feature/rule/graph functions; stored traces retain 20 triggers per case with complete-input history. Do not reconstruct missing historical features from bounded stored cases. Graph candidate near misses remain explicitly unavailable instead of inventing values. No actual PaySim data means no transaction model performance claim.
+
+
+## 25 October 2026 — Live evaluation and review integrity revision
+
+- The previous Evaluation page described insufficient history as less than 30 days and LOW as benign context; neither statement matched the running rules. Replaced fixed frontend policy/status claims with API-supplied policy and measured database counts. LOW retains evidence and is not a legitimacy finding. Context can affect ordering under the existing explicit routine policy; “never suppress” means risk evidence is retained, not that priority never changes.
+- Preserve deterministic synthetic rule behavior. Thresholds remain documented design defaults, not claimed validated banking values. Centralize priority conditions and expose fan-in outflow ratio through Settings, shared with diagnostic gates.
+- Fingerprint engine source and settings in run IDs to prevent attaching existing reviews to a different policy. This intentionally changes IDs relative to older archives. Golden scenario tests compare every behavioral field except the deliberately versioned run/case IDs; the golden input was not regenerated to hide behavioral changes.
+- Record zero-case runs and persist cases/traces/run metadata atomically. Compute diagnostic traces before acquiring the write lock. Bound evaluation run payloads to the latest 25, with explicit omission counts. Use SQL aggregation instead of loading all case evidence.
+- Only migrate review hashes when the old schema lacks hashes. Never rehash a partially damaged modern log at startup. Verify transitions and current state as well as hashes; reject new reviews on damaged chains.
+- ML dataset files, training scripts, artifacts and optional model logic are outside this revision. No claims of measured production accuracy, exhaustive security review, authenticated identities or externally anchored logs.

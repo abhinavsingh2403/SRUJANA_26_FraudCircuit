@@ -11,6 +11,8 @@ sys.path.insert(0,str(ROOT))
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--browser',action='store_true')
+    parser.add_argument('--research-browser',action='store_true')
+    parser.add_argument('--evaluation-browser',action='store_true')
     args=parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='traceguard-acceptance-') as tmp:
         with socket.socket() as sock:
@@ -27,6 +29,12 @@ def main():
                         except httpx.ConnectError:time.sleep(.1)
                     else:raise RuntimeError('Local server did not become healthy')
                     assert client.get('/api/cases').json()['count']==0
+                    if args.evaluation_browser:
+                        result=subprocess.run(['node','scripts/evaluation_browser_journey.cjs'],cwd=ROOT,env={**env,'TRACEGUARD_TEST_URL':base},text=True,capture_output=True,timeout=120)
+                        (ROOT/'artifacts/revision_evaluation_browser.json').write_text(result.stdout)
+                        (ROOT/'artifacts/revision_evaluation_browser.log').write_text(result.stderr)
+                        print(result.stdout,end='');print(result.stderr,end='',file=sys.stderr)
+                        if result.returncode:raise RuntimeError('Evaluation browser journey failed')
                     if args.browser:
                         from traceguard.config import Settings
                         from traceguard.fixtures import scenario_transactions
@@ -35,10 +43,19 @@ def main():
                         run_id,cases,stats=analyse_transactions_detailed(scenario_transactions('directed-cycle'),'budget-ui-test',Settings(graph_search_expansion_limit=1))
                         fixture=Path(tmp)/'bounded.json'
                         fixture.write_text(json.dumps({'run_id':run_id,'transaction_count':3,'case_count':len(cases),'cases':[], 'analysis_warnings':_analysis_warnings(stats),'graph_summary':stats}))
-                        result=subprocess.run(['node','scripts/browser_journey.cjs'],cwd=ROOT,env={**env,'TRACEGUARD_TEST_URL':base,'TRACEGUARD_BOUNDED_FIXTURE':str(fixture)},text=True,capture_output=True)
+                        result=subprocess.run(['node','scripts/browser_journey.cjs'],cwd=ROOT,env={**env,'TRACEGUARD_TEST_URL':base,'TRACEGUARD_BOUNDED_FIXTURE':str(fixture)},text=True,capture_output=True,timeout=120)
                         print(result.stdout,end='');print(result.stderr,end='',file=sys.stderr)
                         if result.returncode:raise RuntimeError('Browser journey failed')
                         (ROOT/'reports/browser_integration.json').write_text(result.stdout)
+                        extra=subprocess.run(['node','scripts/research_browser_journey.cjs'],cwd=ROOT,env={**env,'TRACEGUARD_TEST_URL':base},text=True,capture_output=True,timeout=120)
+                        print(extra.stdout,end='');print(extra.stderr,end='',file=sys.stderr)
+                        if extra.returncode:raise RuntimeError('Research browser journey failed')
+                        (ROOT/'artifacts/research_browser.json').write_text(extra.stdout)
+                    if args.research_browser:
+                        extra=subprocess.run(['node','scripts/research_browser_journey.cjs'],cwd=ROOT,env={**env,'TRACEGUARD_TEST_URL':base},text=True,capture_output=True,timeout=120)
+                        print(extra.stdout,end='');print(extra.stderr,end='',file=sys.stderr)
+                        if extra.returncode:raise RuntimeError('Research browser journey failed')
+                        (ROOT/'artifacts/research_browser.json').write_text(extra.stdout)
                     checks={}
                     for route in ['/','/static/app.js','/health','/api/scenarios','/api/cases','/api/evaluation/summary']:
                         response=client.get(route);assert response.status_code==200;checks[route]=response.status_code
@@ -57,6 +74,10 @@ def main():
                     evaluation=client.get('/api/evaluation/summary').json()
                     assert evaluation['model_status']=='not_configured' and evaluation['metrics'] is None
                     checks['model_not_configured']=True
+                    from scripts.self_test_limits import checks as limit_checks
+                    results=limit_checks(client)
+                    assert all(r['passed'] for r in results)
+                    (ROOT/'artifacts/self_test_report.md').write_text('# Observed loopback checks\n\nAPI is unauthenticated by design. Not a security audit.\n\n'+ '\n'.join(str(r) for r in results)+'\n')
                     (ROOT/'reports/http_integration.json').write_text(json.dumps(checks,indent=2)+'\n')
                     print(json.dumps(checks,indent=2))
             finally:

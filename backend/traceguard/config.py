@@ -24,6 +24,7 @@ class Settings:
     case_gap_seconds: int = 6 * 60 * 60
     max_case_span_seconds: int = 24 * 60 * 60
 
+    fan_in_min_outflow_ratio: float = 0.50
     pass_through_min_ratio: float = 0.75
     min_fan_in_senders: int = 3
     min_fan_in_cluster_senders: int = 6
@@ -76,11 +77,11 @@ class Settings:
             self.max_case_trigger_transactions, self.max_case_context_transactions,
             self.max_case_account_ids, self.max_case_evidence_items,
         )
-        if any(value <= 0 for value in positive_ints):
+        if any(isinstance(value, bool) or not isinstance(value, int) or value <= 0 for value in positive_ints):
             raise ValueError("time windows, counts, and limits must be positive")
         if not math.isfinite(self.max_transaction_amount) or self.max_transaction_amount <= 0:
             raise ValueError("max_transaction_amount must be finite and positive")
-        if not self.pass_through_windows_seconds or any(not isinstance(w, int) or w <= 0 for w in self.pass_through_windows_seconds):
+        if not self.pass_through_windows_seconds or any(isinstance(w, bool) or not isinstance(w, int) or w <= 0 for w in self.pass_through_windows_seconds):
             raise ValueError("pass_through_windows_seconds must contain positive integer windows")
         if len(set(self.pass_through_windows_seconds)) != len(self.pass_through_windows_seconds):
             raise ValueError("pass_through_windows_seconds must be unique")
@@ -90,6 +91,8 @@ class Settings:
             raise ValueError("cycle_min_retention_ratio must be in (0, 1]")
         if not 0 < self.layered_chain_min_retention_ratio <= 1:
             raise ValueError("layered_chain_min_retention_ratio must be in (0, 1]")
+        if not 0 < self.fan_in_min_outflow_ratio <= 1:
+            raise ValueError("fan_in_min_outflow_ratio must be in (0, 1]")
         if not 0 < self.pass_through_min_ratio <= 1:
             raise ValueError("pass_through_min_ratio must be in (0, 1]")
         numeric_thresholds = (self.amount_mad_z_threshold, self.amount_deviation_min_relative_change, self.zero_mad_amount_multiple, self.global_outlier_multiple, self.stable_amount_context_tolerance, self.dormant_amount_multiple, self.cycle_min_retention_ratio, self.layered_chain_min_retention_ratio)

@@ -63,6 +63,8 @@ class ReviewRequest(BaseModel):
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     db.initialize()
+    from .security import initialize
+    initialize()
     yield
 
 
@@ -113,8 +115,9 @@ def frontend_page(page_name: str) -> FileResponse:
 
 
 @app.get("/health", tags=["system"])
-def health() -> dict[str, str]:
-    return {"status": "ok", "service": "traceguard-backend", "model_status": "not_configured"}
+def health() -> dict[str, Any]:
+    from .model_hook import model_status
+    return {"status": "ok", "service": "traceguard-backend", **model_status()}
 
 
 @app.get("/api/scenarios", tags=["scenarios"])
@@ -192,6 +195,9 @@ def get_case(case_id: str) -> dict[str, Any]:
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
     case["review_history"] = db.review_history(case_id)
+    from .security import trace_for, related
+    case["trace"] = trace_for(case)
+    case["related_security_events"] = related(case)
     return case
 
 
@@ -207,6 +213,9 @@ def update_case_review(case_id: str, body: ReviewRequest) -> dict[str, Any]:
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
     case["review_history"] = db.review_history(case_id)
+    from .security import trace_for, related
+    case["trace"] = trace_for(case)
+    case["related_security_events"] = related(case)
     return case
 
 
@@ -224,16 +233,13 @@ def analytics_review_outcomes() -> dict[str, Any]:
 
 
 @app.get("/api/evaluation/summary", tags=["evaluation"])
-def evaluation_summary() -> dict[str, Any]:
-    return {
-        "model_status": "not_configured",
-        "evaluation_status": "not_run",
-        "metrics": None,
-        "dataset": None,
-        "message": "No trained ML model or model-evaluation result is configured. A separate controlled synthetic episode benchmark is bundled for rule-coverage inspection only; it is not evidence of real-world fraud-detection performance.",
-        "required_reporting": ["chronological split", "precision-recall metric", "precision", "recall", "false positives", "precision at top K"],
-    }
+def evaluation_summary(source_kind: str | None = Query(default=None, pattern="^(synthetic_fixture|uploaded_csv)$")) -> dict[str, Any]:
+    from .provenance import summary
+    return summary(source_kind)
 
+
+from .extensions_api import router
+app.include_router(router)
 
 # Same-origin UI assets; CORS remains allowlisted for optional Vite development.
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

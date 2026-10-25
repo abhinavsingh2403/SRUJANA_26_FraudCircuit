@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "checks": [
+    "empty state has no invented performance or completion metrics",
+    "real run provenance including a zero-case run; no-events audit state",
+    "real review verification and valid JSON export",
+    "source filter, live review counters and scoped snapshot export",
+    "failure clears stale figures and disables export; refresh recovers",
+    "unknown-case error and responsive desktop/mobile layout"
+  ],
+  "page_errors": []
+}

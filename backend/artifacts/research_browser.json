@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "browser": "153.0.8010.0",
+  "checks": [
+    "offline parse → editable spec → real simulation → SVG graph/timeline",
+    "edge inspection includes supporting engine evidence",
+    "debounced what-if rerun and rule/priority diff",
+    "real four-point sensitivity sweep",
+    "offline advisory triage with untrusted markup rendered as text",
+    "missing PaySim file is explicit and disables replay",
+    "security events list empty/loaded state",
+    "research interactions do not create stored cases",
+    "simulation API failure visible",
+    "desktop/mobile viewport bounds"
+  ],
+  "page_errors": []
+}

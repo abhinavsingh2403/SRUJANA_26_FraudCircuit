@@ -1,0 +1,179 @@
+{
+  "evaluation_status": "completed",
+  "metrics": {
+    "macro_f1": 0.17142857142857143,
+    "per_class": {
+      "HIGH": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 0.0
+      },
+      "MEDIUM": {
+        "precision": 1.0,
+        "recall": 0.16666666666666666,
+        "f1-score": 0.2857142857142857,
+        "support": 24.0
+      },
+      "LOW": {
+        "precision": 0.25,
+        "recall": 1.0,
+        "f1-score": 0.4,
+        "support": 6.0
+      },
+      "INSUFFICIENT_INFORMATION": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 0.0
+      },
+      "accuracy": 0.3333333333333333,
+      "macro avg": {
+        "precision": 0.3125,
+        "recall": 0.2916666666666667,
+        "f1-score": 0.17142857142857143,
+        "support": 30.0
+      },
+      "weighted avg": {
+        "precision": 0.85,
+        "recall": 0.3333333333333333,
+        "f1-score": 0.30857142857142855,
+        "support": 30.0
+      }
+    },
+    "high_recall": null,
+    "confusion_matrix": [
+      [
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        4,
+        18,
+        2
+      ],
+      [
+        0,
+        0,
+        6,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "labels": [
+      "HIGH",
+      "MEDIUM",
+      "LOW",
+      "INSUFFICIENT_INFORMATION"
+    ]
+  },
+  "train_size": 66,
+  "test_size": 30,
+  "train_families": [
+    "compound-layered-cycle",
+    "delayed-pass-through-90m",
+    "dormant-reactivation",
+    "fan-in-collector",
+    "insufficient-history",
+    "layered-chain",
+    "legitimate-settlement-context",
+    "rapid-pass-through",
+    "single-inflow-four-way-split",
+    "vague"
+  ],
+  "test_families": [
+    "amount-deviation",
+    "directed-cycle",
+    "fan-in-dispersal",
+    "legitimate-high-volume",
+    "repeated-value-burst"
+  ],
+  "label_counts": {
+    "train": {
+      "LOW": 24,
+      "INSUFFICIENT_INFORMATION": 18,
+      "MEDIUM": 18,
+      "HIGH": 6
+    },
+    "test": {
+      "MEDIUM": 24,
+      "LOW": 6
+    }
+  },
+  "injection_tests": [
+    {
+      "id": "fan-in-dispersal-1",
+      "expected": "MEDIUM",
+      "predicted": "LOW",
+      "correct": false
+    },
+    {
+      "id": "fan-in-dispersal-4",
+      "expected": "MEDIUM",
+      "predicted": "LOW",
+      "correct": false
+    },
+    {
+      "id": "legitimate-high-volume-1",
+      "expected": "LOW",
+      "predicted": "LOW",
+      "correct": true
+    },
+    {
+      "id": "legitimate-high-volume-4",
+      "expected": "LOW",
+      "predicted": "LOW",
+      "correct": true
+    },
+    {
+      "id": "repeated-value-burst-1",
+      "expected": "MEDIUM",
+      "predicted": "LOW",
+      "correct": false
+    },
+    {
+      "id": "repeated-value-burst-4",
+      "expected": "MEDIUM",
+      "predicted": "LOW",
+      "correct": false
+    },
+    {
+      "id": "directed-cycle-1",
+      "expected": "MEDIUM",
+      "predicted": "LOW",
+      "correct": false
+    },
+    {
+      "id": "directed-cycle-4",
+      "expected": "MEDIUM",
+      "predicted": "LOW",
+      "correct": false
+    },
+    {
+      "id": "amount-deviation-1",
+      "expected": "MEDIUM",
+      "predicted": "MEDIUM",
+      "correct": true
+    },
+    {
+      "id": "amount-deviation-4",
+      "expected": "MEDIUM",
+      "predicted": "MEDIUM",
+      "correct": true
+    }
+  ],
+  "llm_model": "not_evaluated",
+  "limitations": [
+    "Synthetic template recognition only; labels and text share scenario facts.",
+    "Rare classes can be absent in a family-held-out split; inspect label counts.",
+    "No real-world triage performance established."
+  ]
+}

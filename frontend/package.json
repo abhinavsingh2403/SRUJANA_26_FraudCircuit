@@ -2,11 +2,11 @@
   "name": "traceguard-frontend",
   "version": "0.4.0",
   "private": true,
-  "description": "TraceGuard Analyst Investigation Workbench — Frontend UI",
+  "description": "TraceGuard Analyst Investigation Workbench \u2014 Frontend UI",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node build.cjs",
     "preview": "vite preview"
   },
   "devDependencies": {
